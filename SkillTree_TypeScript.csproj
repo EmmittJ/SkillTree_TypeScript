@@ -10,9 +10,9 @@
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TypeScriptHTMLApp1</RootNamespace>
-    <AssemblyName>TypeScriptHTMLApp1</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <RootNamespace>SkillTree_TypeScript</RootNamespace>
+    <AssemblyName>SkillTree_TypeScript</AssemblyName>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
     <IISExpressAnonymousAuthentication />
@@ -21,8 +21,9 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
-    <TypeScriptToolsVersion>2.1</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>3.1</TypeScriptToolsVersion>
     <Use64BitIISExpress />
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -56,6 +57,108 @@
     <TypeScriptSourceRoot />
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="data\Assets\Background1.png" />
+    <Content Include="data\Assets\BackgroundDex.png" />
+    <Content Include="data\Assets\BackgroundDexInt.png" />
+    <Content Include="data\Assets\BackgroundInt.png" />
+    <Content Include="data\Assets\BackgroundStr.png" />
+    <Content Include="data\Assets\BackgroundStrDex.png" />
+    <Content Include="data\Assets\BackgroundStrInt.png" />
+    <Content Include="data\Assets\centerduelist.png" />
+    <Content Include="data\Assets\centermarauder.png" />
+    <Content Include="data\Assets\centerranger.png" />
+    <Content Include="data\Assets\centerscion.png" />
+    <Content Include="data\Assets\centershadow.png" />
+    <Content Include="data\Assets\centertemplar.png" />
+    <Content Include="data\Assets\centerwitch.png" />
+    <Content Include="data\Assets\ClassesAscendant.png" />
+    <Content Include="data\Assets\ClassesAssassin.png" />
+    <Content Include="data\Assets\ClassesBerserker.png" />
+    <Content Include="data\Assets\ClassesChampion.png" />
+    <Content Include="data\Assets\ClassesChieftain.png" />
+    <Content Include="data\Assets\ClassesDeadeye.png" />
+    <Content Include="data\Assets\ClassesElementalist.png" />
+    <Content Include="data\Assets\ClassesGladiator.png" />
+    <Content Include="data\Assets\ClassesGuardian.png" />
+    <Content Include="data\Assets\ClassesHierophant.png" />
+    <Content Include="data\Assets\ClassesInquisitor.png" />
+    <Content Include="data\Assets\ClassesJuggernaut.png" />
+    <Content Include="data\Assets\ClassesNecromancer.png" />
+    <Content Include="data\Assets\ClassesOccultist.png" />
+    <Content Include="data\Assets\ClassesPathfinder.png" />
+    <Content Include="data\Assets\ClassesRaider.png" />
+    <Content Include="data\Assets\ClassesSaboteur.png" />
+    <Content Include="data\Assets\ClassesSlayer.png" />
+    <Content Include="data\Assets\ClassesTrickster.png" />
+    <Content Include="data\Assets\groups-0.png" />
+    <Content Include="data\Assets\groups-1.png" />
+    <Content Include="data\Assets\groups-2.png" />
+    <Content Include="data\Assets\groups-3.png" />
+    <Content Include="data\Assets\imgPSFadeCorner.png" />
+    <Content Include="data\Assets\imgPSFadeSide.png" />
+    <Content Include="data\Assets\JewelFrameAllocated.png" />
+    <Content Include="data\Assets\JewelFrameCanAllocate.png" />
+    <Content Include="data\Assets\JewelFrameUnallocated.png" />
+    <Content Include="data\Assets\JewelSocketActiveAbyss.png" />
+    <Content Include="data\Assets\JewelSocketActiveBlue.png" />
+    <Content Include="data\Assets\JewelSocketActiveGreen.png" />
+    <Content Include="data\Assets\JewelSocketActivePrismatic.png" />
+    <Content Include="data\Assets\JewelSocketActiveRed.png" />
+    <Content Include="data\Assets\KeystoneFrameAllocated.png" />
+    <Content Include="data\Assets\KeystoneFrameCanAllocate.png" />
+    <Content Include="data\Assets\KeystoneFrameUnallocated.png" />
+    <Content Include="data\Assets\LineConnectorActive.png" />
+    <Content Include="data\Assets\LineConnectorIntermediate.png" />
+    <Content Include="data\Assets\LineConnectorNormal.png" />
+    <Content Include="data\Assets\NotableFrameAllocated.png" />
+    <Content Include="data\Assets\NotableFrameCanAllocate.png" />
+    <Content Include="data\Assets\NotableFrameUnallocated.png" />
+    <Content Include="data\Assets\Orbit1Active.png" />
+    <Content Include="data\Assets\Orbit1Intermediate.png" />
+    <Content Include="data\Assets\Orbit1Normal.png" />
+    <Content Include="data\Assets\Orbit2Active.png" />
+    <Content Include="data\Assets\Orbit2Intermediate.png" />
+    <Content Include="data\Assets\Orbit2Normal.png" />
+    <Content Include="data\Assets\Orbit3Active.png" />
+    <Content Include="data\Assets\Orbit3Intermediate.png" />
+    <Content Include="data\Assets\Orbit3Normal.png" />
+    <Content Include="data\Assets\Orbit4Active.png" />
+    <Content Include="data\Assets\Orbit4Intermediate.png" />
+    <Content Include="data\Assets\Orbit4Normal.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyButton.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyButtonHighlight.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyButtonPressed.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyFrameLargeAllocated.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyFrameLargeCanAllocate.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyFrameLargeNormal.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyFrameSmallAllocated.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyFrameSmallCanAllocate.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyFrameSmallNormal.png" />
+    <Content Include="data\Assets\PassiveSkillScreenAscendancyMiddle.png" />
+    <Content Include="data\Assets\PSGroupBackground1.png" />
+    <Content Include="data\Assets\PSGroupBackground2.png" />
+    <Content Include="data\Assets\PSGroupBackground3.png" />
+    <Content Include="data\Assets\PSLineDeco.png" />
+    <Content Include="data\Assets\PSLineDecoHighlighted.png" />
+    <Content Include="data\Assets\PSPointsFrame.png" />
+    <Content Include="data\Assets\PSSkillFrame.png" />
+    <Content Include="data\Assets\PSSkillFrameActive.png" />
+    <Content Include="data\Assets\PSSkillFrameHighlighted.png" />
+    <Content Include="data\Assets\PSStartNodeBackgroundInactive.png" />
+    <Content Include="data\Assets\skills-0.jpg" />
+    <Content Include="data\Assets\skills-1.jpg" />
+    <Content Include="data\Assets\skills-2.jpg" />
+    <Content Include="data\Assets\skills-3.jpg" />
+    <Content Include="data\Assets\skills-disabled-0.jpg" />
+    <Content Include="data\Assets\skills-disabled-1.jpg" />
+    <Content Include="data\Assets\skills-disabled-2.jpg" />
+    <Content Include="data\Assets\skills-disabled-3.jpg" />
+    <None Include="data\SkillTree.json" />
+    <Content Include="package.json" />
+    <Content Include="scripts\pixi-viewport.min.js" />
+    <Content Include="webpack.config.js" />
+    <Content Include="tsconfig.json" />
+    <Content Include="tslint.json" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -64,18 +167,39 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="app.css" />
+    <Content Include="content\app.css" />
     <Content Include="index.html" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
-    <TypeScriptCompile Include="app.ts" />
+    <TypeScriptCompile Include="app\app.ts" />
+    <TypeScriptCompile Include="app\CanvasControls.ts" />
+    <TypeScriptCompile Include="models\SkillNode.ts" />
+    <TypeScriptCompile Include="models\SkillTreeData.ts" />
+    <TypeScriptCompile Include="models\types\IAsset.d.ts" />
+    <TypeScriptCompile Include="models\types\ICharacter.d.ts" />
+    <TypeScriptCompile Include="models\types\IClassImage.d.ts" />
+    <TypeScriptCompile Include="models\types\IConstants.d.ts" />
+    <TypeScriptCompile Include="models\types\IGroup.d.ts" />
+    <TypeScriptCompile Include="models\types\IPoint.ts" />
+    <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillTreeData.d.ts" />
+    <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
+    <TypeScriptCompile Include="models\Point.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="System.Web.DynamicData" />
+    <Reference Include="System.Web.Entity" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
@@ -103,4 +227,8 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
 </Project>

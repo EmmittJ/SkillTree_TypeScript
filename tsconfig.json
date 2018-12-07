@@ -1,0 +1,19 @@
+{
+  "extends": "./node_modules/gts/tsconfig-google.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": ".",
+    "lib": [
+      "dom",
+      "es6"
+    ],
+    "module": "commonjs",
+    "target": "es5"
+  },
+  "include": [
+    "node_modules/@types/**.*.d.ts",
+    "models/**/*.ts",
+    "models/**/*.d.ts",
+    "app/**/*.ts"
+  ]
+}

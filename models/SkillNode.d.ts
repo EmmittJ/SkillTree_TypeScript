@@ -1,0 +1,35 @@
+export declare class SkillNode implements ISkillNode {
+    id: number;
+    dn: string;
+    icon: string;
+    ks: boolean;
+    not: boolean;
+    m: boolean;
+    isJewelSocket: boolean;
+    isMultipleChoice: boolean;
+    isMultipleChoiceOption: boolean;
+    passivePointsGranted: number;
+    ascendancyName: string;
+    isAscendancyStart: boolean;
+    spc: number[];
+    sd: string[];
+    reminderText: string[];
+    g: number;
+    o: number;
+    oidx: number;
+    da: number;
+    ia: number;
+    sa: number;
+    out: number[];
+    in: number[];
+    orbitRadii: Array<number>;
+    skillsPerOrbit: Array<number>;
+    group: IGroup;
+    arc: number;
+    x: number;
+    y: number;
+    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>);
+    private getArc;
+    private getX;
+    private getY;
+}
