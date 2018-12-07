@@ -173,7 +173,6 @@
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="app\app.ts" />
-    <TypeScriptCompile Include="app\CanvasControls.ts" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
     <TypeScriptCompile Include="models\SkillTreeData.ts" />
     <TypeScriptCompile Include="models\types\IAsset.d.ts" />
