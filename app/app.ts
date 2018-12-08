@@ -9,7 +9,7 @@ namespace App {
     let viewport: Viewport;
     export const main = async () => {
         skillTreeData = new SkillTreeData(await $.ajax({
-            url: '/data/SkillTree.json',
+            url: `/data/SkillTree.json?t=${(new Date()).getTime()}`,
             dataType: 'json'
         }));
 
@@ -60,19 +60,28 @@ namespace App {
         viewport.removeChildren();
         //we like the highest res images
         var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
+        //Draw background first
 
+        // Draw connections second
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            if (node.spc.length > 0) {
-                // Class roots will be drawn
-                continue;
+            if (node.spc.length === 0) {
+                viewport.addChild(node.getGraphic());
             }
-            viewport.addChild(node.getGraphic());
             for (let graphic of node.getGraphicConnections(skillTreeData.nodes)) {
                 viewport.addChild(graphic);
             }
         }
 
+        //draw skill icons third
+        for (let id in skillTreeData.nodes) {
+            var node = skillTreeData.nodes[id];
+            if (node.spc.length === 0) {
+                viewport.addChild(node.getGraphic());
+            }
+        }
+
+        //draw faces forth
         for (let id of skillTreeData.root.out) {
             let node = skillTreeData.nodes[id];
             if (node.spc.length !== 1) {
@@ -101,7 +110,7 @@ namespace App {
             let node_url = `data/assets/center${common_name.toLocaleLowerCase()}${file_name.slice(file_name.lastIndexOf('.'))}`;
             let node_graphic = PIXI.Sprite.fromImage(node_url);
             node_graphic.anchor.set(.5)
-            node_graphic.scale.set(2.75);
+            //node_graphic.scale.set(3);
             node_graphic.x = node.x;
             node_graphic.y = node.y;
             viewport.addChild(node_graphic);
