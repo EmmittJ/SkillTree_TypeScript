@@ -8,7 +8,7 @@
     min_y: number;
     max_x: number;
     max_y: number;
-    assets: { [id: string]: Array<IAsset> };
+    assets: { [id: string]: { [zoomLevel: string]: string } };
     imageRoot: string;
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };

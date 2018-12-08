@@ -1,6 +1,7 @@
 ﻿import { SkillTreeData } from "../models/SkillTreeData";
-import * as PIXI from "pixi.js";
-import * as Viewport from "pixi-viewport"
+import { Utils } from "./utils";
+import * as PIXI from "pixi.js";;
+import * as Viewport from "pixi-viewport";
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -15,6 +16,7 @@ namespace App {
         pixi = new PIXI.Application(window.innerWidth, window.innerHeight, {
             autoResize: true,
             resolution: devicePixelRatio,
+            antialias: true
         });
         document.body.appendChild(pixi.view);
 
@@ -32,13 +34,10 @@ namespace App {
 
         pixi.stage.addChild(viewport);
 
-        //events();
-
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width, skillTreeData.height);
         });
-        //pixi.ticker.add(draw);
         draw();
     }
 
@@ -59,26 +58,54 @@ namespace App {
 
     export const draw = (): void => {
         viewport.removeChildren();
+        //we like the highest res images
+        var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
+
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            var node_color = 0xFF0000;
-            var node_size = 20;
-            if (node.ks) {
-                node_color = 0x0000FF;
-                node_size *= 2;
-            } else if (node.not) {
-                node_color = 0x00FFFF;
-                node_size *= 1.5;
-            } else if (node.m) {
-                node_color = 0xFFFFFF;
+            if (node.spc.length > 0) {
+                // Class roots will be drawn
+                continue;
+            }
+            viewport.addChild(node.getGraphic());
+            for (let graphic of node.getGraphicConnections(skillTreeData.nodes)) {
+                viewport.addChild(graphic);
+            }
+        }
+
+        for (let id of skillTreeData.root.out) {
+            let node = skillTreeData.nodes[id];
+            if (node.spc.length !== 1) {
+                // Root node with no/multiple classes?
+                continue;
             }
 
-            var node_graphic = new PIXI.Graphics();
-            node_graphic.beginFill(node.spc.length > 0 || node.isAscendancyStart ? 0x00FF00 : node_color);
-            node_graphic.lineStyle(0);
-            node_graphic.drawCircle(node.x, node.y, node_size);
-            node_graphic.endFill();
+            let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
+            if (class_name === undefined) {
+                throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
+            }
+            let common_name = skillTreeData.constants.classesToName[class_name];
+
+            //find center
+            //TODO: make asset loader
+            let class_backgrounds = skillTreeData.assets[`center${common_name.toLocaleLowerCase()}`];
+            let class_background = "";
+            if (max_zoom in class_backgrounds) {
+                class_background = class_backgrounds[max_zoom];
+            } else {
+                class_background = class_backgrounds[0];
+            }
+
+            //get file name
+            let file_name = class_background.slice(class_background.lastIndexOf('/') + 1);
+            let node_url = `data/assets/center${common_name.toLocaleLowerCase()}${file_name.slice(file_name.lastIndexOf('.'))}`;
+            let node_graphic = PIXI.Sprite.fromImage(node_url);
+            node_graphic.anchor.set(.5)
+            node_graphic.scale.set(2.75);
+            node_graphic.x = node.x;
+            node_graphic.y = node.y;
             viewport.addChild(node_graphic);
+            viewport.addChild(node.getGraphic());
         }
     }
 }

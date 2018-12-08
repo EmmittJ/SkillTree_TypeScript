@@ -1,4 +1,5 @@
 ﻿import { SkillNode } from "./SkillNode";
+import { Constants } from "./Constants";
 
 export class SkillTreeData implements ISkillTreeData {
     characterData: { [id: string]: ICharacter };
@@ -10,11 +11,11 @@ export class SkillTreeData implements ISkillTreeData {
     min_y: number;
     max_x: number;
     max_y: number;
-    assets: { [id: string]: Array<IAsset> };
+    assets: { [id: string]: {[zoomLevel: string]: string} };
     imageRoot: string;
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };
-    constants: IConstants;
+    constants: Constants;
     width: number;
     height: number;
 
@@ -31,7 +32,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.imageRoot = skillTree.imageRoot;
         this.imageZoomLevels = skillTree.imageZoomLevels;
         this.skillSprites = skillTree.skillSprites
-        this.constants = skillTree.constants;
+        this.constants = new Constants(skillTree.constants);
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
 
