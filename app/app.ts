@@ -104,7 +104,7 @@ namespace App {
             node_graphic.scale.set(2.75);
             node_graphic.x = node.x;
             node_graphic.y = node.y;
-            viewport.addChild(node_graphic);
+            //viewport.addChild(node_graphic);
             viewport.addChild(node.getGraphic());
         }
     }
