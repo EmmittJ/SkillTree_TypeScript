@@ -31,7 +31,7 @@ export class SkillNode implements ISkillNode {
     arc: number;
     x: number;
     y: number;
-    private downScale: number = 2.5;
+    private downScale: number = 2.75;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>) {
         this.id = node.id;
