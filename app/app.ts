@@ -105,8 +105,7 @@ namespace App {
                 let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
                 let class_url = `data/assets/Background${class_name.replace("Class", "").toLocaleLowerCase()}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
                 let class_node_graphic = PIXI.Sprite.fromImage(class_url);
-                class_node_graphic.anchor.set(.6, .4)
-                //node_graphic.scale.set(3);
+                class_node_graphic.anchor.set(.5, .5)
                 class_node_graphic.x = node.group.x / 2.75;
                 class_node_graphic.y = node.group.y / 2.75;
                 //viewport.addChild(class_node_graphic);
@@ -129,11 +128,9 @@ namespace App {
                 let node_url = `data/assets/center${common_name.toLocaleLowerCase()}${file_name.slice(file_name.lastIndexOf('.'))}`;
                 let node_graphic = PIXI.Sprite.fromImage(node_url);
                 node_graphic.anchor.set(.5)
-                //node_graphic.scale.set(3);
                 node_graphic.x = node.x;
                 node_graphic.y = node.y;
                 viewport.addChild(node_graphic);
-                //viewport.addChild(node.getGraphic());
             }
         }
     }

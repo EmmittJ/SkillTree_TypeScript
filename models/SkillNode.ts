@@ -34,29 +34,29 @@ export class SkillNode implements ISkillNode {
     private downScale: number = 2.75;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>) {
-        this.id = node.id;
-        this.dn = node.dn;
-        this.icon = node.icon;
-        this.ks = node.ks;
-        this.not = node.not;
-        this.m = node.m;
-        this.isJewelSocket = node.isJewelSocket;
-        this.isMultipleChoice = node.isMultipleChoice;
-        this.isMultipleChoiceOption = node.isMultipleChoiceOption;
-        this.passivePointsGranted = node.passivePointsGranted;
-        this.ascendancyName = node.ascendancyName;
-        this.isAscendancyStart = node.isAscendancyStart;
-        this.spc = node.spc;
-        this.sd = node.sd;
-        this.reminderText = node.reminderText;
-        this.g = node.g;
-        this.o = node.o;
-        this.oidx = node.oidx;
-        this.da = node.da;
-        this.ia = node.ia;
-        this.sa = node.sa;
-        this.out = node.out;
-        this.in = node.in;
+        this.id = node.id || -1;
+        this.dn = node.dn || "";
+        this.icon = node.icon || "";
+        this.ks = node.ks || false;
+        this.not = node.not || false;
+        this.m = node.m || false;
+        this.isJewelSocket = node.isJewelSocket || false;
+        this.isMultipleChoice = node.isMultipleChoice || false;
+        this.isMultipleChoiceOption = node.isMultipleChoiceOption || false;
+        this.passivePointsGranted = node.passivePointsGranted || 0;
+        this.ascendancyName = node.ascendancyName || "";
+        this.isAscendancyStart = node.isAscendancyStart || false;
+        this.spc = node.spc || [];
+        this.sd = node.sd || [];
+        this.reminderText = node.reminderText || [];
+        this.g = node.g || 0;
+        this.o = node.o || 0;
+        this.oidx = node.oidx || 0;
+        this.da = node.da || 0;
+        this.ia = node.ia || 0;
+        this.sa = node.sa || 0;
+        this.out = node.out || [];
+        this.in = node.in || [];
 
         this.group = group;
         this.orbitRadii = orbitRadii;
@@ -96,32 +96,22 @@ export class SkillNode implements ISkillNode {
         let graphics: Array<Container> = new Array<Container>();
         for (let id of this.out) {
             let node = nodes[id];
-            if (node.isAscendancyStart || this.dn.toLowerCase().startsWith("path of the") || node.dn.toLowerCase().startsWith("path of the")) {
+            if (node.isAscendancyStart || (this.ascendancyName !== "" && node.ascendancyName === "") || (this.ascendancyName === "" && node.ascendancyName !== "")) {
                 continue;
             }
-            let dist = Math.hypot(this.x - node.x, this.y - node.y);
+
             if (this.g === node.g && this.o === node.o) {
-                //for (let text of this.getOrbitLocationsText()) {
-                //    graphics.push(text);
-                //}
                 var oidx = this.getOidxBetween(this, node, this.skillsPerOrbit);
                 let arc = this.getArc(oidx);
                 let x = this.getX(arc);
                 let y = this.getY(arc);
 
-                //var midpoint_graphic = new PIXI.Graphics();
-                //midpoint_graphic.beginFill(0xFF00FF);
-                //midpoint_graphic.lineStyle(0);
-                //midpoint_graphic.drawCircle(x, y, 5);
-                //midpoint_graphic.endFill();
-                //graphics.push(midpoint_graphic);
-
                 // Create a mask in order to crop out unwanted arc overlap
                 let arc_graphic = new PIXI.Graphics();
                 arc_graphic.moveTo(this.x, this.y);
                 arc_graphic.beginFill(0xFF00FF, 1);
-                arc_graphic.lineStyle(15, 0xFF00FF, 1)
-                arc_graphic.arc(this.group.x / this.downScale, this.group.y / this.downScale, this.orbitRadii[this.o] / 2.5, this.arc - Math.PI / 2, node.arc - Math.PI / 2, this.isCounterClockWise(node.arc - this.arc));
+                arc_graphic.lineStyle(this.orbitRadii[this.o] / this.downScale, 0xFF00FF, 1)
+                arc_graphic.arc(this.group.x / this.downScale, this.group.y / this.downScale, this.orbitRadii[this.o] / this.downScale, this.arc - Math.PI / 2, node.arc - Math.PI / 2, this.isCounterClockWise(node.arc - this.arc));
                 arc_graphic.endFill();
                 graphics.push(arc_graphic);
 
@@ -139,16 +129,9 @@ export class SkillNode implements ISkillNode {
                 graphic.anchor.set(0, 0.5);
                 graphic.x = this.x;
                 graphic.y = this.y;
-                graphic.width = dist;
+                graphic.width = Math.hypot(this.x - node.x, this.y - node.y);
                 graphic.rotation = rot;
                 graphics.push(graphic);
-
-                //let text_graphic = new PIXI.Text(`${dist.toFixed(2)}, ${rot.toFixed(2)}`, { fill: 0xFFFFFF, align: 'center', fontSize: 24 });
-                //text_graphic.x = this.x;
-                //text_graphic.y = this.y;
-                //text_graphic.rotation = rot;
-                //text_graphic.anchor.set(.5);
-                //graphics.push(text_graphic);
             }
 
         }
@@ -162,7 +145,7 @@ export class SkillNode implements ISkillNode {
          * (11 + 0 + 12) / 2 = 11.5, this is the correct side.
          * same goes for:
          * orbit 11 <- orbit 2: (11 + 2) / 2 = 6.5, but, again, wrong side
-         * (11 + 2 + 12) / 2 = 13, oh no... well, we sustract 12 (a full orbit)
+         * (11 + 2 + 12) / 2 = 13, oh no... well, we subtract 12 (a full orbit)
          * 13 - 12 = 1, this is correct!
          */
         let oidx = n1.oidx + n2.oidx;
