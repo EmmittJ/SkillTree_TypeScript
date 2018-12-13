@@ -1,6 +1,6 @@
 ﻿interface ISpriteSheet {
     filename: string;
-    coords: Map<string, ISprite>;
+    coords: { [id: string]: ISprite };
 }
 
 interface ISprite {
