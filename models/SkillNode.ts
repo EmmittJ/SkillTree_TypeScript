@@ -157,11 +157,13 @@ export class SkillNode implements ISkillNode {
                 let y = this.getY(arc);
 
                 // Create a mask in order to crop out unwanted arc overlap
+                let arc_size = 10;
+                let arc_offset = .3;
                 let arc_graphic = new PIXI.Graphics();
                 arc_graphic.moveTo(this.x, this.y);
-                arc_graphic.beginFill(0xFF00FF, 1);
-                arc_graphic.lineStyle(this.orbitRadii[this.o] / this.downScale, 0xFF00FF, 1)
-                arc_graphic.arc(this.group.x / this.downScale, this.group.y / this.downScale, this.orbitRadii[this.o] / this.downScale, this.arc - Math.PI / 2, node.arc - Math.PI / 2, this.isCounterClockWise(node.arc - this.arc));
+                arc_graphic.beginFill(0xFF00FF, 0);
+                arc_graphic.lineStyle(arc_size, 0xFF00FF, 1);
+                arc_graphic.arc(this.group.x / this.downScale, this.group.y / this.downScale, (this.orbitRadii[this.o] / this.downScale) - (arc_size * arc_offset), this.arc - Math.PI / 2, node.arc - Math.PI / 2, this.isCounterClockWise(node.arc - this.arc));
                 arc_graphic.endFill();
                 graphics.push(arc_graphic);
 
@@ -171,7 +173,7 @@ export class SkillNode implements ISkillNode {
                 graphic.x = x;
                 graphic.y = y;
                 graphic.rotation = arc + Math.PI / 4;
-                graphic.anchor.set(.3);
+                graphic.anchor.set(arc_offset);
                 graphics.push(graphic);
             } else {
                 let graphic = PIXI.Sprite.fromImage(`data/assets/LineConnector${connectionType}.png`);

@@ -16,29 +16,27 @@ namespace App {
 
         pixi = new PIXI.Application(window.innerWidth, window.innerHeight, {
             autoResize: true,
-            resolution: devicePixelRatio,
-            antialias: true
+            resolution: devicePixelRatio
         });
         document.body.appendChild(pixi.view);
 
         viewport = new Viewport({
             screenWidth: pixi.screen.width,
             screenHeight: pixi.screen.height,
-            worldWidth: skillTreeData.width,
-            worldHeight: skillTreeData.height,
+            worldWidth: skillTreeData.width / 2.4,
+            worldHeight: skillTreeData.height / 2.4,
             interaction: pixi.renderer.plugins.interaction
         });
         viewport
             .drag()
-            .wheel({ smooth: 3 })
+            .wheel()
             .pinch();
-
         pixi.stage.addChild(viewport);
-
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width, skillTreeData.height);
         });
+
         draw();
     }
 
@@ -66,8 +64,6 @@ namespace App {
         let connections_active: PIXI.Container = new PIXI.Container();
         let skillIcons: PIXI.Container = new PIXI.Container();
         let skillIcons_active: PIXI.Container = new PIXI.Container();
-        let nodeFrames: PIXI.Container = new PIXI.Container();
-        let nodeFrames_active: PIXI.Container = new PIXI.Container();
         let characterStarts: PIXI.Container = new PIXI.Container();
 
         let background_graphic = PIXI.extras.TilingSprite.fromImage('data/assets/Background1.png', skillTreeData.width / 2.4, skillTreeData.height / 2.4);
@@ -112,7 +108,7 @@ namespace App {
 
             if (node.spc.length === 0) {
                 skillIcons.addChild(node.getGraphic(skillTreeData.skillSprites, "Inactive", skillTreeData.imageZoomLevels.length - 1));
-                nodeFrames.addChild(node.getNodeFrame("Unallocated"));
+                skillIcons.addChild(node.getNodeFrame("Unallocated"));
             }
         }
 
@@ -168,12 +164,28 @@ namespace App {
                 characterStarts.addChild(node_graphic);
             }
         }
-
+        background.interactive = false;
+        background.interactiveChildren = false;
         viewport.addChild(background);
+
+        connections.interactive = false;
+        connections.interactiveChildren = false;
         viewport.addChild(connections);
+
         viewport.addChild(skillIcons);
-        viewport.addChild(nodeFrames);
+
+        characterStarts.interactive = false;
+        characterStarts.interactiveChildren = false;
         viewport.addChild(characterStarts);
+
+        // Loading textures takes a bit, so we need to pause before caching
+        setTimeout(() => {
+            background.cacheAsBitmap = true;
+            connections.cacheAsBitmap = true;
+        }, 1000);
+
+        viewport.fitWorld(true);
+        viewport.zoomPercent(1.5);
     }
 }
 
