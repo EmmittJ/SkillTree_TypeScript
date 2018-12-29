@@ -2,7 +2,7 @@
 import { Utils } from "./utils";
 import * as PIXI from "pixi.js";;
 import * as Viewport from "pixi-viewport";
-import { SkillNode } from "../models/SkillNode";
+import * as $ from "jquery";
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -66,52 +66,38 @@ namespace App {
         let skillIcons_active: PIXI.Container = new PIXI.Container();
         let characterStarts: PIXI.Container = new PIXI.Container();
 
-        let background_graphic = PIXI.extras.TilingSprite.fromImage('data/assets/Background1.png', skillTreeData.width / 2.4, skillTreeData.height / 2.4);
-        background_graphic.x = skillTreeData.min_x / 2.4;
-        background_graphic.y = skillTreeData.min_y / 2.4;
 
-        let background_mask = new PIXI.Sprite();
-        let fade_side = PIXI.Sprite.fromImage('data/assets/imgPSFadeSide.png');
-        for (let i = 0; i < 2; i++) {
-            for (let j = 0; j < 2; j++) {
-                let fade_corner = PIXI.Sprite.fromImage('data/assets/imgPSFadeCorner.png');
-                let fade_side_tiled = new PIXI.extras.TilingSprite(fade_side.texture, skillTreeData.width / 2.4, fade_side.texture.baseTexture.height);
-                fade_side_tiled.x = fade_corner.x = (i % 2 === 0 ? skillTreeData.min_x : skillTreeData.max_x) / 2.4;
-                fade_side_tiled.y = fade_corner.y = (j % 2 === 0 ? skillTreeData.min_y : skillTreeData.max_y) / 2.4;
-                if (i === 0 && j === 0) {
-                    fade_side_tiled.rotation = 0;
-                    fade_corner.rotation = 0;
-                } else if (i === 1 && j === 0) {
-                    fade_side_tiled.rotation = (Math.PI * 2) * .25;
-                    fade_corner.rotation = (Math.PI * 2) * .25;
-                } else if (i === 1 && j === 1) {
-                    fade_side_tiled.rotation = (Math.PI * 2) * .5;
-                    fade_corner.rotation = (Math.PI * 2) * .5;
-                } else if (i === 0 && j === 1) {
-                    fade_side_tiled.rotation = (Math.PI * 2) * .75;
-                    fade_corner.rotation = (Math.PI * 2) * .75;
-                }
-                fade_corner.alpha = .75;
-                background_mask.addChild(fade_side_tiled);
-                background_mask.addChild(fade_corner);
-            }
-
-        }
+        let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width / 2.4, skillTreeData.height / 2.4);
+        background_graphic.position.set(skillTreeData.min_x / 2.4, skillTreeData.min_y / 2.4);
         background.addChild(background_graphic);
-        background.addChild(background_mask);
 
+        let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            for (let graphic of node.getGraphicConnectionsTo(node.out.map(id => skillTreeData.nodes[id]), "Normal")) {
-                connections.addChild(graphic);
-            }
+            let nodes = node.in
+                .filter((outID) => {
+                    if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
+                        return true;
+                    } else {
+                        return drawn_connections[outID].indexOf(+id) < 0 && drawn_connections[+id].indexOf(outID) < 0;
+                    }
+                })
+                .map((outID) => {
+                    if (drawn_connections[outID] === undefined) {
+                        drawn_connections[outID] = new Array<number>();
+                    }
+                    if (drawn_connections[+id] === undefined) {
+                        drawn_connections[+id] = new Array<number>();
+                    }
+                    drawn_connections[outID].push(+id);
+                    drawn_connections[+id].push(outID);
 
-            if (node.spc.length === 0) {
-                skillIcons.addChild(node.getGraphic(skillTreeData.skillSprites, "Inactive", skillTreeData.imageZoomLevels.length - 1));
-                skillIcons.addChild(node.getNodeFrame("Unallocated"));
-            }
+                    return skillTreeData.nodes[outID]
+                });
+            connections.addChild(node.getGraphicConnectionsTo(nodes, "Normal"));
+            skillIcons.addChild(node.getGraphic(skillTreeData.skillSprites, "Inactive", skillTreeData.imageZoomLevels.length - 1));
+            skillIcons.addChild(node.getNodeFrame("Unallocated"));
         }
-
 
         for (let id of skillTreeData.root.out) {
             let node = skillTreeData.nodes[id];
@@ -135,11 +121,9 @@ namespace App {
                 }
                 let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
                 let class_url = `data/assets/Background${class_name.replace("Class", "").toLocaleLowerCase()}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
-                let class_node_graphic = PIXI.Sprite.fromImage(class_url);
+                let class_node_graphic = PIXI.Sprite.from(class_url);
                 class_node_graphic.anchor.set(.5, .5)
-                class_node_graphic.x = node.group.x / 2.5;
-                class_node_graphic.y = node.group.y / 2.5;
-                //viewport.addChild(class_node_graphic);
+                class_node_graphic.position.set(node.group.x / 2.5, node.group.y / 2.5);
             }
 
             let common_name = skillTreeData.constants.classesToName[class_name];
@@ -157,32 +141,17 @@ namespace App {
                 //get file name
                 let file_name = class_background.slice(class_background.lastIndexOf('/') + 1);
                 let node_url = `data/assets/center${common_name.toLocaleLowerCase()}${file_name.slice(file_name.lastIndexOf('.'))}`;
-                let node_graphic = PIXI.Sprite.fromImage(node_url);
+                let node_graphic = PIXI.Sprite.from(node_url);
                 node_graphic.anchor.set(.5)
-                node_graphic.x = node.x;
-                node_graphic.y = node.y;
+                node_graphic.position.set(node.x, node.y);
                 characterStarts.addChild(node_graphic);
             }
         }
-        background.interactive = false;
-        background.interactiveChildren = false;
+
         viewport.addChild(background);
-
-        connections.interactive = false;
-        connections.interactiveChildren = false;
         viewport.addChild(connections);
-
         viewport.addChild(skillIcons);
-
-        characterStarts.interactive = false;
-        characterStarts.interactiveChildren = false;
         viewport.addChild(characterStarts);
-
-        // Loading textures takes a bit, so we need to pause before caching
-        setTimeout(() => {
-            background.cacheAsBitmap = true;
-            connections.cacheAsBitmap = true;
-        }, 1000);
 
         viewport.fitWorld(true);
         viewport.zoomPercent(1.5);

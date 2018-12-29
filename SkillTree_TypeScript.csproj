@@ -155,7 +155,6 @@
     <Content Include="data\assets\skills-disabled-3.jpg" />
     <None Include="data\SkillTree.json" />
     <Content Include="package.json" />
-    <Content Include="scripts\pixi-viewport.min.js" />
     <Content Include="webpack.config.js" />
     <Content Include="tsconfig.json" />
     <Content Include="tslint.json" />

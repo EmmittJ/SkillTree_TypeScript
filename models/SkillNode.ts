@@ -31,7 +31,7 @@ export class SkillNode implements ISkillNode {
     arc: number;
     x: number;
     y: number;
-    private downScale: number = 2.6;
+    private downScale: number = 2.5;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>) {
         this.id = node.id || -1;
@@ -77,7 +77,7 @@ export class SkillNode implements ISkillNode {
             assetKey = "PassiveSkillScreenAscendancyMiddle";
         } else if (this.isJewelSocket) {
             assetKey = `JewelFrame${drawType}`;
-        }else if (this.ks) {
+        } else if (this.ks) {
             assetKey = `KeystoneFrame${drawType}`;
         } else if (this.not) {
             assetKey = this.ascendancyName === ""
@@ -105,9 +105,8 @@ export class SkillNode implements ISkillNode {
             }
         }
 
-        node_frame = PIXI.Sprite.fromImage(`data/assets/${assetKey}.png`);
-        node_frame.x = this.x;
-        node_frame.y = this.y;
+        node_frame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
+        node_frame.position.set(this.x, this.y);
         node_frame.anchor.set(.5);
         return node_frame;
     }
@@ -132,21 +131,25 @@ export class SkillNode implements ISkillNode {
         if (!spriteSheet) {
             throw Error(`Sprite Sheet (${spriteSheetKey}) not found in SpriteSheets (${spriteSheets})`);
         }
-        var spriteSheetTexture = PIXI.BaseTexture.fromImage(`data/assets/${spriteSheet.filename}`);
+        var spriteSheetTexture = PIXI.Texture.from(`data/assets/${spriteSheet.filename}`);
         var coords = spriteSheet.coords[this.icon];
-        var spriteTexture = new PIXI.Texture(spriteSheetTexture, new Rectangle(coords.x, coords.y, coords.w, coords.h));
+        var spriteTexture = new PIXI.Texture(spriteSheetTexture.baseTexture, new Rectangle(coords.x, coords.y, coords.w, coords.h));
         var node_graphic = new PIXI.Sprite(spriteTexture);
-        node_graphic.x = this.x;
-        node_graphic.y = this.y;
+        node_graphic.position.set(this.x, this.y);
         node_graphic.anchor.set(.5);
+        
+        node_graphic.interactive = true;
+        node_graphic.on("mouseover", () => {
+            console.log(this);
+        });
 
         return node_graphic;
     }
 
-    public getGraphicConnectionsTo = (nodes: Array<SkillNode>, connectionType: "Normal" | "Intermediate" | "Active" = "Normal"): Array<Container> => {
-        let graphics: Array<Container> = new Array<Container>();
+    public getGraphicConnectionsTo = (nodes: Array<SkillNode>, connectionType: "Normal" | "Intermediate" | "Active" = "Normal"): Container => {
+        let graphics: Container = new PIXI.Container();
         for (let node of nodes) {
-            if (node.isAscendancyStart || (this.ascendancyName !== "" && node.ascendancyName === "") || (this.ascendancyName === "" && node.ascendancyName !== "")) {
+            if ((this.ascendancyName !== "" && node.ascendancyName === "") || (this.ascendancyName === "" && node.ascendancyName !== "")) {
                 continue;
             }
 
@@ -165,27 +168,24 @@ export class SkillNode implements ISkillNode {
                 arc_graphic.lineStyle(arc_size, 0xFF00FF, 1);
                 arc_graphic.arc(this.group.x / this.downScale, this.group.y / this.downScale, (this.orbitRadii[this.o] / this.downScale) - (arc_size * arc_offset), this.arc - Math.PI / 2, node.arc - Math.PI / 2, this.isCounterClockWise(node.arc - this.arc));
                 arc_graphic.endFill();
-                graphics.push(arc_graphic);
+                graphics.addChild(arc_graphic);
 
                 // Create orbit sprite and apply the mask
-                let graphic = PIXI.Sprite.fromImage(`data/assets/Orbit${this.o}${connectionType}.png`);
+                let graphic = PIXI.Sprite.from(`data/assets/Orbit${this.o}${connectionType}.png`);
                 graphic.mask = arc_graphic
-                graphic.x = x;
-                graphic.y = y;
+                graphic.position.set(x, y);
                 graphic.rotation = arc + Math.PI / 4;
                 graphic.anchor.set(arc_offset);
-                graphics.push(graphic);
+                graphics.addChild(graphic);
             } else {
-                let graphic = PIXI.Sprite.fromImage(`data/assets/LineConnector${connectionType}.png`);
+                let graphic = PIXI.Sprite.from(`data/assets/LineConnector${connectionType}.png`);
                 let rot = Math.atan2(node.y - this.y, node.x - this.x);
                 graphic.anchor.set(0, 0.5);
-                graphic.x = this.x;
-                graphic.y = this.y;
+                graphic.position.set(this.x, this.y);
                 graphic.width = Math.hypot(this.x - node.x, this.y - node.y);
                 graphic.rotation = rot;
-                graphics.push(graphic);
+                graphics.addChild(graphic);
             }
-
         }
 
         return graphics
@@ -228,7 +228,7 @@ export class SkillNode implements ISkillNode {
 
     private nodeTextOverlay = (oidx: number, text: string = ""): Container => {
         if (text === "") {
-            text = oidx.toString();
+            text = `${oidx}: ${this.g}`;
         }
         let text_graphic = new PIXI.Text(text, { fill: 0xFFFFFF, align: 'center', fontSize: 24 });
         let arc = this.getArc(oidx);

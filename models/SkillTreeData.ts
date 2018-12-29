@@ -11,7 +11,7 @@ export class SkillTreeData implements ISkillTreeData {
     min_y: number;
     max_x: number;
     max_y: number;
-    assets: { [id: string]: {[zoomLevel: string]: string} };
+    assets: { [id: string]: { [zoomLevel: string]: string } };
     imageRoot: string;
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };
@@ -35,6 +35,34 @@ export class SkillTreeData implements ISkillTreeData {
         this.constants = new Constants(skillTree.constants);
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
+
+        // Setup in/out properties correctly
+        {
+            for (let id in skillTree.nodes) {
+                skillTree.nodes[id].in = [];
+            }
+            for (let id in skillTree.nodes) {
+                if (skillTree.nodes[id].m) {
+                    continue;
+                }
+                for (let outId of skillTree.nodes[id].out) {
+                    if (skillTree.nodes[id].in.indexOf(outId) < 0) {
+                        skillTree.nodes[id].in.push(outId);
+                    }
+                    if (skillTree.nodes[outId].out.indexOf(+id) < 0) {
+                        skillTree.nodes[outId].out.push(+id);
+                    }
+                }
+                for (let inId of skillTree.nodes[id].in) {
+                    if (skillTree.nodes[id].out.indexOf(inId) < 0) {
+                        skillTree.nodes[id].out.push(inId);
+                    }
+                    if (skillTree.nodes[inId].in.indexOf(+id) < 0) {
+                        skillTree.nodes[inId].in.push(+id);
+                    }
+                }
+            }
+        }
 
         this.nodes = {};
         for (let id in skillTree.nodes) {
