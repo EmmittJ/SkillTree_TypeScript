@@ -1,4 +1,4 @@
-﻿import { Container, Point, Rectangle } from "pixi.js";
+﻿import { Container, Point, Rectangle, Sprite } from "pixi.js";
 
 export class SkillNode implements ISkillNode {
     id: number;
@@ -31,6 +31,7 @@ export class SkillNode implements ISkillNode {
     arc: number;
     x: number;
     y: number;
+    active: boolean;
     private downScale: number = 2.5;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>) {
@@ -64,13 +65,14 @@ export class SkillNode implements ISkillNode {
         this.arc = this.getArc(this.oidx);
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
+        this.active = false;
     }
 
     private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.o ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.o] : 0;
     private getX = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.x - this.orbitRadii[this.o] * Math.sin(-arc)) / this.downScale : 0;
     private getY = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.y - this.orbitRadii[this.o] * Math.cos(-arc)) / this.downScale : 0;
 
-    public getNodeFrame = (drawType: "Allocated" | "CanAllocate" | "Unallocated"): PIXI.Container => {
+    public createNodeFrame = (drawType: "Allocated" | "CanAllocate" | "Unallocated"): PIXI.Container => {
         var node_frame = new PIXI.Sprite();
         let assetKey = "";
         if (this.isAscendancyStart) {
@@ -111,7 +113,8 @@ export class SkillNode implements ISkillNode {
         return node_frame;
     }
 
-    public getGraphic = (skillSprites: { [id: string]: Array<ISpriteSheet> }, drawType: "Inactive" | "Active" = "Inactive", zoomLevel: number = 3): PIXI.Container => {
+    public createNodeGraphic = (skillSprites: { [id: string]: Array<ISpriteSheet> }, zoomLevel: number = 3): PIXI.Container => {
+        let drawType = this.active ? "Active" : "Inactive";
         let spriteSheetKey: string = "";
         if (this.ks) {
             spriteSheetKey = `keystone${drawType}`;
@@ -137,61 +140,82 @@ export class SkillNode implements ISkillNode {
         var node_graphic = new PIXI.Sprite(spriteTexture);
         node_graphic.position.set(this.x, this.y);
         node_graphic.anchor.set(.5);
-        
+
         node_graphic.interactive = true;
         node_graphic.on("mouseover", () => {
             console.log(this);
         });
-
+        node_graphic.on("click", () => {
+            if (this.m) {
+                return;
+            }
+            this.active = !this.active;
+        });
         return node_graphic;
     }
 
-    public getGraphicConnectionsTo = (nodes: Array<SkillNode>, connectionType: "Normal" | "Intermediate" | "Active" = "Normal"): Container => {
-        let graphics: Container = new PIXI.Container();
-        for (let node of nodes) {
-            if ((this.ascendancyName !== "" && node.ascendancyName === "") || (this.ascendancyName === "" && node.ascendancyName !== "")) {
-                continue;
-            }
-
-            if (this.g === node.g && this.o === node.o) {
-                var oidx = this.getOidxBetween(this, node, this.skillsPerOrbit);
-                let arc = this.getArc(oidx);
-                let x = this.getX(arc);
-                let y = this.getY(arc);
-
-                // Create a mask in order to crop out unwanted arc overlap
-                let arc_size = 10;
-                let arc_offset = .3;
-                let arc_graphic = new PIXI.Graphics();
-                arc_graphic.moveTo(this.x, this.y);
-                arc_graphic.beginFill(0xFF00FF, 0);
-                arc_graphic.lineStyle(arc_size, 0xFF00FF, 1);
-                arc_graphic.arc(this.group.x / this.downScale, this.group.y / this.downScale, (this.orbitRadii[this.o] / this.downScale) - (arc_size * arc_offset), this.arc - Math.PI / 2, node.arc - Math.PI / 2, this.isCounterClockWise(node.arc - this.arc));
-                arc_graphic.endFill();
-                graphics.addChild(arc_graphic);
-
-                // Create orbit sprite and apply the mask
-                let graphic = PIXI.Sprite.from(`data/assets/Orbit${this.o}${connectionType}.png`);
-                graphic.mask = arc_graphic
-                graphic.position.set(x, y);
-                graphic.rotation = arc + Math.PI / 4;
-                graphic.anchor.set(arc_offset);
-                graphics.addChild(graphic);
-            } else {
-                let graphic = PIXI.Sprite.from(`data/assets/LineConnector${connectionType}.png`);
-                let rot = Math.atan2(node.y - this.y, node.x - this.x);
-                graphic.anchor.set(0, 0.5);
-                graphic.position.set(this.x, this.y);
-                graphic.width = Math.hypot(this.x - node.x, this.y - node.y);
-                graphic.rotation = rot;
-                graphics.addChild(graphic);
+    public createConnections = (others: Array<SkillNode>): Container => {
+        let container = new PIXI.Container();
+        for (let other of others) {
+            let connection = this.createConnection(other);
+            if (connection) {
+                container.addChild(connection);
             }
         }
-
-        return graphics
+        return container;
     }
 
-    private getOidxBetween = (n1: SkillNode, n2: SkillNode, skillsPerOrbit: Array<number>) => {
+    public createConnection = (other: SkillNode): Sprite | null => {
+        if ((this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
+            return null;
+        }
+        if (this.g === other.g && this.o === other.o) {
+            return this.createArcConnection(other);
+        } else {
+            return this.createLineConnection(other);
+        }
+    }
+
+    private createArcConnection = (other: SkillNode): Sprite => {
+        let connectionType = this.getConnectionType(other);
+        var oidx = this.getMidpoint(this, other, this.skillsPerOrbit);
+        let arc = this.getArc(oidx);
+        let x = this.getX(arc);
+        let y = this.getY(arc);
+        let arc_offset = connectionType === "Active" ? (this.o !== 4 ? .37 : .33) : .3125;
+
+        //Calculate the bounds of the arc
+        let texture = PIXI.Texture.from(`data/assets/Orbit${this.o}${connectionType}.png`);
+        let length = Math.hypot(this.x - x, this.y - y) * 2;
+        let rectw = Math.min(length * .75, texture.baseTexture.width);
+        let recth = Math.min(length * .75, texture.baseTexture.height);
+        let rect = new Rectangle((texture.baseTexture.width - rectw) * arc_offset, (texture.baseTexture.height - recth) * arc_offset, rectw, recth);
+
+        //Apply the bounds of the arc
+        var arcTexture = new PIXI.Texture(texture.baseTexture, rect);
+        let arcGraphic = new PIXI.Sprite(arcTexture);
+        arcGraphic.position.set(x, y);
+        arcGraphic.rotation = arc + Math.PI / 4;
+        arcGraphic.anchor.set(arc_offset);
+
+        return arcGraphic;
+    }
+
+    private createLineConnection = (other: SkillNode): Sprite => {
+        let line = PIXI.Sprite.from(`data/assets/LineConnector${this.getConnectionType(other)}.png`);
+        let rot = Math.atan2(other.y - this.y, other.x - this.x);
+        line.anchor.set(0, 0.5);
+        line.position.set(this.x, this.y);
+        line.width = Math.hypot(this.x - other.x, this.y - other.y);
+        line.rotation = rot;
+        return line;
+    }
+
+    private getConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {
+        return this.active && other.active ? "Active" : (this.active || other.active ? "Intermediate" : "Normal");
+    }
+
+    private getMidpoint = (n1: SkillNode, n2: SkillNode, skillsPerOrbit: Array<number>): number => {
         /* We nee to figure out what direction we are going, so we know where the midpoint needs to end up.
          * Basically, if we are going clockwise and this node is greater than the out node, add a full orbit.
          * orbit 11 -> orbit 0: (11 + 0) / 2 = 5.5, but we are on the wrong side of the circle.
@@ -202,8 +226,8 @@ export class SkillNode implements ISkillNode {
          * 13 - 12 = 1, this is correct!
          */
         let oidx = n1.oidx + n2.oidx;
-        if ((!n1.isCounterClockWise(n2.arc - n1.arc) && n1.oidx > n2.oidx)
-            || (n1.isCounterClockWise(n2.arc - n1.arc) && n1.oidx < n2.oidx)) {
+        if ((!n1.isCounterclockwise(n2.arc - n1.arc) && n1.oidx > n2.oidx)
+            || (n1.isCounterclockwise(n2.arc - n1.arc) && n1.oidx < n2.oidx)) {
             oidx += skillsPerOrbit[n1.o]
         }
         oidx /= 2;
@@ -212,21 +236,22 @@ export class SkillNode implements ISkillNode {
         }
         return oidx;
     }
-    private isCounterClockWise(angle: number) {
+
+    private isCounterclockwise = (angle: number): boolean => {
         while (angle <= -Math.PI) angle += Math.PI * 2;
         while (angle > Math.PI) angle -= Math.PI * 2;
         return angle < 0;
     }
 
-    private getOrbitLocationsText = (): Array<Container> => {
+    private createOrbitLocationsText = (): Array<Container> => {
         let graphics = new Array<Container>();
         for (let i = 0; i < this.skillsPerOrbit[this.o]; i++) {
-            graphics.push(this.nodeTextOverlay(i));
+            graphics.push(this.createTextAtOidx(i));
         }
         return graphics;
     }
 
-    private nodeTextOverlay = (oidx: number, text: string = ""): Container => {
+    private createTextAtOidx = (oidx: number, text: string = ""): Container => {
         if (text === "") {
             text = `${oidx}: ${this.g}`;
         }

@@ -37,7 +37,28 @@ namespace App {
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width, skillTreeData.height);
         });
 
-        draw();
+        PIXI.Loader.shared.reset();
+        let added_assets = new Array<string>();
+        for (let id in skillTreeData.assets) {
+            let asset = skillTreeData.assets[id];
+            var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
+            if (asset[max_zoom] && added_assets.indexOf(id) < 0) {
+                added_assets.push(id);
+                PIXI.Loader.shared.add(`data/assets/${id}.png`);
+            }
+        }
+        for (let id in skillTreeData.skillSprites) {
+            let sprites = skillTreeData.skillSprites[id];
+            let sprite = sprites[sprites.length - 1];
+            if (sprite && added_assets.indexOf(sprite.filename) < 0) {
+                added_assets.push(sprite.filename);
+                PIXI.Loader.shared.add(`data/assets/${sprite.filename}`);
+            }
+        }
+        PIXI.Loader.shared.load();
+        PIXI.Loader.shared.onComplete.add(() => {
+            draw();
+        });
     }
 
 
@@ -61,9 +82,7 @@ namespace App {
         var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
         let background: PIXI.Container = new PIXI.Container();
         let connections: PIXI.Container = new PIXI.Container();
-        let connections_active: PIXI.Container = new PIXI.Container();
         let skillIcons: PIXI.Container = new PIXI.Container();
-        let skillIcons_active: PIXI.Container = new PIXI.Container();
         let characterStarts: PIXI.Container = new PIXI.Container();
 
 
@@ -94,9 +113,9 @@ namespace App {
 
                     return skillTreeData.nodes[outID]
                 });
-            connections.addChild(node.getGraphicConnectionsTo(nodes, "Normal"));
-            skillIcons.addChild(node.getGraphic(skillTreeData.skillSprites, "Inactive", skillTreeData.imageZoomLevels.length - 1));
-            skillIcons.addChild(node.getNodeFrame("Unallocated"));
+            connections.addChild(node.createConnections(nodes));
+            skillIcons.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
+            skillIcons.addChild(node.createNodeFrame("Unallocated"));
         }
 
         for (let id of skillTreeData.root.out) {
@@ -155,6 +174,55 @@ namespace App {
 
         viewport.fitWorld(true);
         viewport.zoomPercent(1.5);
+        drawActive();
+    }
+
+    let connections_active: PIXI.Container = new PIXI.Container();
+    let skillIcons_active: PIXI.Container = new PIXI.Container();
+    export const drawActive = () => {
+        viewport.removeChild(connections_active);
+        viewport.removeChild(skillIcons_active);
+        connections_active.removeChildren();
+        skillIcons_active.removeChildren();
+
+        let drawn_connections: { [id: number]: Array<number> } = {};
+        for (let id in skillTreeData.nodes) {
+            var node = skillTreeData.nodes[id];
+            if (!node.active) {
+                continue;
+            }
+            let nodes = node.in
+                .filter((outID) => {
+                    if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
+                        return true;
+                    } else {
+                        return drawn_connections[outID].indexOf(+id) < 0 && drawn_connections[+id].indexOf(outID) < 0;
+                    }
+                })
+                .map((outID) => {
+                    if (drawn_connections[outID] === undefined) {
+                        drawn_connections[outID] = new Array<number>();
+                    }
+                    if (drawn_connections[+id] === undefined) {
+                        drawn_connections[+id] = new Array<number>();
+                    }
+                    drawn_connections[outID].push(+id);
+                    drawn_connections[+id].push(outID);
+
+                    return skillTreeData.nodes[outID]
+                });
+            connections_active.addChild(node.createConnections(nodes));
+            skillIcons_active.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
+
+            for (let out of nodes) {
+                skillIcons_active.addChild(out.createNodeFrame("CanAllocate"));
+            }
+            skillIcons_active.addChild(node.createNodeFrame("Allocated"));
+        }
+
+        viewport.addChildAt(connections_active, 2);
+        viewport.addChildAt(skillIcons_active, 4);
+        requestAnimationFrame(drawActive);
     }
 }
 
