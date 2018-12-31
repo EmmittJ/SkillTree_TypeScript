@@ -1,6 +1,4 @@
-﻿import { Container, Point, Rectangle, Sprite } from "pixi.js";
-
-export class SkillNode implements ISkillNode {
+﻿export class SkillNode implements ISkillNode {
     id: number;
     dn: string;
     icon: string;
@@ -136,7 +134,7 @@ export class SkillNode implements ISkillNode {
         }
         var spriteSheetTexture = PIXI.Texture.from(`data/assets/${spriteSheet.filename}`);
         var coords = spriteSheet.coords[this.icon];
-        var spriteTexture = new PIXI.Texture(spriteSheetTexture.baseTexture, new Rectangle(coords.x, coords.y, coords.w, coords.h));
+        var spriteTexture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
         var node_graphic = new PIXI.Sprite(spriteTexture);
         node_graphic.position.set(this.x, this.y);
         node_graphic.anchor.set(.5);
@@ -154,7 +152,7 @@ export class SkillNode implements ISkillNode {
         return node_graphic;
     }
 
-    public createConnections = (others: Array<SkillNode>): Container => {
+    public createConnections = (others: Array<SkillNode>): PIXI.Container => {
         let container = new PIXI.Container();
         for (let other of others) {
             let connection = this.createConnection(other);
@@ -165,7 +163,7 @@ export class SkillNode implements ISkillNode {
         return container;
     }
 
-    public createConnection = (other: SkillNode): Sprite | null => {
+    public createConnection = (other: SkillNode): PIXI.Sprite | null => {
         if ((this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
             return null;
         }
@@ -176,20 +174,43 @@ export class SkillNode implements ISkillNode {
         }
     }
 
-    private createArcConnection = (other: SkillNode): Sprite => {
+    private createArcConnection = (other: SkillNode): PIXI.Sprite => {
         let connectionType = this.getConnectionType(other);
         var oidx = this.getMidpoint(this, other, this.skillsPerOrbit);
         let arc = this.getArc(oidx);
         let x = this.getX(arc);
         let y = this.getY(arc);
-        let arc_offset = connectionType === "Active" ? (this.o !== 4 ? .37 : .33) : .3125;
+        let arc_offset = 0.3125;
+        switch (connectionType) {
+            case "Active":
+                switch (this.o) {
+                    case 1:
+                        arc_offset = .42;
+                        break;
+                    case 2:
+                        arc_offset = .37;
+                        break;
+                    case 3:
+                        arc_offset = .34;
+                        break;
+                    case 4:
+                        arc_offset = .33;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+            case "Intermediate":
+            case "Normal":
+                break;
+        }
 
         //Calculate the bounds of the arc
         let texture = PIXI.Texture.from(`data/assets/Orbit${this.o}${connectionType}.png`);
         let length = Math.hypot(this.x - x, this.y - y) * 2;
         let rectw = Math.min(length * .75, texture.baseTexture.width);
         let recth = Math.min(length * .75, texture.baseTexture.height);
-        let rect = new Rectangle((texture.baseTexture.width - rectw) * arc_offset, (texture.baseTexture.height - recth) * arc_offset, rectw, recth);
+        let rect = new PIXI.Rectangle((texture.baseTexture.width - rectw) * arc_offset, (texture.baseTexture.height - recth) * arc_offset, rectw, recth);
 
         //Apply the bounds of the arc
         var arcTexture = new PIXI.Texture(texture.baseTexture, rect);
@@ -201,13 +222,19 @@ export class SkillNode implements ISkillNode {
         return arcGraphic;
     }
 
-    private createLineConnection = (other: SkillNode): Sprite => {
-        let line = PIXI.Sprite.from(`data/assets/LineConnector${this.getConnectionType(other)}.png`);
-        let rot = Math.atan2(other.y - this.y, other.x - this.x);
+    private createLineConnection = (other: SkillNode): PIXI.Sprite => {
+        let texture = PIXI.Texture.from(`data/assets/LineConnector${this.getConnectionType(other)}.png`);
+        let length = Math.hypot(this.x - other.x, this.y - other.y);
+        let line: PIXI.Sprite;
+        if (length <= texture.baseTexture.width) {
+            var lineTexure = new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(0, 0, length, texture.baseTexture.height));
+            line = new PIXI.Sprite(lineTexure);
+        } else {
+            line = PIXI.TilingSprite.from(texture.baseTexture, length);
+        }
         line.anchor.set(0, 0.5);
         line.position.set(this.x, this.y);
-        line.width = Math.hypot(this.x - other.x, this.y - other.y);
-        line.rotation = rot;
+        line.rotation = Math.atan2(other.y - this.y, other.x - this.x);
         return line;
     }
 
@@ -243,15 +270,15 @@ export class SkillNode implements ISkillNode {
         return angle < 0;
     }
 
-    private createOrbitLocationsText = (): Array<Container> => {
-        let graphics = new Array<Container>();
+    private createOrbitLocationsText = (): Array<PIXI.Container> => {
+        let graphics = new Array<PIXI.Container>();
         for (let i = 0; i < this.skillsPerOrbit[this.o]; i++) {
             graphics.push(this.createTextAtOidx(i));
         }
         return graphics;
     }
 
-    private createTextAtOidx = (oidx: number, text: string = ""): Container => {
+    private createTextAtOidx = (oidx: number, text: string = ""): PIXI.Container => {
         if (text === "") {
             text = `${oidx}: ${this.g}`;
         }
