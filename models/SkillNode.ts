@@ -29,8 +29,14 @@
     arc: number;
     x: number;
     y: number;
-    active: boolean;
     scale: number;
+    isActive: boolean;
+    isHovered: boolean;
+    isPath: boolean;
+
+    click: Function | undefined;
+    mouseover: Function | undefined;
+    mouseout: Function | undefined;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
         this.id = node.id || -1;
@@ -64,7 +70,9 @@
         this.arc = this.getArc(this.oidx);
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
-        this.active = false;
+        this.isActive = false;
+        this.isHovered = false;
+        this.isPath = false;
     }
 
     private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.o ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.o] : 0;
@@ -113,7 +121,7 @@
     }
 
     public createNodeGraphic = (skillSprites: { [id: string]: Array<ISpriteSheet> }, zoomLevel: number = 3): PIXI.Container => {
-        let drawType = this.active ? "Active" : "Inactive";
+        let drawType = this.isActive ? "Active" : "Inactive";
         let spriteSheetKey: string = "";
         if (this.ks) {
             spriteSheetKey = `keystone${drawType}`;
@@ -142,19 +150,24 @@
 
         node_graphic.interactive = true;
         node_graphic.on("mouseover", () => {
-            console.log(this);
+            if (this.mouseover) {
+                this.mouseover();
+            }
+        });
+        node_graphic.on("mouseout", () => {
+            if (this.mouseout) {
+                this.mouseout();
+            }
         });
         node_graphic.on("click", () => {
-            if (this.m) {
-                return;
+            if (this.click) {
+                this.click();
             }
-            this.active = !this.active;
         });
         node_graphic.on("tap", () => {
-            if (this.m) {
-                return;
+            if (this.click) {
+                this.click();
             }
-            this.active = !this.active;
         });
         return node_graphic;
     }
@@ -171,7 +184,7 @@
     }
 
     public createConnection = (other: SkillNode): PIXI.Sprite | null => {
-        if ((this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
+        if (this.spc.length > 0 || other.spc.length > 0 || (this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
             return null;
         }
         if (this.g === other.g && this.o === other.o) {
@@ -225,7 +238,9 @@
         arcGraphic.position.set(x, y);
         arcGraphic.rotation = arc + Math.PI / 4;
         arcGraphic.anchor.set(arc_offset);
-
+        if (this.isActive && this.isPath && other.isActive && other.isPath) {
+            arcGraphic.tint = 0xFF0000;
+        }
         return arcGraphic;
     }
 
@@ -243,11 +258,15 @@
         line.anchor.set(0, 0.5);
         line.position.set(this.x, this.y);
         line.rotation = Math.atan2(other.y - this.y, other.x - this.x);
+
+        if (this.isActive && this.isPath && other.isActive && other.isPath) {
+            line.tint = 0xFF0000;
+        }
         return line;
     }
 
     private getConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {
-        return this.active && other.active ? "Active" : (this.active || other.active ? "Intermediate" : "Normal");
+        return this.isActive && other.isActive ? "Active" : (this.isActive || other.isActive || (this.isPath && other.isPath) ? "Intermediate" : "Normal");
     }
 
     private getMidpoint = (n1: SkillNode, n2: SkillNode, skillsPerOrbit: Array<number>): number => {
