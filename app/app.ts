@@ -20,6 +20,7 @@ namespace App {
         });
         document.body.appendChild(pixi.view);
 
+        let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({
             screenWidth: pixi.screen.width,
             screenHeight: pixi.screen.height,
@@ -29,8 +30,8 @@ namespace App {
         });
         viewport
             .drag()
-            .wheel()
-            .pinch();
+            .wheel({ percent: zoomPercent })
+            .pinch({ percent: zoomPercent });
         pixi.stage.addChild(viewport);
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
@@ -86,9 +87,49 @@ namespace App {
         let characterStarts: PIXI.Container = new PIXI.Container();
 
 
-        let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width / 2.4, skillTreeData.height / 2.4);
-        background_graphic.position.set(skillTreeData.min_x / 2.4, skillTreeData.min_y / 2.4);
+        let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width * (max_zoom * 1.5), skillTreeData.height * (max_zoom * 1.5));
+        background_graphic.position.set(skillTreeData.min_x * (max_zoom * 1.5), skillTreeData.min_y * (max_zoom * 1.5));
         background.addChild(background_graphic);
+
+        for (let id in skillTreeData.groups) {
+            let group = skillTreeData.groups[id];
+            if (group.n.find(id => skillTreeData.nodes[id].ascendancyName !== "") !== undefined || group.oo.length === 0) {
+                continue;
+            }
+
+            if (Array.isArray(group.oo)) {
+                if (group.oo.length === 1) {
+                    group.oo = { "0": group.oo[0] };
+                }
+                else {
+                    console.log(group);
+                    throw new Error(`Group ${id} could not be formatted correctly`);
+                }
+            }
+            let max = 0;
+            for (let id in group.oo) {
+                if (+id > max && +id < 4) {
+                    max = +id;
+                }
+            }
+            if (max === 0) {
+                continue;
+            }
+
+            let sprite = PIXI.Sprite.from(`data/assets/PSGroupBackground${max}.png`);
+            let xoffset = (sprite.texture.baseTexture.width * (1 / max_zoom)) / 2;
+            let yoffset = (sprite.texture.baseTexture.height * (max === 3 ? 2 : 1) * (1 / max_zoom)) / 2;
+            sprite.position.set(Math.ceil((group.x - xoffset) * max_zoom), Math.ceil((group.y - yoffset) * max_zoom));
+            background.addChild(sprite);
+
+            if (max === 3) {
+                let sprite2 = PIXI.Sprite.from(`data/assets/PSGroupBackground${max}.png`);
+                sprite2.rotation = Math.PI;
+                sprite2.position.set(Math.ceil((group.x + xoffset) * max_zoom), Math.ceil((group.y + yoffset) * max_zoom));
+                background.addChild(sprite2);
+            }
+
+        }
 
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
@@ -173,7 +214,7 @@ namespace App {
         viewport.addChild(characterStarts);
 
         viewport.fitWorld(true);
-        viewport.zoomPercent(1.5);
+        viewport.zoomPercent(1.726);
         drawActive();
     }
 

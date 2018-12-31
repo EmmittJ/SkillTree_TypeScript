@@ -64,6 +64,7 @@ export class SkillTreeData implements ISkillTreeData {
             }
         }
 
+        let scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
         this.nodes = {};
         for (let id in skillTree.nodes) {
             this.nodes[id]
@@ -71,7 +72,8 @@ export class SkillTreeData implements ISkillTreeData {
                     skillTree.nodes[id],
                     skillTree.groups[skillTree.nodes[id].g],
                     skillTree.constants.orbitRadii,
-                    skillTree.constants.skillsPerOrbit);
+                    skillTree.constants.skillsPerOrbit,
+                    scale);
         }
     }
 }

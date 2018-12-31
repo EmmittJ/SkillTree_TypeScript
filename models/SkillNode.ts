@@ -30,9 +30,9 @@
     x: number;
     y: number;
     active: boolean;
-    private downScale: number = 2.5;
+    scale: number;
 
-    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>) {
+    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
         this.id = node.id || -1;
         this.dn = node.dn || "";
         this.icon = node.icon || "";
@@ -60,6 +60,7 @@
         this.group = group;
         this.orbitRadii = orbitRadii;
         this.skillsPerOrbit = skillsPerOrbit;
+        this.scale = scale;
         this.arc = this.getArc(this.oidx);
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
@@ -67,8 +68,8 @@
     }
 
     private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.o ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.o] : 0;
-    private getX = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.x - this.orbitRadii[this.o] * Math.sin(-arc)) / this.downScale : 0;
-    private getY = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.y - this.orbitRadii[this.o] * Math.cos(-arc)) / this.downScale : 0;
+    private getX = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.x * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
+    private getY = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.y * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
 
     public createNodeFrame = (drawType: "Allocated" | "CanAllocate" | "Unallocated"): PIXI.Container => {
         var node_frame = new PIXI.Sprite();
@@ -223,14 +224,15 @@
     }
 
     private createLineConnection = (other: SkillNode): PIXI.Sprite => {
-        let texture = PIXI.Texture.from(`data/assets/LineConnector${this.getConnectionType(other)}.png`);
+        let assetName = `data/assets/LineConnector${this.getConnectionType(other)}.png`;
+        let texture = PIXI.Texture.from(assetName);
         let length = Math.hypot(this.x - other.x, this.y - other.y);
         let line: PIXI.Sprite;
         if (length <= texture.baseTexture.width) {
             var lineTexure = new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(0, 0, length, texture.baseTexture.height));
             line = new PIXI.Sprite(lineTexure);
         } else {
-            line = PIXI.TilingSprite.from(texture.baseTexture, length);
+            line = PIXI.TilingSprite.from(assetName, length, texture.baseTexture.height);
         }
         line.anchor.set(0, 0.5);
         line.position.set(this.x, this.y);
