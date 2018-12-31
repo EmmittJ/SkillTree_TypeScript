@@ -6,19 +6,24 @@ import * as $ from "jquery";
 
 namespace App {
     let skillTreeData: SkillTreeData;
+    let skillTreeOptions: ISkillTreeOptions;
     let pixi: PIXI.Application;
     let viewport: Viewport;
     export const main = async () => {
-        skillTreeData = new SkillTreeData(await $.ajax({
-            url: `/data/SkillTree.json?t=${(new Date()).getTime()}`,
-            dataType: 'json'
-        }));
-
         pixi = new PIXI.Application(window.innerWidth, window.innerHeight, {
             autoResize: true,
             resolution: devicePixelRatio
         });
         document.body.appendChild(pixi.view);
+
+        skillTreeOptions = await $.ajax({
+            url: `/data/Opts.json?t=${(new Date()).getTime()}`,
+            dataType: 'json'
+        });
+        skillTreeData = new SkillTreeData(await $.ajax({
+            url: `/data/SkillTree.json?t=${(new Date()).getTime()}`,
+            dataType: 'json'
+        }));
 
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({

@@ -153,6 +153,7 @@
     <Content Include="data\assets\skills-disabled-1.jpg" />
     <Content Include="data\assets\skills-disabled-2.jpg" />
     <Content Include="data\assets\skills-disabled-3.jpg" />
+    <Content Include="data\Opts.json" />
     <None Include="data\SkillTree.json" />
     <Content Include="package.json" />
     <Content Include="webpack.config.js" />
@@ -176,12 +177,14 @@
     <TypeScriptCompile Include="models\SkillNode.ts" />
     <TypeScriptCompile Include="models\SkillTreeData.ts" />
     <TypeScriptCompile Include="models\Constants.ts" />
+    <TypeScriptCompile Include="models\types\IAscendancyClasses.d.ts" />
     <TypeScriptCompile Include="models\types\ICharacter.d.ts" />
     <TypeScriptCompile Include="models\types\IClassImage.d.ts" />
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeData.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillTreeOptions.d.ts" />
     <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
   </ItemGroup>
   <ItemGroup>

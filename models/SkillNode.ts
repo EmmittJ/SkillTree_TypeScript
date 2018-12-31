@@ -150,6 +150,12 @@
             }
             this.active = !this.active;
         });
+        node_graphic.on("tap", () => {
+            if (this.m) {
+                return;
+            }
+            this.active = !this.active;
+        });
         return node_graphic;
     }
 
