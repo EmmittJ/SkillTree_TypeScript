@@ -31,7 +31,7 @@ namespace App {
         viewport
             .drag()
             .wheel({ percent: zoomPercent })
-            .pinch({ percent: zoomPercent });
+            .pinch({ percent: zoomPercent * 10 });
         pixi.stage.addChild(viewport);
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
