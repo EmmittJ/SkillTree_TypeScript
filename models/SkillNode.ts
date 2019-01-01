@@ -1,4 +1,7 @@
-﻿export class SkillNode implements ISkillNode {
+﻿import { SkillTreeUtilities } from "./SkillTreeUtilities";
+import { SkillTreeEvents } from "./SkillTreeEvents";
+
+export class SkillNode implements ISkillNode {
     id: number;
     dn: string;
     icon: string;
@@ -33,12 +36,10 @@
     isActive: boolean;
     isHovered: boolean;
     isPath: boolean;
+    skillTreeUtilities: SkillTreeUtilities;
 
-    click: Function | undefined;
-    mouseover: Function | undefined;
-    mouseout: Function | undefined;
-
-    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
+    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number, skillTreeUtilities: SkillTreeUtilities) {
+        this.skillTreeUtilities = skillTreeUtilities;
         this.id = node.id || -1;
         this.dn = node.dn || "";
         this.icon = node.icon || "";
@@ -71,15 +72,26 @@
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
         this.isActive = false;
+
         this.isHovered = false;
         this.isPath = false;
+
+        SkillTreeEvents.subscribe("node", this.rebindNodeEvents);
     }
 
     private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.o ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.o] : 0;
     private getX = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.x * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
     private getY = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.y * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
 
-    public createNodeFrame = (drawType: "Allocated" | "CanAllocate" | "Unallocated"): PIXI.Container => {
+    public createNodeFrame = (): PIXI.Sprite => {
+        let drawType: "Allocated" | "CanAllocate" | "Unallocated" = "Unallocated";
+        if (this.isActive || this.isHovered) {
+            drawType = "Allocated";
+        } else {
+            if (this.skillTreeUtilities.isAnyActive(this.out)) {
+                drawType = "CanAllocate";
+            }
+        }
         var node_frame = new PIXI.Sprite();
         let assetKey = "";
         if (this.isAscendancyStart) {
@@ -120,7 +132,8 @@
         return node_frame;
     }
 
-    public createNodeGraphic = (skillSprites: { [id: string]: Array<ISpriteSheet> }, zoomLevel: number = 3): PIXI.Container => {
+    private nodeSprite: PIXI.Sprite = new PIXI.Sprite();
+    public createNodeGraphic = (skillSprites: { [id: string]: Array<ISpriteSheet> }, zoomLevel: number = 3): PIXI.Sprite => {
         let drawType = this.isActive ? "Active" : "Inactive";
         let spriteSheetKey: string = "";
         if (this.ks) {
@@ -144,32 +157,22 @@
         var spriteSheetTexture = PIXI.Texture.from(`data/assets/${spriteSheet.filename}`);
         var coords = spriteSheet.coords[this.icon];
         var spriteTexture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
-        var node_graphic = new PIXI.Sprite(spriteTexture);
-        node_graphic.position.set(this.x, this.y);
-        node_graphic.anchor.set(.5);
+        this.nodeSprite = new PIXI.Sprite(spriteTexture);
+        this.nodeSprite.position.set(this.x, this.y);
+        this.nodeSprite.anchor.set(.5);
 
-        node_graphic.interactive = true;
-        node_graphic.on("mouseover", () => {
-            if (this.mouseover) {
-                this.mouseover();
+        this.rebindNodeEvents();
+
+        return this.nodeSprite;
+    }
+
+    public rebindNodeEvents = () => {
+        if (!this.m && SkillTreeEvents.events["node"] !== undefined) {
+            this.nodeSprite.interactive = true;
+            for (let event in SkillTreeEvents.events["node"]) {
+                this.nodeSprite.on(event, () => SkillTreeEvents.fire("node", event, this));
             }
-        });
-        node_graphic.on("mouseout", () => {
-            if (this.mouseout) {
-                this.mouseout();
-            }
-        });
-        node_graphic.on("click", () => {
-            if (this.click) {
-                this.click();
-            }
-        });
-        node_graphic.on("tap", () => {
-            if (this.click) {
-                this.click();
-            }
-        });
-        return node_graphic;
+        }
     }
 
     public createConnections = (others: Array<SkillNode>): PIXI.Container => {
@@ -184,7 +187,13 @@
     }
 
     public createConnection = (other: SkillNode): PIXI.Sprite | null => {
-        if (this.spc.length > 0 || other.spc.length > 0 || (this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
+        if ((this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
+            return null;
+        }
+        if (this.spc.length > 0 || other.spc.length > 0) {
+            return null;
+        }
+        if ((this.isPath || this.isHovered) && (!other.isPath && !other.isHovered && !other.isActive)) {
             return null;
         }
         if (this.g === other.g && this.o === other.o) {

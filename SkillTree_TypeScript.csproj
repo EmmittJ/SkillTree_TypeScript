@@ -177,6 +177,8 @@
     <TypeScriptCompile Include="models\SkillNode.ts" />
     <TypeScriptCompile Include="models\SkillTreeData.ts" />
     <TypeScriptCompile Include="models\Constants.ts" />
+    <TypeScriptCompile Include="models\SkillTreeEvents.ts" />
+    <TypeScriptCompile Include="models\SkillTreeUtilities.ts" />
     <TypeScriptCompile Include="models\types\IAscendancyClasses.d.ts" />
     <TypeScriptCompile Include="models\types\ICharacter.d.ts" />
     <TypeScriptCompile Include="models\types\IClassImage.d.ts" />

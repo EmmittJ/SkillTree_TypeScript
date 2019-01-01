@@ -162,7 +162,7 @@ namespace App {
                 });
             connections.addChild(node.createConnections(nodes));
             skillIcons.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
-            skillIcons.addChild(node.createNodeFrame("Unallocated"));
+            skillIcons.addChild(node.createNodeFrame());
         }
 
         for (let id of skillTreeData.root.out) {
@@ -227,15 +227,16 @@ namespace App {
 
                     return skillTreeData.nodes[outID]
                 });
-            connections_active.addChild(node.createConnections(nodes));
-            skillIcons_active.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
 
+            connections_active.addChild(node.createConnections(nodes));
             for (let out of nodes) {
                 if (node.isActive) {
-                    skillIcons_active.addChild(out.createNodeFrame("CanAllocate"));
+                    skillIcons_active.addChild(out.createNodeFrame());
                 }
             }
-            skillIcons_active.addChild(node.createNodeFrame("Allocated"));
+
+            skillIcons_active.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
+            skillIcons_active.addChild(node.createNodeFrame());
         }
 
         for (let id of skillTreeData.root.out) {
