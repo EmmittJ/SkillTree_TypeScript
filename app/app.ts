@@ -167,7 +167,6 @@ namespace App {
                         let g = +c[1];
                         let b = +c[2];
                         let colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                        console.log(colour);
                         let text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: Math.round(48 * max_zoom), fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: Math.round(4 * max_zoom) });
                         text.position.set(x, y);
                         background.addChild(text);
