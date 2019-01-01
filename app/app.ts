@@ -3,6 +3,7 @@ import { Utils } from "./utils";
 import * as PIXI from "pixi.js";;
 import * as Viewport from "pixi-viewport";
 import * as $ from "jquery";
+import { SkillTreeEvents } from "../models/SkillTreeEvents";
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -61,6 +62,10 @@ namespace App {
                 PIXI.Loader.shared.add(`data/assets/${sprite.filename}`);
             }
         }
+        
+        viewport.on('drag-start', (data) => SkillTreeEvents.fire("viewport", "drag-start", data.world));
+        viewport.on('drag-end', (data) => SkillTreeEvents.fire("viewport", "drag-end", data.world));
+        viewport.on('mouseup', () => SkillTreeEvents.fire("viewport", "mouseup"));
         PIXI.Loader.shared.load();
         PIXI.Loader.shared.onComplete.add(() => {
             draw();

@@ -1,8 +1,12 @@
 ﻿import { SkillTreeData } from "./SkillTreeData";
 import { SkillNode } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
+import * as PIXI from "pixi.js";
 
 export class SkillTreeUtilities {
+    private drag_start: PIXI.PointLike;
+    private drag_end: PIXI.PointLike;
+    private DRAG_THRESHOLD_SQUARED = 5 * 5;
     skillTreeData: SkillTreeData;
     constructor(context: SkillTreeData) {
         this.skillTreeData = context;
@@ -10,9 +14,19 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("node", "tap", this.click, false);
         SkillTreeEvents.on("node", "mouseover", this.mouseover, false);
         SkillTreeEvents.on("node", "mouseout", this.mouseout, true);
+
+        this.drag_start = new PIXI.Point(0, 0);
+        this.drag_end = new PIXI.Point(0, 0);
+        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.PointLike) => this.drag_start = JSON.parse(JSON.stringify(point)));
+        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.PointLike) => this.drag_end = JSON.parse(JSON.stringify(point)));
+        SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.drag_start = this.drag_end, 250));
     }
 
     private click = (node: SkillNode) => {
+        if ((this.drag_start.x - this.drag_end.x) * (this.drag_start.x - this.drag_end.x) > this.DRAG_THRESHOLD_SQUARED
+            || (this.drag_start.y - this.drag_end.y) * (this.drag_start.y - this.drag_end.y) > this.DRAG_THRESHOLD_SQUARED) {
+            return;
+        }
         if (node.spc.length > 0 || node.m) {
             return;
         }
@@ -38,11 +52,13 @@ export class SkillTreeUtilities {
 
     private mouseover = (node: SkillNode) => {
         for (let i of this.getShortestPath(node)) {
+            if (i.id === node.id) {
+                node.isHovered = true;
+            }
             if (!i.isPath && !i.isActive) {
                 i.isPath = true;
             }
         }
-        node.isHovered = true;
 
         for (let i of this.getRefundNodes(node)) {
             i.isPath = true;

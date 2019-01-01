@@ -134,6 +134,9 @@ export class SkillNode implements ISkillNode {
         if (this.isActive && this.isPath) {
             this.nodeFrame.tint = 0xFF0000;
         }
+
+        this.rebindNodeEvents();
+
         return this.nodeFrame;
     }
 
@@ -172,6 +175,9 @@ export class SkillNode implements ISkillNode {
     }
 
     public rebindNodeEvents = () => {
+        this.nodeSprite.removeAllListeners();
+        this.nodeFrame.removeAllListeners();
+
         if (!this.m && SkillTreeEvents.events["node"] !== undefined) {
             this.nodeSprite.interactive = true;
             this.nodeFrame.interactive = true;

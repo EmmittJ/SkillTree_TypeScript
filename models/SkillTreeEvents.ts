@@ -1,7 +1,7 @@
-﻿type SkillTreeEvent = "node";
+﻿type SkillTreeEvent = "node" | "viewport";
 export class SkillTreeEvents {
     public static events: { [type: string]: { [event: string]: Array<Function> } } = {};
-    public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes, fn: Function, notify: boolean = true) => {
+    public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify: boolean = true) => {
         if (SkillTreeEvents.events[type] === undefined) {
             SkillTreeEvents.events[type] = {};
         }
@@ -13,7 +13,7 @@ export class SkillTreeEvents {
         if (notify) SkillTreeEvents.notify(type);
     }
 
-    public static off = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes, fn: Function, notify: boolean = true) => {
+    public static off = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify: boolean = true) => {
         if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined || SkillTreeEvents.events[type][event].indexOf(fn) === -1) {
             return;
         }
