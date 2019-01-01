@@ -62,7 +62,7 @@ namespace App {
                 PIXI.Loader.shared.add(`data/assets/${sprite.filename}`);
             }
         }
-        
+
         viewport.on('drag-start', (data) => SkillTreeEvents.fire("viewport", "drag-start", data.world));
         viewport.on('drag-end', (data) => SkillTreeEvents.fire("viewport", "drag-end", data.world));
         viewport.on('mouseup', () => SkillTreeEvents.fire("viewport", "mouseup"));
@@ -139,7 +139,41 @@ namespace App {
                 sprite2.anchor.set(.5, 1);
                 background.addChild(sprite2);
             }
+        }
 
+        for (let id in skillTreeData.groups) {
+            let group = skillTreeData.groups[id];
+            if (group.n.filter(id => skillTreeData.nodes[id].isAscendancyStart).length <= 0) {
+                continue;
+            }
+            let ascendancyName = group.n.map(id => skillTreeData.nodes[id].ascendancyName)[0];
+            let sprite = PIXI.Sprite.from(`data/assets/Classes${ascendancyName}.png`);
+            sprite.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
+            sprite.anchor.set(.5);
+            background.addChild(sprite);
+
+            for (let id in skillTreeOptions.ascClasses) {
+                let ascClasses = skillTreeOptions.ascClasses[id];
+                for (let classid in ascClasses.classes) {
+                    let ascClass = ascClasses.classes[classid];
+                    if (ascClass.name === ascendancyName) {
+                        let rect = ascClass.flavourTextRect.split(",");
+                        let x = Math.ceil((group.x + +rect[0]) * max_zoom) - sprite.width / 2;
+                        let y = Math.ceil((group.y + +rect[1]) * max_zoom) - sprite.height / 2;
+                        let w = Math.ceil(+rect[2] * max_zoom);
+                        let h = Math.ceil(+rect[3] * max_zoom);
+                        let c = ascClass.flavourTextColour.split(",");
+                        let r = +c[0];
+                        let g = +c[1];
+                        let b = +c[2];
+                        let colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                        console.log(colour);
+                        let text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: Math.round(48 * max_zoom), fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: Math.round(4 * max_zoom) });
+                        text.position.set(x, y);
+                        background.addChild(text);
+                    }
+                }
+            }
         }
 
         let drawn_connections: { [id: number]: Array<number> } = {};
