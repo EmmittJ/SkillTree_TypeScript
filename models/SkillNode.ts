@@ -83,6 +83,7 @@ export class SkillNode implements ISkillNode {
     private getX = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.x * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
     private getY = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.y * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
 
+    private nodeFrame: PIXI.Sprite = new PIXI.Sprite();
     public createNodeFrame = (): PIXI.Sprite => {
         let drawType: "Allocated" | "CanAllocate" | "Unallocated" = "Unallocated";
         if (this.isActive || this.isHovered) {
@@ -92,7 +93,7 @@ export class SkillNode implements ISkillNode {
                 drawType = "CanAllocate";
             }
         }
-        var node_frame = new PIXI.Sprite();
+        this.nodeFrame = new PIXI.Sprite();
         let assetKey = "";
         if (this.isAscendancyStart) {
             assetKey = "PassiveSkillScreenAscendancyMiddle";
@@ -105,7 +106,7 @@ export class SkillNode implements ISkillNode {
                 ? `NotableFrame${drawType}`
                 : `PassiveSkillScreenAscendancyFrameLarge${drawType === "Unallocated" ? "Normal" : drawType}`;;
         } else if (this.m) {
-            return node_frame;
+            return this.nodeFrame;
         } else {
             switch (drawType) {
                 case "Unallocated":
@@ -126,10 +127,14 @@ export class SkillNode implements ISkillNode {
             }
         }
 
-        node_frame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
-        node_frame.position.set(this.x, this.y);
-        node_frame.anchor.set(.5);
-        return node_frame;
+        this.nodeFrame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
+        this.nodeFrame.position.set(this.x, this.y);
+        this.nodeFrame.anchor.set(.5);
+
+        if (this.isActive && this.isPath) {
+            this.nodeFrame.tint = 0xFF0000;
+        }
+        return this.nodeFrame;
     }
 
     private nodeSprite: PIXI.Sprite = new PIXI.Sprite();
@@ -157,7 +162,7 @@ export class SkillNode implements ISkillNode {
         var spriteSheetTexture = PIXI.Texture.from(`data/assets/${spriteSheet.filename}`);
         var coords = spriteSheet.coords[this.icon];
         var spriteTexture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
-        this.nodeSprite = new PIXI.Sprite(spriteTexture);
+        this.nodeSprite = this.isAscendancyStart ? new PIXI.Sprite() : new PIXI.Sprite(spriteTexture);
         this.nodeSprite.position.set(this.x, this.y);
         this.nodeSprite.anchor.set(.5);
 
@@ -169,8 +174,10 @@ export class SkillNode implements ISkillNode {
     public rebindNodeEvents = () => {
         if (!this.m && SkillTreeEvents.events["node"] !== undefined) {
             this.nodeSprite.interactive = true;
+            this.nodeFrame.interactive = true;
             for (let event in SkillTreeEvents.events["node"]) {
                 this.nodeSprite.on(event, () => SkillTreeEvents.fire("node", event, this));
+                this.nodeFrame.on(event, () => SkillTreeEvents.fire("node", event, this));
             }
         }
     }
