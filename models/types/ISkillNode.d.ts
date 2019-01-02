@@ -41,6 +41,9 @@
     /** The stat descriptions of the SkillNode */
     sd: Array<string>;
 
+    /** Node flavour text (similar to the flavour text on unqiues, appears in the unique border color in game) */
+    flavourText: Array<string>;
+
     /** Additional information on mechanics or the node itself (appears grey in game) */
     reminderText: Array<string>;
 }

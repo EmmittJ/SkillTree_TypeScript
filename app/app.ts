@@ -231,16 +231,21 @@ namespace App {
     let connections_active: PIXI.Container = new PIXI.Container();
     let skillIcons_active: PIXI.Container = new PIXI.Container();
     let characterStarts_active: PIXI.Container = new PIXI.Container();
+    let tooltip: PIXI.Graphics | null = null;
     export const drawActive = () => {
         var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
         viewport.removeChild(connections_active);
         viewport.removeChild(skillIcons_active);
         viewport.removeChild(characterStarts_active);
+        if (tooltip !== null) {
+            viewport.removeChild(tooltip);
+        }
         connections_active.removeChildren();
         skillIcons_active.removeChildren();
         characterStarts_active.removeChildren();
 
         let drawn_connections: { [id: number]: Array<number> } = {};
+        tooltip = null;
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
             if (!node.isActive && !node.isHovered && !node.isPath) {
@@ -276,6 +281,53 @@ namespace App {
 
             skillIcons_active.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
             skillIcons_active.addChild(node.createNodeFrame());
+
+            if (node.isHovered) {
+                let padding = 10;
+                let mouse = pixi.renderer.plugins.interaction.mouse.getLocalPosition(viewport);
+                let title = new PIXI.Text(`${node.dn}`, { fill: 0xFFFFFF, fontSize: 24 });
+                let stats: PIXI.Text | null = node.sd.length > 0 ? new PIXI.Text(`\n${node.sd.join('\n')}`, { fill: 0xFFFFFF, fontSize: 20 }) : null;
+                let flavour: PIXI.Text | null = node.flavourText.length > 0 ? new PIXI.Text(`\n${node.flavourText.join('\n')}`, { fill: 0xAF6025, fontSize: 20 }) : null;
+                let reminder: PIXI.Text | null = node.reminderText.length > 0 ? new PIXI.Text(`\n${node.reminderText.join('\n')}`, { fill: 0x808080, fontSize: 20 }) : null;
+
+
+                let text = new PIXI.Container();
+                text.position.set(padding / 2, padding / 2);
+
+                text.addChild(title);
+                title.position.set(0, 0);
+                let height = title.height;
+                let width = title.width;
+
+                if (stats !== null) {
+                    text.addChild(stats);
+                    stats.position.set(0, height);
+                    height += stats.height;
+                    width = Math.max(width, stats.width);
+                }
+
+                if (flavour !== null) {
+                    text.addChild(flavour);
+                    flavour.position.set(0, height);
+                    height += flavour.height;
+                    width = Math.max(width, flavour.width);
+                }
+
+                if (reminder !== null) {
+                    text.addChild(reminder);
+                    reminder.position.set(0, height);
+                    height += reminder.height;
+                    width = Math.max(width, reminder.width);
+                }
+
+                tooltip = new PIXI.Graphics();
+                tooltip.beginFill(0x000000, .75);
+                tooltip.lineStyle(2, 0xCBB59C)
+                tooltip.drawRect(0, 0, width + padding, height + padding);
+                tooltip.endFill();
+                tooltip.position.set(mouse.x + 15, mouse.y - 5);
+                tooltip.addChild(text);
+            }
         }
 
         for (let id of skillTreeData.root.out) {
@@ -331,6 +383,9 @@ namespace App {
         viewport.addChildAt(connections_active, 2);
         viewport.addChildAt(skillIcons_active, 4);
         viewport.addChild(characterStarts_active)
+        if (tooltip !== null) {
+            viewport.addChild(tooltip);
+        }
         requestAnimationFrame(drawActive);
     }
 }

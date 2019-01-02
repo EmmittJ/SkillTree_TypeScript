@@ -69,11 +69,11 @@ export class SkillTreeUtilities {
     }
 
     private mouseover = (node: SkillNode) => {
+        if (node.spc.length === 0) {
+            node.isHovered = true;
+        }
         let shortest = this.getShortestPath(node);
         for (let i of shortest) {
-            if (i.id === node.id) {
-                node.isHovered = true;
-            }
             if (!i.isPath && !i.isActive) {
                 i.isPath = true;
             }
@@ -83,9 +83,6 @@ export class SkillTreeUtilities {
         if (shortest.length === 0) {
             let refund = this.getRefundNodes(node);
             for (let i of refund) {
-                if (i.id === node.id) {
-                    node.isHovered = true;
-                }
                 i.isPath = true;
             }
             node.hoverText = refund.length.toString();

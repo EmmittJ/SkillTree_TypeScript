@@ -17,6 +17,7 @@ export class SkillNode implements ISkillNode {
     spc: number[];
     sd: string[];
     reminderText: string[];
+    flavourText: string[];
     g: number;
     o: number;
     oidx: number;
@@ -57,6 +58,7 @@ export class SkillNode implements ISkillNode {
         this.spc = node.spc || [];
         this.sd = node.sd || [];
         this.reminderText = node.reminderText || [];
+        this.flavourText = node.flavourText || [];
         this.g = node.g || 0;
         this.o = node.o || 0;
         this.oidx = node.oidx || 0;
