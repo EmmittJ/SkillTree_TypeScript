@@ -7,19 +7,23 @@ export class SkillTreeUtilities {
     private drag_start: PIXI.PointLike;
     private drag_end: PIXI.PointLike;
     private DRAG_THRESHOLD_SQUARED = 5 * 5;
+    private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
     constructor(context: SkillTreeData) {
         this.skillTreeData = context;
         SkillTreeEvents.on("node", "click", this.click, false);
         SkillTreeEvents.on("node", "tap", this.click, false);
         SkillTreeEvents.on("node", "mouseover", this.mouseover, false);
-        SkillTreeEvents.on("node", "mouseout", this.mouseout, true);
+        SkillTreeEvents.on("node", "mouseout", this.mouseout, false);
+        SkillTreeEvents.on("node", "touchstart", this.touchstart, false);
+        SkillTreeEvents.on("node", "touchend", this.touchend, true);
 
         this.drag_start = new PIXI.Point(0, 0);
         this.drag_end = new PIXI.Point(0, 0);
-        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.PointLike) => this.drag_start = JSON.parse(JSON.stringify(point)));
-        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.PointLike) => this.drag_end = JSON.parse(JSON.stringify(point)));
-        SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.drag_start = this.drag_end, 250));
+        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.PointLike) => this.drag_start = JSON.parse(JSON.stringify(point)), false);
+        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.PointLike) => this.drag_end = JSON.parse(JSON.stringify(point)), false);
+        SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), false);
+        SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
     }
 
     private click = (node: SkillNode) => {
@@ -47,11 +51,26 @@ export class SkillTreeUtilities {
         for (let id in this.getHoveredNodes()) {
             this.skillTreeData.nodes[id].isHovered = false;
             this.skillTreeData.nodes[id].isPath = false;
+            this.skillTreeData.nodes[id].hoverText = null;
         }
     }
 
+    private touchTimeout: number | null =  null;
+    private touchstart = (node: SkillNode) => {
+        this.touchTimeout = setTimeout(() => this.drag_end.x = this.drag_start.x + this.DRAG_THRESHOLD_SQUARED * this.DRAG_THRESHOLD_SQUARED, this.LONG_PRESS_THRESHOLD);
+        this.mouseover(node);
+    }
+
+    private touchend = (node: SkillNode) => {
+        if (this.touchTimeout !== null) {
+            clearTimeout(this.touchTimeout);
+        }
+        this.mouseout(node);
+    }
+
     private mouseover = (node: SkillNode) => {
-        for (let i of this.getShortestPath(node)) {
+        let shortest = this.getShortestPath(node);
+        for (let i of shortest) {
             if (i.id === node.id) {
                 node.isHovered = true;
             }
@@ -59,9 +78,17 @@ export class SkillTreeUtilities {
                 i.isPath = true;
             }
         }
+        node.hoverText = shortest.length.toString();
 
-        for (let i of this.getRefundNodes(node)) {
-            i.isPath = true;
+        if (shortest.length === 0) {
+            let refund = this.getRefundNodes(node);
+            for (let i of refund) {
+                if (i.id === node.id) {
+                    node.isHovered = true;
+                }
+                i.isPath = true;
+            }
+            node.hoverText = refund.length.toString();
         }
     }
 
@@ -69,6 +96,7 @@ export class SkillTreeUtilities {
         for (let id in this.getHoveredNodes()) {
             this.skillTreeData.nodes[id].isHovered = false;
             this.skillTreeData.nodes[id].isPath = false;
+            this.skillTreeData.nodes[id].hoverText = null;
         }
     }
 

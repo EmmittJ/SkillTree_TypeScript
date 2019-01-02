@@ -26,17 +26,19 @@ export class SkillNode implements ISkillNode {
     out: number[];
     in: number[];
 
+    skillTreeUtilities: SkillTreeUtilities;
+    group: IGroup;
     orbitRadii: Array<number>;
     skillsPerOrbit: Array<number>;
-    group: IGroup;
+    scale: number;
     arc: number;
     x: number;
     y: number;
-    scale: number;
+
     isActive: boolean;
     isHovered: boolean;
+    hoverText: string | null = null;
     isPath: boolean;
-    skillTreeUtilities: SkillTreeUtilities;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number, skillTreeUtilities: SkillTreeUtilities) {
         this.skillTreeUtilities = skillTreeUtilities;
@@ -71,8 +73,8 @@ export class SkillNode implements ISkillNode {
         this.arc = this.getArc(this.oidx);
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
-        this.isActive = false;
 
+        this.isActive = false;
         this.isHovered = false;
         this.isPath = false;
 
@@ -131,9 +133,15 @@ export class SkillNode implements ISkillNode {
         this.nodeFrame.position.set(this.x, this.y);
         this.nodeFrame.anchor.set(.5);
 
-        if (this.isActive && this.isPath) {
+        if (this.isActive && this.isHovered) {
             this.nodeFrame.tint = 0xFF0000;
         }
+
+        //if (this.hoverText) {
+        //    let text = new PIXI.Text(this.hoverText, { fill: 0xFFFFFF, align: 'center', fontSize: 20, stroke: 0x000000, strokeThickness: 2 });
+        //    text.anchor.set(.5);
+        //    this.nodeFrame.addChild(text);
+        //}
 
         this.rebindNodeEvents();
 

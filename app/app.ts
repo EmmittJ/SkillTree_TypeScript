@@ -66,6 +66,7 @@ namespace App {
         viewport.on('drag-start', (data) => SkillTreeEvents.fire("viewport", "drag-start", data.world));
         viewport.on('drag-end', (data) => SkillTreeEvents.fire("viewport", "drag-end", data.world));
         viewport.on('mouseup', () => SkillTreeEvents.fire("viewport", "mouseup"));
+        viewport.on('touchend', () => SkillTreeEvents.fire("viewport", "touchend"));
         PIXI.Loader.shared.load();
         PIXI.Loader.shared.onComplete.add(() => {
             draw();
