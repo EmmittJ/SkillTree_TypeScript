@@ -17,6 +17,7 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("node", "mouseout", this.mouseout, false);
         SkillTreeEvents.on("node", "touchstart", this.touchstart, false);
         SkillTreeEvents.on("node", "touchend", this.touchend, true);
+        SkillTreeEvents.on("node", "touchcancel", this.touchend, true);
 
         this.drag_start = new PIXI.Point(0, 0);
         this.drag_end = new PIXI.Point(0, 0);
@@ -24,6 +25,7 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.PointLike) => this.drag_end = JSON.parse(JSON.stringify(point)), false);
         SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), false);
         SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
+        SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
     }
 
     private click = (node: SkillNode) => {
@@ -48,14 +50,10 @@ export class SkillTreeUtilities {
                 }
             }
         }
-        for (let id in this.getHoveredNodes()) {
-            this.skillTreeData.nodes[id].isHovered = false;
-            this.skillTreeData.nodes[id].isPath = false;
-            this.skillTreeData.nodes[id].hoverText = null;
-        }
+        this.clearHoveredNodes();
     }
 
-    private touchTimeout: number | null =  null;
+    private touchTimeout: number | null = null;
     private touchstart = (node: SkillNode) => {
         this.touchTimeout = setTimeout(() => this.drag_end.x = this.drag_start.x + this.DRAG_THRESHOLD_SQUARED * this.DRAG_THRESHOLD_SQUARED, this.LONG_PRESS_THRESHOLD);
         this.mouseover(node);
@@ -69,6 +67,8 @@ export class SkillTreeUtilities {
     }
 
     private mouseover = (node: SkillNode) => {
+        this.clearHoveredNodes();
+
         if (node.spc.length === 0) {
             node.isHovered = true;
         }
@@ -90,6 +90,11 @@ export class SkillTreeUtilities {
     }
 
     private mouseout = (node: SkillNode) => {
+        node.destroyTooltip();
+        this.clearHoveredNodes();
+    }
+
+    private clearHoveredNodes = () => {
         for (let id in this.getHoveredNodes()) {
             this.skillTreeData.nodes[id].isHovered = false;
             this.skillTreeData.nodes[id].isPath = false;

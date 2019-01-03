@@ -198,6 +198,61 @@ export class SkillNode implements ISkillNode {
         }
     }
 
+    private tooltipTimeout: number | null = null;
+    private PIXI_tooltip: PIXI.Container | null = null;
+    public createTooltipText = (): PIXI.Container => {
+        if (this.tooltipTimeout !== null) {
+            clearTimeout(this.tooltipTimeout);
+        }
+        if (this.PIXI_tooltip !== null) {
+            return this.PIXI_tooltip;
+        }
+
+        let title: PIXI.Text | null = this.dn.length > 0 ? new PIXI.Text(`${this.dn}`, { fill: 0xFFFFFF, fontSize: 20 }) : null;
+        let stats: PIXI.Text | null = this.sd.length > 0 ? new PIXI.Text(`\n${this.sd.join('\n')}`, { fill: 0xFFFFFF, fontSize: 16 }) : null;
+        let flavour: PIXI.Text | null = this.flavourText.length > 0 ? new PIXI.Text(`\n${this.flavourText.join('\n')}`, { fill: 0xAF6025, fontSize: 16 }) : null;
+        let reminder: PIXI.Text | null = this.reminderText.length > 0 ? new PIXI.Text(`\n${this.reminderText.join('\n')}`, { fill: 0x808080, fontSize: 16 }) : null;
+
+        this.PIXI_tooltip = new PIXI.Container();
+        this.PIXI_tooltip.position.set(0, 0);
+        let height = 0;
+        if (title !== null) {
+            this.PIXI_tooltip.addChild(title);
+            title.position.set(0, height);
+            height += title.height;
+        }
+
+        if (stats !== null) {
+            this.PIXI_tooltip.addChild(stats);
+            stats.position.set(0, height);
+            height += stats.height;
+        }
+
+        if (flavour !== null) {
+            this.PIXI_tooltip.addChild(flavour);
+            flavour.position.set(0, height);
+            height += flavour.height;
+        }
+
+        if (reminder !== null) {
+            this.PIXI_tooltip.addChild(reminder);
+            reminder.position.set(0, height);
+            height += reminder.height;
+        }
+
+        return this.PIXI_tooltip;
+    }
+
+    public destroyTooltip = () => {
+        this.tooltipTimeout = setTimeout(() => {
+            this.tooltipTimeout = null;
+            if (this.PIXI_tooltip !== null) {
+                this.PIXI_tooltip.destroy();
+                this.PIXI_tooltip = null
+            }
+        }, 5000);
+    }
+
     public createConnections = (others: Array<SkillNode>): PIXI.Container => {
         let container = new PIXI.Container();
         for (let other of others) {
