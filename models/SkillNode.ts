@@ -208,10 +208,10 @@ export class SkillNode implements ISkillNode {
             return this.PIXI_tooltip;
         }
 
-        let title: PIXI.Text | null = this.dn.length > 0 ? new PIXI.Text(`${this.dn}`, { fill: 0xFFFFFF, fontSize: 20 }) : null;
-        let stats: PIXI.Text | null = this.sd.length > 0 ? new PIXI.Text(`\n${this.sd.join('\n')}`, { fill: 0xFFFFFF, fontSize: 16 }) : null;
-        let flavour: PIXI.Text | null = this.flavourText.length > 0 ? new PIXI.Text(`\n${this.flavourText.join('\n')}`, { fill: 0xAF6025, fontSize: 16 }) : null;
-        let reminder: PIXI.Text | null = this.reminderText.length > 0 ? new PIXI.Text(`\n${this.reminderText.join('\n')}`, { fill: 0x808080, fontSize: 16 }) : null;
+        let title: PIXI.Text | null = this.dn.length > 0 ? new PIXI.Text(`${this.dn}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
+        let stats: PIXI.Text | null = this.sd.length > 0 ? new PIXI.Text(`\n${this.sd.join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
+        let flavour: PIXI.Text | null = this.flavourText.length > 0 ? new PIXI.Text(`\n${this.flavourText.join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
+        let reminder: PIXI.Text | null = this.reminderText.length > 0 ? new PIXI.Text(`\n${this.reminderText.join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;
 
         this.PIXI_tooltip = new PIXI.Container();
         this.PIXI_tooltip.position.set(0, 0);

@@ -300,7 +300,7 @@ namespace App {
                 tooltip.endFill();
 
                 tooltip.addChild(text);
-                let mouse = pixi.renderer.plugins.interaction.supportsTouchEvents
+                let mouse = PIXI.utils.isMobile.phone
                     ? new PIXI.Point(node.x + 50, node.y - 15) :
                     pixi.renderer.plugins.interaction.mouse.getLocalPosition(viewport);
                 tooltip.position.set(mouse.x + 10, mouse.y - 5);
@@ -366,12 +366,23 @@ namespace App {
             let scalex = tooltip.width / bounds.width;
             let scaley = tooltip.height / bounds.height;
             if (tooltip.worldTransform.tx + bounds.x > screen.width) {
-                tooltip.x -= tooltip.width * scalex;
+                if (!PIXI.utils.isMobile.phone) {
+                    tooltip.x -= tooltip.width * scalex;
+                } else {
+                    tooltip.x -= tooltip.width / 2;
+                }
             }
             if (tooltip.worldTransform.ty + bounds.y > screen.height) {
-                tooltip.x -= tooltip.height * scaley;
+                if (!PIXI.utils.isMobile.phone) {
+                    tooltip.y -= tooltip.height * scaley;
+                } else {
+                    tooltip.y -= tooltip.height / 2;
+                }
             }
-            tooltip.scale.set(scalex, scaley);
+            if (!PIXI.utils.isMobile.phone) {
+
+                tooltip.scale.set(scalex, scaley);
+            }
         }
         requestAnimationFrame(drawActive);
     }
