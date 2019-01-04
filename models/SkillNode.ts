@@ -135,7 +135,7 @@ export class SkillNode implements ISkillNode {
         this.nodeFrame.position.set(this.x, this.y);
         this.nodeFrame.anchor.set(.5);
 
-        if (this.isActive && this.isHovered) {
+        if ((this.isActive && this.isHovered) || (this.isActive && this.isPath && (this.isMultipleChoice || this.isMultipleChoiceOption))) {
             this.nodeFrame.tint = 0xFF0000;
         }
 

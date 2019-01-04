@@ -36,18 +36,19 @@ export class SkillTreeUtilities {
         if (node.spc.length > 0 || node.m) {
             return;
         }
-        if (node.isActive) {
-            for (let i of this.getRefundNodes(node)) {
-                if (i.spc.length > 0) {
-                    continue;
-                }
-                i.isActive = false;
+
+        let refund = this.getRefundNodes(node);
+        for (let i of refund) {
+            if (i.spc.length > 0) {
+                continue;
             }
-        } else {
-            for (let i of this.getShortestPath(node)) {
-                if (!i.isActive) {
-                    i.isActive = true;
-                }
+            i.isActive = false;
+        }
+
+        let shortest = this.getShortestPath(node);
+        for (let i of shortest) {
+            if (!i.isActive && refund.indexOf(i) < 0) {
+                i.isActive = true;
             }
         }
         this.clearHoveredNodes();
@@ -80,11 +81,11 @@ export class SkillTreeUtilities {
         }
         node.hoverText = shortest.length.toString();
 
-        if (shortest.length === 0) {
-            let refund = this.getRefundNodes(node);
-            for (let i of refund) {
-                i.isPath = true;
-            }
+        let refund = this.getRefundNodes(node);
+        for (let i of refund) {
+            i.isPath = true;
+        }
+        if (refund.length > 0) {
             node.hoverText = refund.length.toString();
         }
     }
@@ -173,10 +174,6 @@ export class SkillTreeUtilities {
     }
 
     private getRefundNodes = (source: SkillNode): Array<SkillNode> => {
-        if (!source.isActive) {
-            return new Array<SkillNode>();
-        }
-
         let characterStartNode: SkillNode | undefined = undefined;
         for (let id in this.skillTreeData.nodes) {
             let node = this.skillTreeData.nodes[id];
@@ -197,12 +194,18 @@ export class SkillTreeUtilities {
                 reachable[id] = out;
             }
         }
-
+        
         while (frontier.length > 0) {
             let nextFrontier = new Array<SkillNode>();
             for (let node of frontier) {
                 for (let id of node.out) {
                     let out = this.skillTreeData.nodes[id];
+                    if (out.isMultipleChoiceOption && source.isMultipleChoiceOption) {
+                        let outchoice = out.in.find(id => this.skillTreeData.nodes[id].isMultipleChoice);
+                        if (outchoice !== undefined && outchoice === source.in.find(id => this.skillTreeData.nodes[id].isMultipleChoice)) {
+                            continue;
+                        }
+                    }
                     if (out.id === source.id || reachable[id] || !out.isActive) {
                         continue;
                     }
@@ -214,7 +217,7 @@ export class SkillTreeUtilities {
 
             frontier = nextFrontier;
         }
-
+        
         let unreachable = new Array<SkillNode>();
         let skilledNodes = this.getSkilledNodes();
         for (let id in skilledNodes) {
