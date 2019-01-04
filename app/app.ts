@@ -231,7 +231,10 @@ namespace App {
                 });
             connections.addChild(node.createConnections(nodes));
             skillIcons.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
-            skillIcons.addChild(node.createNodeFrame());
+            let frame = node.createNodeFrame();
+            if (frame !== null) {
+                skillIcons.addChild(frame);
+            }
         }
 
         for (let id of skillTreeData.root.out) {
@@ -335,12 +338,18 @@ namespace App {
             connections_active.addChild(node.createConnections(nodes));
             for (let out of nodes) {
                 if (node.isActive) {
-                    skillIcons_active.addChild(out.createNodeFrame());
+                    let frame = out.createNodeFrame();
+                    if (frame !== null) {
+                        skillIcons_active.addChild(frame);
+                    }
                 }
             }
 
             skillIcons_active.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
-            skillIcons_active.addChild(node.createNodeFrame());
+            let frame = node.createNodeFrame();
+            if (frame !== null) {
+                skillIcons_active.addChild(frame);
+            }
 
             if (node.isHovered) {
                 let padding = 10;

@@ -88,7 +88,7 @@ export class SkillNode implements ISkillNode {
     private getY = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.y * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
 
     private nodeFrame: PIXI.Sprite = new PIXI.Sprite();
-    public createNodeFrame = (): PIXI.Sprite => {
+    public createNodeFrame = (): PIXI.Sprite | null => {
         let drawType: "Allocated" | "CanAllocate" | "Unallocated" = "Unallocated";
         if (this.isActive || this.isHovered) {
             drawType = "Allocated";
@@ -97,7 +97,6 @@ export class SkillNode implements ISkillNode {
                 drawType = "CanAllocate";
             }
         }
-        this.nodeFrame = new PIXI.Sprite();
         let assetKey = "";
         if (this.isAscendancyStart) {
             assetKey = "PassiveSkillScreenAscendancyMiddle";
@@ -110,7 +109,8 @@ export class SkillNode implements ISkillNode {
                 ? `NotableFrame${drawType}`
                 : `PassiveSkillScreenAscendancyFrameLarge${drawType === "Unallocated" ? "Normal" : drawType}`;;
         } else if (this.m) {
-            return this.nodeFrame;
+            this.nodeFrame.destroy();
+            return null;
         } else {
             switch (drawType) {
                 case "Unallocated":
@@ -131,19 +131,22 @@ export class SkillNode implements ISkillNode {
             }
         }
 
-        this.nodeFrame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
-        this.nodeFrame.position.set(this.x, this.y);
-        this.nodeFrame.anchor.set(.5);
-        this.nodeFrame.hitArea = new PIXI.Circle(0, 0, Math.max(this.nodeFrame.texture.width, this.nodeFrame.texture.height) / 2);
-        if ((this.isActive && this.isHovered) || (this.isActive && this.isPath && (this.isMultipleChoice || this.isMultipleChoiceOption))) {
-            this.nodeFrame.tint = 0xFF0000;
+        if (assetKey !== "") {
+            this.nodeFrame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
+            this.nodeFrame.position.set(this.x, this.y);
+            this.nodeFrame.anchor.set(.5);
+            this.nodeFrame.hitArea = new PIXI.Circle(0, 0, Math.max(this.nodeFrame.texture.width, this.nodeFrame.texture.height) / 2);
+            if ((this.isActive && this.isHovered) || (this.isActive && this.isPath && (this.isMultipleChoice || this.isMultipleChoiceOption))) {
+                this.nodeFrame.tint = 0xFF0000;
+            }
+
+            //if (this.hoverText) {
+            //    let text = new PIXI.Text(this.hoverText, { fill: 0xFFFFFF, align: 'center', fontSize: 20, stroke: 0x000000, strokeThickness: 2 });
+            //    text.anchor.set(.5);
+            //    this.nodeFrame.addChild(text);
+            //}
         }
 
-        //if (this.hoverText) {
-        //    let text = new PIXI.Text(this.hoverText, { fill: 0xFFFFFF, align: 'center', fontSize: 20, stroke: 0x000000, strokeThickness: 2 });
-        //    text.anchor.set(.5);
-        //    this.nodeFrame.addChild(text);
-        //}
 
         this.rebindNodeEvents();
 
