@@ -134,7 +134,7 @@ export class SkillNode implements ISkillNode {
         this.nodeFrame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
         this.nodeFrame.position.set(this.x, this.y);
         this.nodeFrame.anchor.set(.5);
-
+        this.nodeFrame.hitArea = new PIXI.Circle(0, 0, Math.max(this.nodeFrame.texture.width, this.nodeFrame.texture.height) / 2);
         if ((this.isActive && this.isHovered) || (this.isActive && this.isPath && (this.isMultipleChoice || this.isMultipleChoiceOption))) {
             this.nodeFrame.tint = 0xFF0000;
         }
@@ -178,7 +178,7 @@ export class SkillNode implements ISkillNode {
         this.nodeSprite = this.isAscendancyStart ? new PIXI.Sprite() : new PIXI.Sprite(spriteTexture);
         this.nodeSprite.position.set(this.x, this.y);
         this.nodeSprite.anchor.set(.5);
-
+        this.nodeSprite.hitArea = new PIXI.Circle(0, 0, Math.max(this.nodeSprite.texture.width, this.nodeSprite.texture.height) / 2);
         this.rebindNodeEvents();
 
         return this.nodeSprite;
