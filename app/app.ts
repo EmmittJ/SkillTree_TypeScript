@@ -31,8 +31,8 @@ namespace App {
         viewport = new Viewport({
             screenWidth: pixi.screen.width,
             screenHeight: pixi.screen.height,
-            worldWidth: skillTreeData.width,
-            worldHeight: skillTreeData.height,
+            worldWidth: skillTreeData.width * (max_zoom * 1.25),
+            worldHeight: skillTreeData.height * (max_zoom * 1.25),
             interaction: pixi.renderer.plugins.interaction
         });
         viewport
@@ -42,7 +42,6 @@ namespace App {
         viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         viewport.fitWorld(true);
         viewport.zoomPercent(1.726);
-        viewport.scale.set(max_zoom * 1.5)
         pixi.stage.addChild(viewport);
 
         PIXI.Loader.shared.reset();
@@ -75,7 +74,7 @@ namespace App {
 
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
-            viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (max_zoom * 1.5), skillTreeData.height * (max_zoom * 1.5));
+            viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
         });
 
     }
@@ -105,9 +104,8 @@ namespace App {
         let characterStarts: PIXI.Container = new PIXI.Container();
 
 
-        let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width, skillTreeData.height);
+        let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
         background_graphic.anchor.set(.5);
-        background_graphic.scale.set(max_zoom * 1.5);
         background.addChild(background_graphic);
 
         for (let id in skillTreeData.groups) {
@@ -218,6 +216,28 @@ namespace App {
                 continue;
             }
 
+            if (node.isActive) {
+                let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
+                if (class_name === undefined) {
+                    throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
+                }
+                let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
+                let class_name_backgroud = "";
+                if (class_name_backgrouds) {
+                    if (max_zoom in class_name_backgrouds) {
+                        class_name_backgroud = class_name_backgrouds[max_zoom];
+                    } else {
+                        class_name_backgroud = class_name_backgrouds[0];
+                    }
+                    let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
+                    let class_url = `data/assets/Background${class_name.replace("Class", "").toLocaleLowerCase()}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
+                    let class_node_graphic = PIXI.Sprite.from(class_url);
+                    class_node_graphic.anchor.set(.5)
+                    class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
+                    background.addChild(class_node_graphic);
+                }
+            }
+
             let graphic = PIXI.Sprite.from("data/assets/PSStartNodeBackgroundInactive.png");
             graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
             graphic.anchor.set(.5);
@@ -242,19 +262,28 @@ namespace App {
         viewport.removeChild(connections_active);
         viewport.removeChild(skillIcons_active);
         viewport.removeChild(characterStarts_active);
+
         if (tooltip !== null) {
             viewport.removeChild(tooltip);
-            tooltip.removeChildren();
+            if (tooltip.children.length > 0) {
+                tooltip.removeChildren();
+            }
             tooltip = null;
         }
-        connections_active.removeChildren();
-        skillIcons_active.removeChildren();
-        characterStarts_active.removeChildren();
+        if (connections_active.children.length > 0) {
+            connections_active.removeChildren();
+        }
+        if (skillIcons_active.children.length > 0) {
+            skillIcons_active.removeChildren();
+        }
+        if (characterStarts_active.children.length > 0) {
+            characterStarts_active.removeChildren();
+        }
 
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            if (!node.isActive && !node.isHovered && !node.isPath) {
+            if ((!node.isActive && !node.isHovered && !node.isPath) || node.spc.length > 0) {
                 continue;
             }
             let nodes = node.in
@@ -309,33 +338,13 @@ namespace App {
 
         for (let id of skillTreeData.root.out) {
             let node = skillTreeData.nodes[id];
-            if (node.spc.length !== 1) {
-                // Root node with no/multiple classes?
-                continue;
-            }
-            if (!node.isActive) {
+            if (node.spc.length !== 1 || !node.isActive) {
                 continue;
             }
             let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
             if (class_name === undefined) {
                 throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
             }
-
-            let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
-            let class_name_backgroud = "";
-            if (class_name_backgrouds) {
-                if (max_zoom in class_name_backgrouds) {
-                    class_name_backgroud = class_name_backgrouds[max_zoom];
-                } else {
-                    class_name_backgroud = class_name_backgrouds[0];
-                }
-                let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
-                let class_url = `data/assets/Background${class_name.replace("Class", "").toLocaleLowerCase()}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
-                let class_node_graphic = PIXI.Sprite.from(class_url);
-                class_node_graphic.anchor.set(.5)
-                class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
-            }
-
             let common_name = skillTreeData.constants.classesToName[class_name];
 
             //find center
