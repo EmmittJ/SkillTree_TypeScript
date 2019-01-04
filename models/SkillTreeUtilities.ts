@@ -38,20 +38,23 @@ export class SkillTreeUtilities {
         }
 
         let refund = this.getRefundNodes(node);
-        for (let i of refund) {
-            if (i.spc.length > 0) {
-                continue;
+        let shortest = this.getShortestPath(node);
+
+        if (shortest.length > 0 || node.isActive) {
+            for (let i of refund) {
+                if (i.spc.length > 0) {
+                    continue;
+                }
+                i.isActive = false;
             }
-            i.isActive = false;
         }
 
-        let shortest = this.getShortestPath(node);
         for (let i of shortest) {
             if (!i.isActive && refund.indexOf(i) < 0) {
                 i.isActive = true;
             }
         }
-        this.clearHoveredNodes();
+        this.clearPathNodes();
     }
 
     private touchTimeout: number | null = null;
@@ -81,12 +84,14 @@ export class SkillTreeUtilities {
         }
         node.hoverText = shortest.length.toString();
 
-        let refund = this.getRefundNodes(node);
-        for (let i of refund) {
-            i.isPath = true;
-        }
-        if (refund.length > 0) {
-            node.hoverText = refund.length.toString();
+        if (shortest.length > 0 || node.isActive) {
+            let refund = this.getRefundNodes(node);
+            for (let i of refund) {
+                i.isPath = true;
+            }
+            if (refund.length > 0) {
+                node.hoverText = refund.length.toString();
+            }
         }
     }
 
@@ -96,15 +101,21 @@ export class SkillTreeUtilities {
     }
 
     private clearHoveredNodes = () => {
-        for (let id in this.getHoveredNodes()) {
+        for (let id in this.skillTreeData.getHoveredNodes()) {
             this.skillTreeData.nodes[id].isHovered = false;
             this.skillTreeData.nodes[id].isPath = false;
             this.skillTreeData.nodes[id].hoverText = null;
         }
     }
 
+    private clearPathNodes = () => {
+        for (let id in this.skillTreeData.getHoveredNodes()) {
+            this.skillTreeData.nodes[id].isPath = false;
+        }
+    }
+
     private getShortestPath = (target: SkillNode): Array<SkillNode> => {
-        let skilled = this.getSkilledNodes();
+        let skilled = this.skillTreeData.getSkilledNodes();
         if (skilled[target.id]) {
             return new Array<SkillNode>();
         }
@@ -142,9 +153,6 @@ export class SkillTreeUtilities {
                     continue;
                 }
                 if (out.m) {
-                    continue;
-                }
-                if (out.isAscendancyStart && !out.isActive) {
                     continue;
                 }
                 if (out.spc.length > 0 && !out.isActive) {
@@ -189,12 +197,15 @@ export class SkillTreeUtilities {
         let reachable: { [id: string]: SkillNode } = {};
         for (let id of characterStartNode.out) {
             let out = this.skillTreeData.nodes[id];
+            if (out.ascendancyName !== "" && source.ascendancyName !== "" && out.ascendancyName !== source.ascendancyName) {
+                continue;
+            }
             if (out.isActive && out.id !== source.id) {
                 frontier.push(out);
                 reachable[id] = out;
             }
         }
-        
+
         while (frontier.length > 0) {
             let nextFrontier = new Array<SkillNode>();
             for (let node of frontier) {
@@ -205,6 +216,9 @@ export class SkillTreeUtilities {
                         if (outchoice !== undefined && outchoice === source.in.find(id => this.skillTreeData.nodes[id].isMultipleChoice)) {
                             continue;
                         }
+                    }
+                    if (out.ascendancyName !== "" && source.ascendancyName !== "" && out.ascendancyName !== source.ascendancyName) {
+                        continue;
                     }
                     if (out.id === source.id || reachable[id] || !out.isActive) {
                         continue;
@@ -217,37 +231,15 @@ export class SkillTreeUtilities {
 
             frontier = nextFrontier;
         }
-        
+
         let unreachable = new Array<SkillNode>();
-        let skilledNodes = this.getSkilledNodes();
+        let skilledNodes = this.skillTreeData.getSkilledNodes();
         for (let id in skilledNodes) {
             if (reachable[id] === undefined) {
                 unreachable.push(this.skillTreeData.nodes[id]);
             }
         }
         return unreachable;
-    }
-
-    public getSkilledNodes = (): { [id: string]: SkillNode } => {
-        let skilled: { [id: string]: SkillNode } = {};
-        for (let id in this.skillTreeData.nodes) {
-            let node = this.skillTreeData.nodes[id];
-            if (node.isActive) {
-                skilled[id] = node;
-            }
-        }
-        return skilled;
-    }
-
-    public getHoveredNodes = (): { [id: string]: SkillNode } => {
-        let hovered: { [id: string]: SkillNode } = {};
-        for (let id in this.skillTreeData.nodes) {
-            let node = this.skillTreeData.nodes[id];
-            if (node.isHovered || node.isPath) {
-                hovered[id] = node;
-            }
-        }
-        return hovered;
     }
 
     private getAdjacentNodes = (start: { [id: string]: SkillNode }): { [id: string]: SkillNode } => {

@@ -86,4 +86,25 @@ export class SkillTreeData implements ISkillTreeData {
         }
     }
 
+    public getSkilledNodes = (): { [id: string]: SkillNode } => {
+        let skilled: { [id: string]: SkillNode } = {};
+        for (let id in this.nodes) {
+            let node = this.nodes[id];
+            if (node.isActive) {
+                skilled[id] = node;
+            }
+        }
+        return skilled;
+    }
+
+    public getHoveredNodes = (): { [id: string]: SkillNode } => {
+        let hovered: { [id: string]: SkillNode } = {};
+        for (let id in this.nodes) {
+            let node = this.nodes[id];
+            if (node.isHovered || node.isPath) {
+                hovered[id] = node;
+            }
+        }
+        return hovered;
+    }
 }
