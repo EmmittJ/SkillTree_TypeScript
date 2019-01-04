@@ -62,19 +62,45 @@ namespace App {
             }
         }
 
+        PIXI.Loader.shared.load();
+        let loaded_assets: number = 0;
+        let load_bar = new PIXI.Graphics();
+        let text = new PIXI.Text();
+        let load_bar_width = skillTreeData.width / 2;
+        PIXI.Loader.shared.onProgress.add(() => {
+            loaded_assets++;
+            viewport.removeChild(load_bar);
+            viewport.removeChild(text);
+
+            text = new PIXI.Text(`${Math.ceil(loaded_assets / added_assets.length * 100)}%`, { fontSize: 250, fill: 0xFFFFFF });
+            load_bar = new PIXI.Graphics();
+            load_bar.moveTo(0, 0);
+            load_bar.beginFill(0xFFFFFF, .75);
+            load_bar.lineStyle(2, 0xCBB59C)
+            load_bar.drawRect(0, 0, (loaded_assets / added_assets.length) * load_bar_width, 50);
+            load_bar.endFill();
+            text.position.set(0, -50);
+            load_bar.position.set(-load_bar_width / 2, screen.height / 2);
+
+            viewport.addChild(load_bar);
+            viewport.addChild(text);
+        });
+        PIXI.Loader.shared.onComplete.add(() => {
+            load_bar.destroy(true);
+            text.destroy(true);
+            draw();
+        });
+
         viewport.on('drag-start', (data) => SkillTreeEvents.fire("viewport", "drag-start", data.world));
         viewport.on('drag-end', (data) => SkillTreeEvents.fire("viewport", "drag-end", data.world));
         viewport.on('mouseup', () => SkillTreeEvents.fire("viewport", "mouseup"));
         viewport.on('touchend', () => SkillTreeEvents.fire("viewport", "touchend"));
         viewport.on('touchcancel', () => SkillTreeEvents.fire("viewport", "touchcancel"));
-        PIXI.Loader.shared.load();
-        PIXI.Loader.shared.onComplete.add(() => {
-            draw();
-        });
 
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
+            viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         });
 
     }
@@ -102,7 +128,6 @@ namespace App {
         let connections: PIXI.Container = new PIXI.Container();
         let skillIcons: PIXI.Container = new PIXI.Container();
         let characterStarts: PIXI.Container = new PIXI.Container();
-
 
         let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
         background_graphic.anchor.set(.5);
