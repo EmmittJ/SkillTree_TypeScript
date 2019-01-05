@@ -9,6 +9,7 @@ export class SkillTreeUtilities {
     private DRAG_THRESHOLD_SQUARED = 5 * 5;
     private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
+
     constructor(context: SkillTreeData) {
         this.skillTreeData = context;
         SkillTreeEvents.on("node", "click", this.click, false);
@@ -28,12 +29,46 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
     }
 
+    public changeStartClass = (start: number) => {
+        for (let id in this.skillTreeData.classStartNodes) {
+            let node = this.skillTreeData.nodes[id];
+            if (node.spc[0] !== start) {
+                node.isActive = false;
+                continue;
+            }
+
+            node.isActive = true;
+            for (let i of this.getRefundNodes(node)) {
+                i.isActive = false;
+            }
+        }
+    }
+
+    public changeAscendancyClass = (name: string) => {
+        for (let id in this.skillTreeData.ascedancyStartNodes) {
+            let node = this.skillTreeData.nodes[id];
+            if (node.ascendancyName !== name) {
+                node.isActive = false;
+                continue;
+            }
+
+            node.isActive = true;
+            for (let i of this.getRefundNodes(node)) {
+                if (i.id === node.id) {
+                    continue;
+                }
+                i.isActive = false;
+            }
+            console.log(node.isActive);
+        }
+    }
+
     private click = (node: SkillNode) => {
         if ((this.drag_start.x - this.drag_end.x) * (this.drag_start.x - this.drag_end.x) > this.DRAG_THRESHOLD_SQUARED
             || (this.drag_start.y - this.drag_end.y) * (this.drag_start.y - this.drag_end.y) > this.DRAG_THRESHOLD_SQUARED) {
             return;
         }
-        if (node.spc.length > 0 || node.m) {
+        if (node.spc.length > 0 || node.m || node.isAscendancyStart) {
             return;
         }
 
@@ -129,6 +164,10 @@ export class SkillTreeUtilities {
                 path.push(target);
                 return path;
             }
+            let node = this.skillTreeData.nodes[id];
+            if (node.isAscendancyStart && !node.isActive) {
+                continue;
+            }
             frontier.push(adjacent[id]);
             distance[id] = 1;
         }
@@ -150,6 +189,9 @@ export class SkillTreeUtilities {
                     continue;
                 }
                 if (explored[id] || distance[id]) {
+                    continue;
+                }
+                if (out.isAscendancyStart && !out.isActive) {
                     continue;
                 }
                 if (out.m) {
@@ -183,7 +225,7 @@ export class SkillTreeUtilities {
 
     private getRefundNodes = (source: SkillNode): Array<SkillNode> => {
         let characterStartNode: SkillNode | undefined = undefined;
-        for (let id in this.skillTreeData.nodes) {
+        for (let id in this.skillTreeData.classStartNodes) {
             let node = this.skillTreeData.nodes[id];
             if (node.isActive && node.spc.length > 0) {
                 characterStartNode = node;
@@ -235,7 +277,7 @@ export class SkillTreeUtilities {
         let unreachable = new Array<SkillNode>();
         let skilledNodes = this.skillTreeData.getSkilledNodes();
         for (let id in skilledNodes) {
-            if (reachable[id] === undefined) {
+            if (reachable[id] === undefined && this.skillTreeData.nodes[id].spc.length === 0) {
                 unreachable.push(this.skillTreeData.nodes[id]);
             }
         }

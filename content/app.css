@@ -12,3 +12,9 @@ canvas {
     -webkit-tap-highlight-color: transparent;
     background-color: black;
 }
+
+.skillTreeControls {
+    position: fixed;
+    z-index: auto;
+    bottom: 0;
+}

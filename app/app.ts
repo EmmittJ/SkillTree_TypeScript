@@ -10,12 +10,13 @@ namespace App {
     let skillTreeOptions: ISkillTreeOptions;
     let pixi: PIXI.Application;
     let viewport: Viewport;
+
     export const main = async () => {
         pixi = new PIXI.Application(window.innerWidth, window.innerHeight, {
             autoResize: true,
             resolution: devicePixelRatio
         });
-        document.body.appendChild(pixi.view);
+        $("#skillTreeContainer").append(pixi.view);
 
         skillTreeOptions = await $.ajax({
             url: `/data/Opts.json?t=${(new Date()).getTime()}`,
@@ -25,6 +26,38 @@ namespace App {
             url: `/data/SkillTree.json?t=${(new Date()).getTime()}`,
             dataType: 'json'
         }), skillTreeOptions);
+
+        let classe: Array<JQuery> = new Array<JQuery>();
+        for (let id in skillTreeData.classStartNodes) {
+            let node = skillTreeData.nodes[id];
+            let e = $(`<option>${skillTreeOptions.ascClasses[node.spc[0]].name}</option>`).val(node.spc[0]);
+            if (node.spc[0] === skillTreeOptions.startClass) {
+                e.prop("selected", "selected");
+            }
+            classe.push(e);
+        }
+
+        classe.sort((a, b) => {
+            let first = a.val();
+            let second = b.val();
+            if (first !== undefined && second !== undefined) {
+                return +first - +second;
+            }
+            return 0;
+        });
+
+        for (var e of classe) {
+            $("#skillTreeControl_Class").append(e);
+        }
+        $("#skillTreeControl_Class").on("change", () => {
+            let val = $("#skillTreeControl_Class option:selected").val();
+            if (val !== undefined) {
+                skillTreeData.skillTreeUtilities.changeStartClass(+val);
+                populateAscendancyClasses();
+            }
+        })
+
+        populateAscendancyClasses();
 
         let max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
@@ -105,21 +138,22 @@ namespace App {
 
     }
 
-
-    export const events = () => {
-        viewport.on('clicked', () => console.log('clicked'))
-        viewport.on('drag-start', () => console.log('drag-start'))
-        viewport.on('drag-end', () => console.log('drag-end'))
-        viewport.on('pinch-start', () => console.log('pinch-start'))
-        viewport.on('pinch-end', () => console.log('pinch-end'))
-        viewport.on('snap-start', () => console.log('snap-start'))
-        viewport.on('snap-end', () => console.log('snap-end'))
-        viewport.on('snap-zoom-start', () => console.log('snap-zoom-start'))
-        viewport.on('snap-zoom-end', () => console.log('snap-zoom-end'))
-        viewport.on('moved-end', () => console.log('moved-end'))
-        viewport.on('zoomed-end', () => console.log('zoomed-end'))
+    let populateAscendancyClasses = () => {
+        $("#skillTreeControl_Ascendancy").children().remove(); //= $("<select id='skillTreeControl_Ascendancy'></select>");
+        $("#skillTreeControl_Ascendancy").append("<option value='0' selected='selected'>None</option>");
+        let startClass = skillTreeData.getStartClass();
+        for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
+            let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
+            let e = $(`<option>${asc.displayName}</option>`).val(ascid);
+            $("#skillTreeControl_Ascendancy").append(e);
+        }
+        $("#skillTreeControl_Ascendancy").on("change", () => {
+            let val = $("#skillTreeControl_Ascendancy option:selected").text();
+            if (val !== undefined) {
+                skillTreeData.skillTreeUtilities.changeAscendancyClass(val);
+            }
+        });
     }
-
     export const draw = (): void => {
         viewport.removeChildren();
         //we like the highest res images
@@ -244,28 +278,6 @@ namespace App {
                 continue;
             }
 
-            if (node.isActive) {
-                let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
-                if (class_name === undefined) {
-                    throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
-                }
-                let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
-                let class_name_backgroud = "";
-                if (class_name_backgrouds) {
-                    if (max_zoom in class_name_backgrouds) {
-                        class_name_backgroud = class_name_backgrouds[max_zoom];
-                    } else {
-                        class_name_backgroud = class_name_backgrouds[0];
-                    }
-                    let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
-                    let class_url = `data/assets/Background${class_name.replace("Class", "").toLocaleLowerCase()}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
-                    let class_node_graphic = PIXI.Sprite.from(class_url);
-                    class_node_graphic.anchor.set(.5)
-                    class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
-                    background.addChild(class_node_graphic);
-                }
-            }
-
             let graphic = PIXI.Sprite.from("data/assets/PSStartNodeBackgroundInactive.png");
             graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
             graphic.anchor.set(.5);
@@ -281,22 +293,28 @@ namespace App {
         drawActive();
     }
 
+    let backgrounds_active: PIXI.Container = new PIXI.Container();
     let connections_active: PIXI.Container = new PIXI.Container();
     let skillIcons_active: PIXI.Container = new PIXI.Container();
     let characterStarts_active: PIXI.Container = new PIXI.Container();
     let tooltip: PIXI.Graphics | null = null;
     export const drawActive = () => {
         var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
+
+        viewport.removeChild(backgrounds_active);
         viewport.removeChild(connections_active);
         viewport.removeChild(skillIcons_active);
         viewport.removeChild(characterStarts_active);
-
         if (tooltip !== null) {
             viewport.removeChild(tooltip);
             if (tooltip.children.length > 0) {
                 tooltip.removeChildren();
             }
             tooltip = null;
+        }
+
+        if (backgrounds_active.children.length > 0) {
+            backgrounds_active.removeChildren();
         }
         if (connections_active.children.length > 0) {
             connections_active.removeChildren();
@@ -379,8 +397,26 @@ namespace App {
             if (class_name === undefined) {
                 throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
             }
-            let common_name = skillTreeData.constants.classesToName[class_name];
 
+            if (node.isActive) {
+                let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
+                let class_name_backgroud = "";
+                if (class_name_backgrouds) {
+                    if (max_zoom in class_name_backgrouds) {
+                        class_name_backgroud = class_name_backgrouds[max_zoom];
+                    } else {
+                        class_name_backgroud = class_name_backgrouds[0];
+                    }
+                    let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
+                    let class_url = `data/assets/Background${class_name.replace("Class", "")}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
+                    let class_node_graphic = PIXI.Sprite.from(class_url);
+                    class_node_graphic.anchor.set(.5)
+                    class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
+                    backgrounds_active.addChild(class_node_graphic);
+                }
+            }
+
+            let common_name = skillTreeData.constants.classesToName[class_name];
             //find center
             let class_backgrounds = skillTreeData.assets[`center${common_name.toLocaleLowerCase()}`];
             let class_background = "";
@@ -399,9 +435,9 @@ namespace App {
                 characterStarts_active.addChild(node_graphic);
             }
         }
-
-        viewport.addChildAt(connections_active, 2);
-        viewport.addChildAt(skillIcons_active, 4);
+        viewport.addChildAt(backgrounds_active, 1)
+        viewport.addChildAt(connections_active, 3);
+        viewport.addChildAt(skillIcons_active, 5);
         viewport.addChild(characterStarts_active)
         if (tooltip !== null) {
             viewport.addChild(tooltip);

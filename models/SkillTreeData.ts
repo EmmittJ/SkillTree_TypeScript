@@ -17,11 +17,16 @@ export class SkillTreeData implements ISkillTreeData {
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };
     constants: Constants;
+
+    skillTreeOtions: ISkillTreeOptions;
+    skillTreeUtilities: SkillTreeUtilities;
     width: number;
     height: number;
-    skillTreeUtilities: SkillTreeUtilities;
+    classStartNodes: { [id: string]: SkillNode };
+    ascedancyStartNodes: { [id: string]: SkillNode };
 
     constructor(skillTree: ISkillTreeData, options: ISkillTreeOptions) {
+        this.skillTreeOtions = options;
         this.skillTreeUtilities = new SkillTreeUtilities(this);
         this.characterData = skillTree.characterData;
         this.groups = skillTree.groups;
@@ -69,6 +74,8 @@ export class SkillTreeData implements ISkillTreeData {
 
         let scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
         this.nodes = {};
+        this.classStartNodes = {};
+        this.ascedancyStartNodes = {};
         for (let id in skillTree.nodes) {
             let node
                 = new SkillNode(
@@ -83,7 +90,39 @@ export class SkillTreeData implements ISkillTreeData {
             }
 
             this.nodes[id] = node;
+            if (node.isAscendancyStart) {
+                this.ascedancyStartNodes[id] = node;
+            }
+            if (node.spc.length > 0) {
+                this.classStartNodes[id] = node;
+            }
         }
+    }
+
+    public getStartClass = (): number => {
+        for (let id in this.classStartNodes) {
+            if (this.nodes[id].isActive) {
+                return this.nodes[id].spc[0];
+            }
+        }
+        return 0;
+    }
+
+    public getAscendancyClass = (): number => {
+        for (let id in this.ascedancyStartNodes) {
+            if (this.nodes[id].isActive) {
+                for (let classid in this.skillTreeOtions.ascClasses) {
+                    for (let ascid in this.skillTreeOtions.ascClasses[classid].classes) {
+                        let asc = this.skillTreeOtions.ascClasses[classid].classes[ascid];
+                        if (asc.name === this.nodes[id].dn) {
+                            return +ascid;
+                        }
+                    }
+                }
+            }
+        }
+
+        return 0;
     }
 
     public getSkilledNodes = (): { [id: string]: SkillNode } => {
