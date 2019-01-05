@@ -3,6 +3,8 @@ import { Constants } from "./Constants";
 import { SkillTreeUtilities } from "./SkillTreeUtilities";
 
 export class SkillTreeData implements ISkillTreeData {
+    version: number = 4;
+    fullscreen: number = 0;
     characterData: { [id: string]: ICharacter };
     groups: { [id: string]: IGroup };
     root: IRootNode;
@@ -97,6 +99,8 @@ export class SkillTreeData implements ISkillTreeData {
                 this.classStartNodes[id] = node;
             }
         }
+
+        this.skillTreeUtilities.decodeURL();
     }
 
     public getStartClass = (): number => {

@@ -31,7 +31,7 @@ namespace App {
         for (let id in skillTreeData.classStartNodes) {
             let node = skillTreeData.nodes[id];
             let e = $(`<option>${skillTreeOptions.ascClasses[node.spc[0]].name}</option>`).val(node.spc[0]);
-            if (node.spc[0] === skillTreeOptions.startClass) {
+            if (node.spc[0] === skillTreeData.getStartClass()) {
                 e.prop("selected", "selected");
             }
             classe.push(e);
@@ -139,18 +139,22 @@ namespace App {
     }
 
     let populateAscendancyClasses = () => {
+        let ascStart = skillTreeData.getAscendancyClass();
         $("#skillTreeControl_Ascendancy").children().remove(); //= $("<select id='skillTreeControl_Ascendancy'></select>");
-        $("#skillTreeControl_Ascendancy").append("<option value='0' selected='selected'>None</option>");
+        $("#skillTreeControl_Ascendancy").append(`<option value='0' ${ascStart === 0? "selected='selected'" :""}>None</option>`);
         let startClass = skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
             let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
             let e = $(`<option>${asc.displayName}</option>`).val(ascid);
+            if (+ascid === ascStart) {
+                e.prop("selected", "selected");
+            }
             $("#skillTreeControl_Ascendancy").append(e);
         }
         $("#skillTreeControl_Ascendancy").on("change", () => {
-            let val = $("#skillTreeControl_Ascendancy option:selected").text();
+            let val = $("#skillTreeControl_Ascendancy option:selected").val();
             if (val !== undefined) {
-                skillTreeData.skillTreeUtilities.changeAscendancyClass(val);
+                skillTreeData.skillTreeUtilities.changeAscendancyClass(+val);
             }
         });
     }

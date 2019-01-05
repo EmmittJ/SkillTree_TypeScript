@@ -1,4 +1,6 @@
 ﻿interface ISkillTreeData {
+    version: number;
+    fullscreen: number;
     characterData: { [id: string]: ICharacter };
     groups: { [id: string]: IGroup };
     root: IRootNode;
@@ -13,4 +15,9 @@
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };
     constants: IConstants;
+
+    getStartClass(): number;
+    getAscendancyClass(): number;
+    getSkilledNodes(): { [id: string]: ISkillNode };
+    getHoveredNodes(): { [id: string]: ISkillNode };
 }

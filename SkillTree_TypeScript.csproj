@@ -175,6 +175,7 @@
     <TypeScriptCompile Include="app\app.ts" />
     <TypeScriptCompile Include="app\Utils.ts" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
+    <TypeScriptCompile Include="models\SkillTreeCodec.ts" />
     <TypeScriptCompile Include="models\SkillTreeData.ts" />
     <TypeScriptCompile Include="models\Constants.ts" />
     <TypeScriptCompile Include="models\SkillTreeEvents.ts" />
@@ -188,6 +189,7 @@
     <TypeScriptCompile Include="models\types\ISkillTreeData.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeOptions.d.ts" />
     <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillTreeCodec.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />

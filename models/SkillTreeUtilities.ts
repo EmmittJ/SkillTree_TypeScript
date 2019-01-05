@@ -2,6 +2,7 @@
 import { SkillNode } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import * as PIXI from "pixi.js";
+import { SkillTreeCodec } from "./SkillTreeCodec";
 
 export class SkillTreeUtilities {
     private drag_start: PIXI.PointLike;
@@ -9,9 +10,12 @@ export class SkillTreeUtilities {
     private DRAG_THRESHOLD_SQUARED = 5 * 5;
     private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
+    skillTreeCodec: SkillTreeCodec;
 
     constructor(context: SkillTreeData) {
         this.skillTreeData = context;
+        this.skillTreeCodec = new SkillTreeCodec();
+
         SkillTreeEvents.on("node", "click", this.click, false);
         SkillTreeEvents.on("node", "tap", this.click, false);
         SkillTreeEvents.on("node", "mouseover", this.mouseover, false);
@@ -27,9 +31,27 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), false);
         SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
         SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
+
+        window.onhashchange = this.decodeURL;
     }
 
-    public changeStartClass = (start: number) => {
+    public decodeURL = () => {
+        let def = this.skillTreeCodec.decodeURL(window.location.hash.replace("#", ""), this.skillTreeData);
+        this.skillTreeData.version = def.Version;
+        this.skillTreeData.fullscreen = def.Fullscreen;
+        this.changeStartClass(def.Class, false);
+        this.changeAscendancyClass(def.Ascendancy, false);
+        for (let node of def.Nodes) {
+            this.skillTreeData.nodes[node.id].isActive = true;
+        }
+        this.encodeURL();
+    }
+
+    private encodeURL = () => {
+        window.location.hash = `#${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
+    }
+
+    public changeStartClass = (start: number, encode: boolean = true) => {
         for (let id in this.skillTreeData.classStartNodes) {
             let node = this.skillTreeData.nodes[id];
             if (node.spc[0] !== start) {
@@ -42,9 +64,18 @@ export class SkillTreeUtilities {
                 i.isActive = false;
             }
         }
+
+        if (encode) {
+            this.encodeURL();
+        }
     }
 
-    public changeAscendancyClass = (name: string) => {
+    public changeAscendancyClass = (start: number, encode: boolean = true) => {
+        let startClass = this.skillTreeData.getStartClass();
+        let ascClasses = this.skillTreeData.skillTreeOtions.ascClasses[startClass];
+        let ascClass = ascClasses.classes[start];
+        let name = ascClass !== undefined ? ascClass.name : "None";
+
         for (let id in this.skillTreeData.ascedancyStartNodes) {
             let node = this.skillTreeData.nodes[id];
             if (node.ascendancyName !== name) {
@@ -59,7 +90,10 @@ export class SkillTreeUtilities {
                 }
                 i.isActive = false;
             }
-            console.log(node.isActive);
+        }
+
+        if (encode) {
+            this.encodeURL();
         }
     }
 
@@ -89,7 +123,9 @@ export class SkillTreeUtilities {
                 i.isActive = true;
             }
         }
+
         this.clearPathNodes();
+        this.encodeURL();
     }
 
     private touchTimeout: number | null = null;
