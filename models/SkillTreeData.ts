@@ -3,8 +3,8 @@ import { Constants } from "./Constants";
 import { SkillTreeUtilities } from "./SkillTreeUtilities";
 
 export class SkillTreeData implements ISkillTreeData {
-    version: number = 4;
-    fullscreen: number = 0;
+    version: number;
+    fullscreen: number;
     characterData: { [id: string]: ICharacter };
     groups: { [id: string]: IGroup };
     root: IRootNode;
@@ -28,6 +28,8 @@ export class SkillTreeData implements ISkillTreeData {
     ascedancyStartNodes: { [id: string]: SkillNode };
 
     constructor(skillTree: ISkillTreeData, options: ISkillTreeOptions) {
+        this.version = skillTree.version = 4;
+        this.fullscreen = skillTree.fullscreen = 0;
         this.skillTreeOtions = options;
         this.skillTreeUtilities = new SkillTreeUtilities(this);
         this.characterData = skillTree.characterData;
@@ -99,8 +101,6 @@ export class SkillTreeData implements ISkillTreeData {
                 this.classStartNodes[id] = node;
             }
         }
-
-        this.skillTreeUtilities.decodeURL();
     }
 
     public getStartClass = (): number => {

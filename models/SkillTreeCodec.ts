@@ -32,7 +32,7 @@ export class SkillTreeCodec implements ISkillTreeCodec {
     }
 
     decodeURL(encoding: string, skillTreeData: ISkillTreeData): SkillTreeDefinition {
-        let skillTreeDefinition: SkillTreeDefinition = { Version: 4, Fullscreen: 0, Ascendancy: 0, Class: 0, Nodes: new Array<ISkillNode>()};
+        let skillTreeDefinition: SkillTreeDefinition = { Version: 4, Class: 0, Ascendancy: 0, Fullscreen: 0, Nodes: new Array<ISkillNode>() };
         let bytes = this.Base64ToUint8Array(encoding);
         skillTreeDefinition.Version = bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3];
         skillTreeDefinition.Class = bytes[4];

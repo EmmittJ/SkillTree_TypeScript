@@ -35,7 +35,13 @@ export class SkillTreeUtilities {
         window.onhashchange = this.decodeURL;
     }
 
+    private lastHash = "";
     public decodeURL = () => {
+        if (this.lastHash === window.location.hash) {
+            return;
+        }
+        this.lastHash = window.location.hash;
+
         let def = this.skillTreeCodec.decodeURL(window.location.hash.replace("#", ""), this.skillTreeData);
         this.skillTreeData.version = def.Version;
         this.skillTreeData.fullscreen = def.Fullscreen;
@@ -44,6 +50,16 @@ export class SkillTreeUtilities {
         for (let node of def.Nodes) {
             this.skillTreeData.nodes[node.id].isActive = true;
         }
+
+        for (let id in this.skillTreeData.classStartNodes) {
+            if (this.skillTreeData.nodes[id].isActive) {
+                let refund = this.getRefundNodes(this.skillTreeData.nodes[id]);
+                for (let i of refund) {
+                    i.isActive = false;
+                }
+            }
+        }
+
         this.encodeURL();
     }
 
@@ -71,10 +87,9 @@ export class SkillTreeUtilities {
     }
 
     public changeAscendancyClass = (start: number, encode: boolean = true) => {
-        let startClass = this.skillTreeData.getStartClass();
-        let ascClasses = this.skillTreeData.skillTreeOtions.ascClasses[startClass];
+        let ascClasses = this.skillTreeData.skillTreeOtions.ascClasses[this.skillTreeData.getStartClass()];
         let ascClass = ascClasses.classes[start];
-        let name = ascClass !== undefined ? ascClass.name : "None";
+        let name = ascClass !== undefined ? ascClass.name : "NONE";
 
         for (let id in this.skillTreeData.ascedancyStartNodes) {
             let node = this.skillTreeData.nodes[id];
@@ -92,6 +107,17 @@ export class SkillTreeUtilities {
             }
         }
 
+        if (name === "NONE") {
+            for (let id in this.skillTreeData.getSkilledNodes()) {
+                let node = this.skillTreeData.nodes[id];
+                if (node.ascendancyName === "") {
+                    continue;
+                }
+
+                node.isActive = false;
+            }
+        }
+        
         if (encode) {
             this.encodeURL();
         }

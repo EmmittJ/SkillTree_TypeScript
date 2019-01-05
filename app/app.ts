@@ -27,38 +27,6 @@ namespace App {
             dataType: 'json'
         }), skillTreeOptions);
 
-        let classe: Array<JQuery> = new Array<JQuery>();
-        for (let id in skillTreeData.classStartNodes) {
-            let node = skillTreeData.nodes[id];
-            let e = $(`<option>${skillTreeOptions.ascClasses[node.spc[0]].name}</option>`).val(node.spc[0]);
-            if (node.spc[0] === skillTreeData.getStartClass()) {
-                e.prop("selected", "selected");
-            }
-            classe.push(e);
-        }
-
-        classe.sort((a, b) => {
-            let first = a.val();
-            let second = b.val();
-            if (first !== undefined && second !== undefined) {
-                return +first - +second;
-            }
-            return 0;
-        });
-
-        for (var e of classe) {
-            $("#skillTreeControl_Class").append(e);
-        }
-        $("#skillTreeControl_Class").on("change", () => {
-            let val = $("#skillTreeControl_Class option:selected").val();
-            if (val !== undefined) {
-                skillTreeData.skillTreeUtilities.changeStartClass(+val);
-                populateAscendancyClasses();
-            }
-        })
-
-        populateAscendancyClasses();
-
         let max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({
@@ -135,7 +103,40 @@ namespace App {
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
             viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         });
+    }
 
+    let populateStartClasses = () => {
+        let classe: Array<JQuery> = new Array<JQuery>();
+        for (let id in skillTreeData.classStartNodes) {
+            let node = skillTreeData.nodes[id];
+            let e = $(`<option>${skillTreeOptions.ascClasses[node.spc[0]].name}</option>`).val(node.spc[0]);
+            if (node.spc[0] === skillTreeData.getStartClass()) {
+                e.prop("selected", "selected");
+            }
+            classe.push(e);
+        }
+
+        classe.sort((a, b) => {
+            let first = a.val();
+            let second = b.val();
+            if (first !== undefined && second !== undefined) {
+                return +first - +second;
+            }
+            return 0;
+        });
+
+        for (var e of classe) {
+            $("#skillTreeControl_Class").append(e);
+        }
+        $("#skillTreeControl_Class").on("change", () => {
+            let val = $("#skillTreeControl_Class option:selected").val();
+            if (val !== undefined) {
+                skillTreeData.skillTreeUtilities.changeStartClass(+val);
+                populateAscendancyClasses();
+            }
+        })
+
+        populateAscendancyClasses();
     }
 
     let populateAscendancyClasses = () => {
@@ -158,6 +159,7 @@ namespace App {
             }
         });
     }
+
     export const draw = (): void => {
         viewport.removeChildren();
         //we like the highest res images
@@ -295,6 +297,8 @@ namespace App {
         viewport.addChild(characterStarts);
 
         drawActive();
+        skillTreeData.skillTreeUtilities.decodeURL();
+        populateStartClasses();
     }
 
     let backgrounds_active: PIXI.Container = new PIXI.Container();
