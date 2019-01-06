@@ -1,5 +1,6 @@
 ﻿import { SkillTreeUtilities } from "./SkillTreeUtilities";
 import { SkillTreeEvents } from "./SkillTreeEvents";
+import { SkillTreeCodec } from "./SkillTreeCodec";
 
 export class SkillNode implements ISkillNode {
     id: number;
@@ -26,6 +27,7 @@ export class SkillNode implements ISkillNode {
     sa: number;
     out: number[];
     in: number[];
+    state: SkillNodeStates;
 
     skillTreeUtilities: SkillTreeUtilities;
     group: IGroup;
@@ -35,11 +37,7 @@ export class SkillNode implements ISkillNode {
     arc: number;
     x: number;
     y: number;
-
-    isActive: boolean;
-    isHovered: boolean;
     hoverText: string | null = null;
-    isPath: boolean;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number, skillTreeUtilities: SkillTreeUtilities) {
         this.skillTreeUtilities = skillTreeUtilities;
@@ -67,6 +65,7 @@ export class SkillNode implements ISkillNode {
         this.sa = node.sa || 0;
         this.out = node.out || [];
         this.in = node.in || [];
+        this.state = SkillNodeStates.None;
 
         this.group = group;
         this.orbitRadii = orbitRadii;
@@ -76,10 +75,6 @@ export class SkillNode implements ISkillNode {
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
 
-        this.isActive = false;
-        this.isHovered = false;
-        this.isPath = false;
-
         SkillTreeEvents.subscribe("node", this.rebindNodeEvents);
     }
 
@@ -87,10 +82,22 @@ export class SkillNode implements ISkillNode {
     private getX = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.x * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
     private getY = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.y * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
 
+    public is = (test: SkillNodeStates) => {
+        return (this.state & test) === test;
+    }
+
+    public add = (state: SkillNodeStates) => {
+        this.state |= state;
+    }
+
+    public remove = (state: SkillNodeStates) => {
+        this.state &= ~state;
+    }
+
     private nodeFrame: PIXI.Sprite = new PIXI.Sprite();
     public createNodeFrame = (): PIXI.Sprite | null => {
         let drawType: "Allocated" | "CanAllocate" | "Unallocated" = "Unallocated";
-        if (this.isActive || this.isHovered) {
+        if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
             drawType = "Allocated";
         } else {
             if (this.skillTreeUtilities.isAnyActive(this.out)) {
@@ -136,7 +143,8 @@ export class SkillNode implements ISkillNode {
             this.nodeFrame.position.set(this.x, this.y);
             this.nodeFrame.anchor.set(.5);
             this.nodeFrame.hitArea = new PIXI.Circle(0, 0, Math.max(this.nodeFrame.texture.width, this.nodeFrame.texture.height) / 2);
-            if ((this.isActive && this.isHovered) || (this.isActive && this.isPath && (this.isMultipleChoice || this.isMultipleChoiceOption))) {
+            if (this.is(SkillNodeStates.Active | SkillNodeStates.Hovered)
+                || (this.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && (this.isMultipleChoice || this.isMultipleChoiceOption))) {
                 this.nodeFrame.tint = 0xFF0000;
             }
 
@@ -155,7 +163,7 @@ export class SkillNode implements ISkillNode {
 
     private nodeSprite: PIXI.Sprite = new PIXI.Sprite();
     public createNodeGraphic = (skillSprites: { [id: string]: Array<ISpriteSheet> }, zoomLevel: number = 3): PIXI.Sprite => {
-        let drawType = this.isActive ? "Active" : "Inactive";
+        let drawType = this.is(SkillNodeStates.Active) ? "Active" : "Inactive";
         let spriteSheetKey: string = "";
         if (this.ks) {
             spriteSheetKey = `keystone${drawType}`;
@@ -274,7 +282,7 @@ export class SkillNode implements ISkillNode {
         if (this.spc.length > 0 || other.spc.length > 0) {
             return null;
         }
-        if ((this.isPath || this.isHovered) && (!other.isPath && !other.isHovered && !other.isActive)) {
+        if ((this.is(SkillNodeStates.Pathing) || this.is(SkillNodeStates.Hovered)) && (!other.is(SkillNodeStates.Pathing) && !other.is(SkillNodeStates.Hovered) && !other.is(SkillNodeStates.Active) )) {
             return null;
         }
         if (this.g === other.g && this.o === other.o) {
@@ -328,7 +336,7 @@ export class SkillNode implements ISkillNode {
         arcGraphic.position.set(x, y);
         arcGraphic.rotation = arc + Math.PI / 4;
         arcGraphic.anchor.set(arc_offset);
-        if (this.isActive && this.isPath && other.isActive && other.isPath) {
+        if (this.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
             arcGraphic.tint = 0xFF0000;
         }
         return arcGraphic;
@@ -349,14 +357,14 @@ export class SkillNode implements ISkillNode {
         line.position.set(this.x, this.y);
         line.rotation = Math.atan2(other.y - this.y, other.x - this.x);
 
-        if (this.isActive && this.isPath && other.isActive && other.isPath) {
+        if (this.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
             line.tint = 0xFF0000;
         }
         return line;
     }
 
     private getConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {
-        return this.isActive && other.isActive ? "Active" : (this.isActive || other.isActive || (this.isPath && other.isPath) ? "Intermediate" : "Normal");
+        return this.is(SkillNodeStates.Active) && other.is(SkillNodeStates.Active) ? "Active" : (this.is(SkillNodeStates.Active) || other.is(SkillNodeStates.Active) || (this.is(SkillNodeStates.Pathing) && other.is(SkillNodeStates.Pathing)) ? "Intermediate" : "Normal");
     }
 
     private getMidpoint = (n1: SkillNode, n2: SkillNode, skillsPerOrbit: Array<number>): number => {
@@ -406,4 +414,13 @@ export class SkillNode implements ISkillNode {
         text_graphic.anchor.set(.5);
         return text_graphic;
     }
+
+}
+
+export enum SkillNodeStates {
+    None = 0,
+    Active = 1 << 0,
+    Hovered = 1 << 1,
+    Pathing = 1 << 2,
+    Highlighted = 1 << 3
 }

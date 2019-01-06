@@ -5,17 +5,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Skill Tree - TypeScript Example</title>
-    <link rel="stylesheet" href="/content/app.css?v=1.0.0" type="text/css" />
+    <link rel="stylesheet" href="/content/app.css?v=1.0.1" type="text/css" />
+    <script src="dist/app.js" defer></script>
 </head>
 <body>
-    <script src="dist/app.js" defer></script>
-    <div id="skillTreeContainer"></div>
-    <div class="skillTreeControls">
-        <input type="text" id="skillTreeControl_Search" />
-        <select id="skillTreeControl_Class"></select>
-        <select id="skillTreeControl_Ascendancy">
-            <option value="0" selected="selected">None</option>
-        </select>
+    <div id="skillTreeContainer">
+        <div class="skillTreeControls">
+            <input type="text" id="skillTreeControl_Search" />
+            <select id="skillTreeControl_Class"></select>
+            <select id="skillTreeControl_Ascendancy">
+                <option value="0" selected="selected">None</option>
+            </select>
+        </div>
     </div>
 </body>
 </html>

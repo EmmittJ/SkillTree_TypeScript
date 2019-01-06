@@ -1,4 +1,4 @@
-﻿import { SkillNode } from "./SkillNode";
+﻿import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { Constants } from "./Constants";
 import { SkillTreeUtilities } from "./SkillTreeUtilities";
 
@@ -90,7 +90,7 @@ export class SkillTreeData implements ISkillTreeData {
                     scale,
                     this.skillTreeUtilities);
             if (node.spc.length > 0 && node.spc.indexOf(options.startClass) >= 0) {
-                node.isActive = true;
+                node.add(SkillNodeStates.Active);
             }
 
             this.nodes[id] = node;
@@ -105,7 +105,7 @@ export class SkillTreeData implements ISkillTreeData {
 
     public getStartClass = (): number => {
         for (let id in this.classStartNodes) {
-            if (this.nodes[id].isActive) {
+            if (this.nodes[id].is(SkillNodeStates.Active)) {
                 return this.nodes[id].spc[0];
             }
         }
@@ -114,7 +114,7 @@ export class SkillTreeData implements ISkillTreeData {
 
     public getAscendancyClass = (): number => {
         for (let id in this.ascedancyStartNodes) {
-            if (this.nodes[id].isActive) {
+            if (this.nodes[id].is(SkillNodeStates.Active)) {
                 for (let classid in this.skillTreeOtions.ascClasses) {
                     for (let ascid in this.skillTreeOtions.ascClasses[classid].classes) {
                         let asc = this.skillTreeOtions.ascClasses[classid].classes[ascid];
@@ -133,7 +133,7 @@ export class SkillTreeData implements ISkillTreeData {
         let skilled: { [id: string]: SkillNode } = {};
         for (let id in this.nodes) {
             let node = this.nodes[id];
-            if (node.isActive) {
+            if (node.is(SkillNodeStates.Active)) {
                 skilled[id] = node;
             }
         }
@@ -144,7 +144,7 @@ export class SkillTreeData implements ISkillTreeData {
         let hovered: { [id: string]: SkillNode } = {};
         for (let id in this.nodes) {
             let node = this.nodes[id];
-            if (node.isHovered || node.isPath) {
+            if (node.is(SkillNodeStates.Hovered) || node.is(SkillNodeStates.Pathing)) {
                 hovered[id] = node;
             }
         }

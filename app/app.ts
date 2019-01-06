@@ -4,6 +4,7 @@ import * as PIXI from "pixi.js";;
 import * as Viewport from "pixi-viewport";
 import * as $ from "jquery";
 import { SkillTreeEvents } from "../models/SkillTreeEvents";
+import { SkillNodeStates } from "../models/SkillNode";
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -142,7 +143,7 @@ namespace App {
     let populateAscendancyClasses = () => {
         let ascStart = skillTreeData.getAscendancyClass();
         $("#skillTreeControl_Ascendancy").children().remove(); //= $("<select id='skillTreeControl_Ascendancy'></select>");
-        $("#skillTreeControl_Ascendancy").append(`<option value='0' ${ascStart === 0? "selected='selected'" :""}>None</option>`);
+        $("#skillTreeControl_Ascendancy").append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
         let startClass = skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
             let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
@@ -337,9 +338,10 @@ namespace App {
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            if ((!node.isActive && !node.isHovered && !node.isPath) || node.spc.length > 0) {
+            if ((!node.is(SkillNodeStates.Active) && !node.is(SkillNodeStates.Hovered) && !node.is(SkillNodeStates.Pathing)) || node.spc.length > 0) {
                 continue;
             }
+
             let nodes = node.in
                 .filter((outID) => {
                     if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
@@ -363,7 +365,7 @@ namespace App {
 
             connections_active.addChild(node.createConnections(nodes));
             for (let out of nodes) {
-                if (node.isActive) {
+                if (node.is(SkillNodeStates.Active)) {
                     let frame = out.createNodeFrame();
                     if (frame !== null) {
                         skillIcons_active.addChild(frame);
@@ -377,7 +379,7 @@ namespace App {
                 skillIcons_active.addChild(frame);
             }
 
-            if (node.isHovered) {
+            if (node.is(SkillNodeStates.Hovered)) {
                 let padding = 10;
                 let text = node.createTooltipText();
                 text.position.set(padding / 2, padding / 2);
@@ -398,7 +400,7 @@ namespace App {
 
         for (let id of skillTreeData.root.out) {
             let node = skillTreeData.nodes[id];
-            if (node.spc.length !== 1 || !node.isActive) {
+            if (node.spc.length !== 1 || !node.is(SkillNodeStates.Active)) {
                 continue;
             }
             let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
@@ -406,22 +408,20 @@ namespace App {
                 throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
             }
 
-            if (node.isActive) {
-                let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
-                let class_name_backgroud = "";
-                if (class_name_backgrouds) {
-                    if (max_zoom in class_name_backgrouds) {
-                        class_name_backgroud = class_name_backgrouds[max_zoom];
-                    } else {
-                        class_name_backgroud = class_name_backgrouds[0];
-                    }
-                    let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
-                    let class_url = `data/assets/Background${class_name.replace("Class", "")}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
-                    let class_node_graphic = PIXI.Sprite.from(class_url);
-                    class_node_graphic.anchor.set(.5)
-                    class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
-                    backgrounds_active.addChild(class_node_graphic);
+            let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
+            let class_name_backgroud = "";
+            if (class_name_backgrouds) {
+                if (max_zoom in class_name_backgrouds) {
+                    class_name_backgroud = class_name_backgrouds[max_zoom];
+                } else {
+                    class_name_backgroud = class_name_backgrouds[0];
                 }
+                let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
+                let class_url = `data/assets/Background${class_name.replace("Class", "")}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
+                let class_node_graphic = PIXI.Sprite.from(class_url);
+                class_node_graphic.anchor.set(.5)
+                class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
+                backgrounds_active.addChild(class_node_graphic);
             }
 
             let common_name = skillTreeData.constants.classesToName[class_name];
@@ -443,6 +443,7 @@ namespace App {
                 characterStarts_active.addChild(node_graphic);
             }
         }
+
         viewport.addChildAt(backgrounds_active, 1)
         viewport.addChildAt(connections_active, 3);
         viewport.addChildAt(skillIcons_active, 5);
