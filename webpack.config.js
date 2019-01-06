@@ -1,6 +1,7 @@
 ﻿module.exports = {
-    mode: 'development',
+    mode: 'production',
     entry: './app/app.ts',
+    devtool: "none",
     module: {
         rules: [
             {

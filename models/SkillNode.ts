@@ -156,7 +156,7 @@ export class SkillNode implements ISkillNode {
         }
 
         if (assetKey !== "") {
-            this.nodeFrame = PIXI.Sprite.from(`data/assets/${assetKey}.png`);
+            this.nodeFrame = PIXI.Sprite.from(`${assetKey}`);
             this.nodeFrame.position.set(this.x, this.y);
             this.nodeFrame.anchor.set(.5);
             this.nodeFrame.hitArea = new PIXI.Circle(0, 0, Math.max(this.nodeFrame.texture.width, this.nodeFrame.texture.height) / 2);
@@ -200,7 +200,7 @@ export class SkillNode implements ISkillNode {
         if (!spriteSheet) {
             throw Error(`Sprite Sheet (${spriteSheetKey}) not found in SpriteSheets (${spriteSheets})`);
         }
-        var spriteSheetTexture = PIXI.Texture.from(`data/assets/${spriteSheet.filename}`);
+        var spriteSheetTexture = PIXI.Texture.from(`${spriteSheet.filename}`);
         var coords = spriteSheet.coords[this.icon];
         var spriteTexture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
         this.nodeSprite = this.isAscendancyStart ? new PIXI.Sprite() : new PIXI.Sprite(spriteTexture);
@@ -347,7 +347,7 @@ export class SkillNode implements ISkillNode {
         }
 
         //Calculate the bounds of the arc
-        let texture = PIXI.Texture.from(`data/assets/Orbit${this.o}${connectionType}.png`);
+        let texture = PIXI.Texture.from(`Orbit${this.o}${connectionType}`);
         let length = Math.hypot(this.x - x, this.y - y) * 2;
         let rectw = Math.min(length * .75, texture.baseTexture.width);
         let recth = Math.min(length * .75, texture.baseTexture.height);
@@ -366,7 +366,7 @@ export class SkillNode implements ISkillNode {
     }
 
     private createLineConnection = (other: SkillNode): PIXI.Sprite => {
-        let assetName = `data/assets/LineConnector${this.getConnectionType(other)}.png`;
+        let assetName = `LineConnector${this.getConnectionType(other)}`;
         let texture = PIXI.Texture.from(assetName);
         let length = Math.hypot(this.x - other.x, this.y - other.y);
         let line: PIXI.Sprite;

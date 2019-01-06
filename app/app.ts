@@ -52,7 +52,7 @@ namespace App {
             let asset = skillTreeData.assets[id];
             if (asset[max_zoom] && added_assets.indexOf(id) < 0) {
                 added_assets.push(id);
-                PIXI.Loader.shared.add(`data/assets/${id}.png`);
+                PIXI.Loader.shared.add(id, `data/assets/${id}.png`);
             }
         }
         for (let id in skillTreeData.skillSprites) {
@@ -60,7 +60,7 @@ namespace App {
             let sprite = sprites[sprites.length - 1];
             if (sprite && added_assets.indexOf(sprite.filename) < 0) {
                 added_assets.push(sprite.filename);
-                PIXI.Loader.shared.add(`data/assets/${sprite.filename}`);
+                PIXI.Loader.shared.add(sprite.filename, `data/assets/${sprite.filename}`);
             }
         }
 
@@ -142,7 +142,7 @@ namespace App {
 
     let populateAscendancyClasses = (ascControl: JQuery<HTMLElement>) => {
         let ascStart = skillTreeData.getAscendancyClass();
-        ascControl.children().remove(); //= $("<select id='skillTreeControl_Ascendancy'></select>");
+        ascControl.children().remove();
         ascControl.append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
         let startClass = skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
@@ -181,7 +181,7 @@ namespace App {
         let skillIcons: PIXI.Container = new PIXI.Container();
         let characterStarts: PIXI.Container = new PIXI.Container();
 
-        let background_graphic = PIXI.TilingSprite.from('data/assets/Background1.png', skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
+        let background_graphic = PIXI.TilingSprite.from("Background1", skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
         background_graphic.anchor.set(.5);
         background.addChild(background_graphic);
 
@@ -210,14 +210,14 @@ namespace App {
                 continue;
             }
 
-            let sprite = PIXI.Sprite.from(`data/assets/PSGroupBackground${max}.png`);
+            let sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
             sprite.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
             sprite.anchor.set(.5);
             background.addChild(sprite);
 
             if (max === 3) {
                 sprite.anchor.set(.5, 1);
-                let sprite2 = PIXI.Sprite.from(`data/assets/PSGroupBackground${max}.png`);
+                let sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
                 sprite2.rotation = Math.PI;
                 sprite2.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
                 sprite2.anchor.set(.5, 1);
@@ -231,7 +231,7 @@ namespace App {
                 continue;
             }
             let ascendancyName = group.n.map(id => skillTreeData.nodes[id].ascendancyName)[0];
-            let sprite = PIXI.Sprite.from(`data/assets/Classes${ascendancyName}.png`);
+            let sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
             sprite.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
             sprite.anchor.set(.5);
             background.addChild(sprite);
@@ -296,7 +296,7 @@ namespace App {
                 continue;
             }
 
-            let graphic = PIXI.Sprite.from("data/assets/PSStartNodeBackgroundInactive.png");
+            let graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
             graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
             graphic.anchor.set(.5);
             characterStarts.addChild(graphic);
@@ -425,40 +425,16 @@ namespace App {
                 throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
             }
 
-            let class_name_backgrouds = skillTreeData.assets[`Background${class_name.replace("Class", "")}`];
-            let class_name_backgroud = "";
-            if (class_name_backgrouds) {
-                if (max_zoom in class_name_backgrouds) {
-                    class_name_backgroud = class_name_backgrouds[max_zoom];
-                } else {
-                    class_name_backgroud = class_name_backgrouds[0];
-                }
-                let class_file_name = class_name_backgroud.slice(class_name_backgroud.lastIndexOf('/') + 1);
-                let class_url = `data/assets/Background${class_name.replace("Class", "")}${class_file_name.slice(class_file_name.lastIndexOf('.'))}`;
-                let class_node_graphic = PIXI.Sprite.from(class_url);
-                class_node_graphic.anchor.set(.5)
-                class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
-                backgrounds_active.addChild(class_node_graphic);
-            }
+            let class_node_graphic = PIXI.Sprite.from(`Background${class_name.replace("Class", "")}`);
+            class_node_graphic.anchor.set(.5)
+            class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
+            backgrounds_active.addChild(class_node_graphic);
 
             let common_name = skillTreeData.constants.classesToName[class_name];
-            //find center
-            let class_backgrounds = skillTreeData.assets[`center${common_name.toLocaleLowerCase()}`];
-            let class_background = "";
-            if (class_backgrounds) {
-                if (max_zoom in class_backgrounds) {
-                    class_background = class_backgrounds[max_zoom];
-                } else {
-                    class_background = class_backgrounds[0];
-                }
-                //get file name
-                let file_name = class_background.slice(class_background.lastIndexOf('/') + 1);
-                let node_url = `data/assets/center${common_name.toLocaleLowerCase()}${file_name.slice(file_name.lastIndexOf('.'))}`;
-                let node_graphic = PIXI.Sprite.from(node_url);
-                node_graphic.anchor.set(.5)
-                node_graphic.position.set(node.x, node.y);
-                characterStarts_active.addChild(node_graphic);
-            }
+            let node_graphic = PIXI.Sprite.from(`center${common_name.toLocaleLowerCase()}`);
+            node_graphic.anchor.set(.5)
+            node_graphic.position.set(node.x, node.y);
+            characterStarts_active.addChild(node_graphic);
         }
 
         viewport.addChildAt(backgrounds_active, 1)
