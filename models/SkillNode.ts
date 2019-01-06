@@ -94,7 +94,21 @@ export class SkillNode implements ISkillNode {
         this.state &= ~state;
     }
 
-    private nodeFrame: PIXI.Sprite = new PIXI.Sprite();
+    public createNodeHighlight = (): PIXI.Graphics | null => {
+        if (!this.is(SkillNodeStates.Highlighted) || this.nodeFrame === null) {
+            return null;
+        }
+
+        let graphic = new PIXI.Graphics();
+        graphic.beginFill(0x000000, 0);
+        graphic.lineStyle(5, 0x00FFCC);
+        graphic.drawCircle(0, 0, Math.max(this.nodeSprite.texture.width, this.nodeSprite.texture.height) * 1.5 / 2);
+        graphic.endFill();
+        graphic.position.set(this.x, this.y);
+        return graphic;
+    }
+
+    private nodeFrame: PIXI.Sprite | null = new PIXI.Sprite();
     public createNodeFrame = (): PIXI.Sprite | null => {
         let drawType: "Allocated" | "CanAllocate" | "Unallocated" = "Unallocated";
         if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
@@ -116,8 +130,11 @@ export class SkillNode implements ISkillNode {
                 ? `NotableFrame${drawType}`
                 : `PassiveSkillScreenAscendancyFrameLarge${drawType === "Unallocated" ? "Normal" : drawType}`;;
         } else if (this.m) {
-            this.nodeFrame.destroy();
-            return null;
+            if (this.nodeFrame !== null) {
+                this.nodeFrame.destroy();
+                this.nodeFrame = null;
+            }
+            return this.nodeFrame;
         } else {
             switch (drawType) {
                 case "Unallocated":
@@ -197,14 +214,20 @@ export class SkillNode implements ISkillNode {
 
     public rebindNodeEvents = () => {
         this.nodeSprite.removeAllListeners();
-        this.nodeFrame.removeAllListeners();
+        if (this.nodeFrame !== null) {
+            this.nodeFrame.removeAllListeners();
+        }
 
         if (!this.m && SkillTreeEvents.events["node"] !== undefined) {
             this.nodeSprite.interactive = true;
-            this.nodeFrame.interactive = true;
+            if (this.nodeFrame !== null) {
+                this.nodeFrame.interactive = true;
+            }
             for (let event in SkillTreeEvents.events["node"]) {
                 this.nodeSprite.on(event, () => SkillTreeEvents.fire("node", event, this));
-                this.nodeFrame.on(event, () => SkillTreeEvents.fire("node", event, this));
+                if (this.nodeFrame !== null) {
+                    this.nodeFrame.on(event, () => SkillTreeEvents.fire("node", event, this));
+                }
             }
         }
     }

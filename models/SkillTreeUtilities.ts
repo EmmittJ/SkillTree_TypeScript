@@ -32,6 +32,9 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
         SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
 
+        SkillTreeEvents.on("controls", "class-change", this.changeStartClass, false);
+        SkillTreeEvents.on("controls", "ascendancy-class-change", this.changeAscendancyClass, false);
+        SkillTreeEvents.on("controls", "search-change", this.searchChange, true)
         window.onhashchange = this.decodeURL;
     }
 
@@ -114,6 +117,20 @@ export class SkillTreeUtilities {
         }
     }
 
+    public searchChange = (str: string | undefined = undefined) => {
+        this.clearState(SkillNodeStates.Highlighted);
+        if (str === undefined || str.length === 0) {
+            return;
+        }
+        let regex = new RegExp(str, "gi");
+        for (let id in this.skillTreeData.nodes) {
+            let node = this.skillTreeData.nodes[id];
+            if (node.dn.match(regex) !== null || node.sd.find(stat => stat.match(regex) !== null) !== undefined) {
+                node.add(SkillNodeStates.Highlighted);
+            }
+        }
+    }
+
     private click = (node: SkillNode) => {
         if ((this.drag_start.x - this.drag_end.x) * (this.drag_start.x - this.drag_end.x) > this.DRAG_THRESHOLD_SQUARED
             || (this.drag_start.y - this.drag_end.y) * (this.drag_start.y - this.drag_end.y) > this.DRAG_THRESHOLD_SQUARED) {
@@ -141,7 +158,7 @@ export class SkillTreeUtilities {
             }
         }
 
-        this.clearPathNodes();
+        this.clearState(SkillNodeStates.Pathing);
         this.encodeURL();
     }
 
@@ -159,7 +176,8 @@ export class SkillTreeUtilities {
     }
 
     private mouseover = (node: SkillNode) => {
-        this.clearHoveredNodes();
+        this.clearState(SkillNodeStates.Hovered);
+        this.clearState(SkillNodeStates.Pathing);
 
         if (node.spc.length === 0) {
             node.add(SkillNodeStates.Hovered);
@@ -185,20 +203,17 @@ export class SkillTreeUtilities {
 
     private mouseout = (node: SkillNode) => {
         node.destroyTooltip();
-        this.clearHoveredNodes();
+        this.clearState(SkillNodeStates.Hovered);
+        this.clearState(SkillNodeStates.Pathing);
     }
 
-    private clearHoveredNodes = () => {
-        for (let id in this.skillTreeData.getHoveredNodes()) {
-            this.skillTreeData.nodes[id].remove(SkillNodeStates.Hovered);
-            this.skillTreeData.nodes[id].remove(SkillNodeStates.Pathing);
-            this.skillTreeData.nodes[id].hoverText = null;
-        }
-    }
+    private clearState = (state: SkillNodeStates) => {
+        for (let id in this.skillTreeData.getNodes(state)) {
+            this.skillTreeData.nodes[id].remove(state);
 
-    private clearPathNodes = () => {
-        for (let id in this.skillTreeData.getHoveredNodes()) {
-            this.skillTreeData.nodes[id].remove(SkillNodeStates.Pathing);
+            if (state === SkillNodeStates.Hovered) {
+                this.skillTreeData.nodes[id].hoverText = null;
+            }
         }
     }
 

@@ -106,7 +106,7 @@ namespace App {
         });
     }
 
-    let populateStartClasses = () => {
+    let populateStartClasses = (classControl: JQuery<HTMLElement>) => {
         let classe: Array<JQuery> = new Array<JQuery>();
         for (let id in skillTreeData.classStartNodes) {
             let node = skillTreeData.nodes[id];
@@ -127,23 +127,23 @@ namespace App {
         });
 
         for (var e of classe) {
-            $("#skillTreeControl_Class").append(e);
+            classControl.append(e);
         }
-        $("#skillTreeControl_Class").on("change", () => {
-            let val = $("#skillTreeControl_Class option:selected").val();
+        classControl.on("change", () => {
+            let val = classControl.find("option:selected").val();
             if (val !== undefined) {
-                skillTreeData.skillTreeUtilities.changeStartClass(+val);
-                populateAscendancyClasses();
+                SkillTreeEvents.fire("controls", "class-change", +val);
+                populateAscendancyClasses($("#skillTreeControl_Ascendancy"));
             }
         })
 
-        populateAscendancyClasses();
+        populateAscendancyClasses($("#skillTreeControl_Ascendancy"));
     }
 
-    let populateAscendancyClasses = () => {
+    let populateAscendancyClasses = (ascControl: JQuery<HTMLElement>) => {
         let ascStart = skillTreeData.getAscendancyClass();
-        $("#skillTreeControl_Ascendancy").children().remove(); //= $("<select id='skillTreeControl_Ascendancy'></select>");
-        $("#skillTreeControl_Ascendancy").append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
+        ascControl.children().remove(); //= $("<select id='skillTreeControl_Ascendancy'></select>");
+        ascControl.append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
         let startClass = skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
             let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
@@ -151,14 +151,25 @@ namespace App {
             if (+ascid === ascStart) {
                 e.prop("selected", "selected");
             }
-            $("#skillTreeControl_Ascendancy").append(e);
+            ascControl.append(e);
         }
-        $("#skillTreeControl_Ascendancy").on("change", () => {
-            let val = $("#skillTreeControl_Ascendancy option:selected").val();
-            if (val !== undefined) {
-                skillTreeData.skillTreeUtilities.changeAscendancyClass(+val);
-            }
+        ascControl.on("change", () => {
+            let val = ascControl.find("option:selected").val();
+            SkillTreeEvents.fire("controls", "ascendancy-class-change", val !== undefined ? +val : 0);
         });
+    }
+
+    let searchTimout: number | null = null;
+    let bindSearchBox = (searchControl: JQuery<HTMLElement>) => {
+        searchControl.on("keyup", () => {
+            if (searchTimout !== null) {
+                clearTimeout(searchTimout);
+            }
+            searchTimout = setTimeout(() => {
+                SkillTreeEvents.fire("controls", "search-change", searchControl.val());
+                searchTimout = null;
+            }, 200);
+        })
     }
 
     export const draw = (): void => {
@@ -299,7 +310,8 @@ namespace App {
 
         drawActive();
         skillTreeData.skillTreeUtilities.decodeURL();
-        populateStartClasses();
+        populateStartClasses($("#skillTreeControl_Class"));
+        bindSearchBox($("#skillTreeControl_Search"));
     }
 
     let backgrounds_active: PIXI.Container = new PIXI.Container();
@@ -338,7 +350,7 @@ namespace App {
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            if ((!node.is(SkillNodeStates.Active) && !node.is(SkillNodeStates.Hovered) && !node.is(SkillNodeStates.Pathing)) || node.spc.length > 0) {
+            if (node.state === SkillNodeStates.None || node.spc.length > 0) {
                 continue;
             }
 
@@ -395,6 +407,11 @@ namespace App {
                     ? new PIXI.Point(node.x + 50, node.y - 15) :
                     pixi.renderer.plugins.interaction.mouse.getLocalPosition(viewport);
                 tooltip.position.set(mouse.x + 10, mouse.y - 5);
+            }
+
+            let highlight = node.createNodeHighlight();
+            if (highlight !== null) {
+                skillIcons_active.addChild(highlight)
             }
         }
 
