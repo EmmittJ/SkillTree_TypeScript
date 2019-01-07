@@ -421,6 +421,10 @@ namespace App {
                 tooltip.y -= tooltip.height / (PIXI.utils.isMobile.phone ? 2 : 1);
             }
 
+            if (!PIXI.utils.isMobile.phone) {
+                tooltip.scale.set(tooltip.width / bounds.width, tooltip.height / bounds.height);
+            }
+
             requestAnimationFrame(drawTooltip);
         }
     }
