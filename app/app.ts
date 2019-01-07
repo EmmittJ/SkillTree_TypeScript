@@ -445,7 +445,7 @@ namespace App {
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            if (node.state === SkillNodeStates.None || node.spc.length > 0) {
+            if ((!node.is(SkillNodeStates.Active) && !node.is(SkillNodeStates.Pathing)) || node.spc.length > 0) {
                 continue;
             }
 
