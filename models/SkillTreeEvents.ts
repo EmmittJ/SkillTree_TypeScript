@@ -1,4 +1,4 @@
-﻿type SkillTreeEvent = "node" | "viewport" | "controls";
+﻿type SkillTreeEvent = "node" | "skilltree" | "viewport" | "controls";
 export class SkillTreeEvents {
     public static events: { [type: string]: { [event: string]: Array<Function> } } = {};
     public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify: boolean = true) => {

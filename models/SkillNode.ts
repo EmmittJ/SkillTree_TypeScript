@@ -281,7 +281,7 @@ export class SkillNode implements ISkillNode {
         this.tooltipTimeout = setTimeout(() => {
             this.tooltipTimeout = null;
             if (this.PIXI_tooltip !== null) {
-                this.PIXI_tooltip.destroy();
+                this.PIXI_tooltip.destroy(true);
                 this.PIXI_tooltip = null
             }
         }, 5000);

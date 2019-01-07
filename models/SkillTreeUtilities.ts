@@ -82,6 +82,8 @@ export class SkillTreeUtilities {
             }
 
             node.add(SkillNodeStates.Active);
+            SkillTreeEvents.fire("skilltree", "class-change", node);
+
             for (let i of this.getRefundNodes(node)) {
                 i.remove(SkillNodeStates.Active);
             }
@@ -109,6 +111,7 @@ export class SkillTreeUtilities {
             }
             if (node.isAscendancyStart) {
                 node.add(SkillNodeStates.Active);
+                SkillTreeEvents.fire("skilltree", "ascendancy-class-change", node);
             }
         }
 
@@ -125,10 +128,15 @@ export class SkillTreeUtilities {
         let regex = new RegExp(str, "gi");
         for (let id in this.skillTreeData.nodes) {
             let node = this.skillTreeData.nodes[id];
+            if (node.isAscendancyStart || node.spc.length > 0) {
+                continue;
+            }
             if (node.dn.match(regex) !== null || node.sd.find(stat => stat.match(regex) !== null) !== undefined) {
                 node.add(SkillNodeStates.Highlighted);
             }
         }
+
+        SkillTreeEvents.fire("skilltree", "highlighted-nodes-update");
     }
 
     private click = (node: SkillNode) => {
@@ -199,12 +207,15 @@ export class SkillTreeUtilities {
                 node.hoverText = refund.length.toString();
             }
         }
+
+        SkillTreeEvents.fire("skilltree", "hovered-nodes-start", node);
     }
 
     private mouseout = (node: SkillNode) => {
         node.destroyTooltip();
         this.clearState(SkillNodeStates.Hovered);
         this.clearState(SkillNodeStates.Pathing);
+        SkillTreeEvents.fire("skilltree", "hovered-nodes-end", node);
     }
 
     private clearState = (state: SkillNodeStates) => {

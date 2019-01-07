@@ -28,13 +28,12 @@ namespace App {
             dataType: 'json'
         }), skillTreeOptions);
 
-        let max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({
             screenWidth: pixi.screen.width,
             screenHeight: pixi.screen.height,
-            worldWidth: skillTreeData.width * (max_zoom * 1.25),
-            worldHeight: skillTreeData.height * (max_zoom * 1.25),
+            worldWidth: skillTreeData.width * (skillTreeData.maxZoom * 1.25),
+            worldHeight: skillTreeData.height * (skillTreeData.maxZoom * 1.25),
             interaction: pixi.renderer.plugins.interaction
         });
         viewport
@@ -46,11 +45,12 @@ namespace App {
         viewport.zoomPercent(1.726);
         pixi.stage.addChild(viewport);
 
+        PIXI.utils.destroyTextureCache();
         PIXI.Loader.shared.reset();
         let added_assets = new Array<string>();
         for (let id in skillTreeData.assets) {
             let asset = skillTreeData.assets[id];
-            if (asset[max_zoom] && added_assets.indexOf(id) < 0) {
+            if (asset[skillTreeData.maxZoom] && added_assets.indexOf(id) < 0) {
                 added_assets.push(id);
                 PIXI.Loader.shared.add(id, `data/assets/${id}.png`);
             }
@@ -66,30 +66,30 @@ namespace App {
 
         PIXI.Loader.shared.load();
         let loaded_assets: number = 0;
-        let load_bar = new PIXI.Graphics();
-        let text = new PIXI.Text();
         let load_bar_width = skillTreeData.width / 2;
+        let progress_text = "";
         PIXI.Loader.shared.onProgress.add(() => {
             loaded_assets++;
-            viewport.removeChild(load_bar);
-            viewport.removeChild(text);
+            let new_text = `${Math.ceil(loaded_assets / added_assets.length * 1000) / 10}%`;
+            if (new_text !== progress_text) {
+                viewport.removeChildren();
+                progress_text = new_text;
 
-            text = new PIXI.Text(`${Math.ceil(loaded_assets / added_assets.length * 100)}%`, { fontSize: 250, fill: 0xFFFFFF });
-            load_bar = new PIXI.Graphics();
-            load_bar.moveTo(0, 0);
-            load_bar.beginFill(0xFFFFFF, .75);
-            load_bar.lineStyle(2, 0xCBB59C)
-            load_bar.drawRect(0, 0, (loaded_assets / added_assets.length) * load_bar_width, 50);
-            load_bar.endFill();
-            text.position.set(0, -50);
-            load_bar.position.set(-load_bar_width / 2, screen.height / 2);
+                let load_bar = new PIXI.Graphics();
+                load_bar.moveTo(0, 0);
+                load_bar.beginFill(0xFFFFFF, .75);
+                load_bar.lineStyle(2, 0xCBB59C)
+                load_bar.drawRect(0, 0, (loaded_assets / added_assets.length) * load_bar_width, 50);
+                load_bar.endFill();
+                load_bar.position.set(-load_bar_width / 2, screen.height / 2);
+                viewport.addChild(load_bar);
 
-            viewport.addChild(load_bar);
-            viewport.addChild(text);
+                let text = new PIXI.Text(progress_text, { fontSize: 250, fill: 0xFFFFFF });
+                text.position.set(0, -50);
+                viewport.addChild(text);
+            }
         });
         PIXI.Loader.shared.onComplete.add(() => {
-            load_bar.destroy(true);
-            text.destroy(true);
             draw();
         });
 
@@ -101,12 +101,13 @@ namespace App {
 
         $(window).on("resize", () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
-            viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
+            viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
             viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         });
     }
 
     let populateStartClasses = (classControl: JQuery<HTMLElement>) => {
+        classControl.children().remove();
         let classe: Array<JQuery> = new Array<JQuery>();
         for (let id in skillTreeData.classStartNodes) {
             let node = skillTreeData.nodes[id];
@@ -168,20 +169,18 @@ namespace App {
             searchTimout = setTimeout(() => {
                 SkillTreeEvents.fire("controls", "search-change", searchControl.val());
                 searchTimout = null;
-            }, 200);
+            }, 250);
         })
     }
 
     export const draw = (): void => {
         viewport.removeChildren();
-        //we like the highest res images
-        var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
         let background: PIXI.Container = new PIXI.Container();
         let connections: PIXI.Container = new PIXI.Container();
         let skillIcons: PIXI.Container = new PIXI.Container();
         let characterStarts: PIXI.Container = new PIXI.Container();
 
-        let background_graphic = PIXI.TilingSprite.from("Background1", skillTreeData.width * (max_zoom * 1.25), skillTreeData.height * (max_zoom * 1.25));
+        let background_graphic = PIXI.TilingSprite.from("Background1", skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
         background_graphic.anchor.set(.5);
         background.addChild(background_graphic);
 
@@ -211,7 +210,7 @@ namespace App {
             }
 
             let sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
-            sprite.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
+            sprite.position.set(Math.ceil(group.x * skillTreeData.maxZoom), Math.ceil(group.y * skillTreeData.maxZoom));
             sprite.anchor.set(.5);
             background.addChild(sprite);
 
@@ -219,7 +218,7 @@ namespace App {
                 sprite.anchor.set(.5, 1);
                 let sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
                 sprite2.rotation = Math.PI;
-                sprite2.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
+                sprite2.position.set(Math.ceil(group.x * skillTreeData.maxZoom), Math.ceil(group.y * skillTreeData.maxZoom));
                 sprite2.anchor.set(.5, 1);
                 background.addChild(sprite2);
             }
@@ -232,7 +231,7 @@ namespace App {
             }
             let ascendancyName = group.n.map(id => skillTreeData.nodes[id].ascendancyName)[0];
             let sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
-            sprite.position.set(Math.ceil(group.x * max_zoom), Math.ceil(group.y * max_zoom));
+            sprite.position.set(Math.ceil(group.x * skillTreeData.maxZoom), Math.ceil(group.y * skillTreeData.maxZoom));
             sprite.anchor.set(.5);
             background.addChild(sprite);
 
@@ -242,8 +241,8 @@ namespace App {
                     let ascClass = ascClasses.classes[classid];
                     if (ascClass.name === ascendancyName) {
                         let rect = ascClass.flavourTextRect.split(",");
-                        let x = Math.ceil((group.x + +rect[0]) * max_zoom) - sprite.width / 2;
-                        let y = Math.ceil((group.y + +rect[1]) * max_zoom) - sprite.height / 2;
+                        let x = Math.ceil((group.x + +rect[0]) * skillTreeData.maxZoom) - sprite.width / 2;
+                        let y = Math.ceil((group.y + +rect[1]) * skillTreeData.maxZoom) - sprite.height / 2;
                         let c = ascClass.flavourTextColour.split(",");
                         let r = +c[0];
                         let g = +c[1];
@@ -251,7 +250,7 @@ namespace App {
                         let colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
                         let text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
                         text.position.set(x, y);
-                        text.scale.set(max_zoom);
+                        text.scale.set(skillTreeData.maxZoom);
                         background.addChild(text);
                     }
                 }
@@ -297,54 +296,146 @@ namespace App {
             }
 
             let graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
-            graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
+            graphic.position.set(node.group.x * skillTreeData.maxZoom, node.group.y * skillTreeData.maxZoom);
             graphic.anchor.set(.5);
             characterStarts.addChild(graphic);
         }
 
-
+        background.interactive = false;
+        background.interactiveChildren = false;
         viewport.addChild(background);
+
+        connections.interactive = false;
+        connections.interactiveChildren = false;
         viewport.addChild(connections);
+
+        skillIcons.interactive = false;
+        skillIcons.interactiveChildren = true;
         viewport.addChild(skillIcons);
+
+        characterStarts.interactive = false;
+        characterStarts.interactiveChildren = false;
         viewport.addChild(characterStarts);
 
+        drawCharacterStartsActive();
         drawActive();
         skillTreeData.skillTreeUtilities.decodeURL();
         populateStartClasses($("#skillTreeControl_Class"));
         bindSearchBox($("#skillTreeControl_Search"));
+        SkillTreeEvents.on("skilltree", "highlighted-nodes-update", drawHighlight);
+        SkillTreeEvents.on("skilltree", "class-change", drawCharacterStartsActive);
+
+        SkillTreeEvents.on("skilltree", "hovered-nodes-start", () => {
+            updateTooltip = true;
+            drawTooltip();
+        });
+        SkillTreeEvents.on("skilltree", "hovered-nodes-end", () => updateTooltip = false);
+    }
+
+    let highlights: PIXI.Container = new PIXI.Container();
+    export const drawHighlight = () => {
+        viewport.removeChild(highlights);
+        if (highlights.children.length > 0) {
+            highlights.removeChildren();
+        }
+        for (let id in skillTreeData.nodes) {
+            let node = skillTreeData.nodes[id];
+            let highlight = node.createNodeHighlight();
+            if (highlight !== null) {
+                highlights.addChild(highlight)
+            }
+        }
+        viewport.addChild(highlights);
     }
 
     let backgrounds_active: PIXI.Container = new PIXI.Container();
+    let characterStarts_active: PIXI.Container = new PIXI.Container();
+    export const drawCharacterStartsActive = () => {
+        viewport.removeChild(backgrounds_active);
+        backgrounds_active.removeChildren();
+
+        viewport.removeChild(characterStarts_active);
+        characterStarts_active.removeChildren();
+
+        for (let id of skillTreeData.root.out) {
+            let node = skillTreeData.nodes[id];
+            if (node.spc.length !== 1 || !node.is(SkillNodeStates.Active)) {
+                continue;
+            }
+            let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
+            if (class_name === undefined) {
+                throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
+            }
+
+            let class_node_graphic = PIXI.Sprite.from(`Background${class_name.replace("Class", "")}`);
+            class_node_graphic.anchor.set(.5)
+            class_node_graphic.position.set(node.group.x * skillTreeData.maxZoom, node.group.y * skillTreeData.maxZoom);
+            backgrounds_active.addChild(class_node_graphic);
+
+            let common_name = skillTreeData.constants.classesToName[class_name];
+            let node_graphic = PIXI.Sprite.from(`center${common_name.toLocaleLowerCase()}`);
+            node_graphic.anchor.set(.5)
+            node_graphic.position.set(node.x, node.y);
+            characterStarts_active.addChild(node_graphic);
+        }
+
+        viewport.addChildAt(backgrounds_active, 1);
+        viewport.addChild(characterStarts_active);
+    }
+
+    let updateTooltip = true;
+    let tooltip: PIXI.Graphics = new PIXI.Graphics();
+    export const drawTooltip = () => {
+        viewport.removeChild(tooltip);
+        if (tooltip.children.length > 0) {
+            tooltip.removeChildren();
+        }
+        for (let id in skillTreeData.nodes) {
+            let node = skillTreeData.nodes[id];
+            if (node.is(SkillNodeStates.Hovered)) {
+                let padding = 10;
+                let text = node.createTooltipText();
+                text.position.set(padding / 2, padding / 2);
+
+                tooltip.clear();
+                tooltip.beginFill(0x000000, .75);
+                tooltip.lineStyle(2, 0xCBB59C)
+                tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
+                tooltip.endFill();
+
+                tooltip.addChild(text);
+                let mouse = PIXI.utils.isMobile.phone
+                    ? new PIXI.Point(node.x + 50, node.y - 15) :
+                    pixi.renderer.plugins.interaction.mouse.getLocalPosition(viewport);
+                tooltip.position.set(mouse.x + 10, mouse.y - 5);
+            }
+        }
+
+        if (updateTooltip) {
+            viewport.addChild(tooltip);
+            let bounds = tooltip.getBounds();
+            if (tooltip.worldTransform.tx + bounds.width > screen.width) {
+                tooltip.x -= tooltip.width / (PIXI.utils.isMobile.phone ? 2 : 1);
+            }
+            if (tooltip.worldTransform.ty + bounds.height > screen.height) {
+                tooltip.y -= tooltip.height / (PIXI.utils.isMobile.phone ? 2 : 1);
+            }
+
+            requestAnimationFrame(drawTooltip);
+        }
+    }
+
     let connections_active: PIXI.Container = new PIXI.Container();
     let skillIcons_active: PIXI.Container = new PIXI.Container();
-    let characterStarts_active: PIXI.Container = new PIXI.Container();
-    let tooltip: PIXI.Graphics | null = null;
     export const drawActive = () => {
-        var max_zoom = skillTreeData.imageZoomLevels[skillTreeData.imageZoomLevels.length - 1];
-
-        viewport.removeChild(backgrounds_active);
         viewport.removeChild(connections_active);
         viewport.removeChild(skillIcons_active);
-        viewport.removeChild(characterStarts_active);
-        if (tooltip !== null) {
-            viewport.removeChild(tooltip);
-            if (tooltip.children.length > 0) {
-                tooltip.removeChildren();
-            }
-            tooltip = null;
-        }
 
-        if (backgrounds_active.children.length > 0) {
-            backgrounds_active.removeChildren();
-        }
         if (connections_active.children.length > 0) {
             connections_active.removeChildren();
         }
         if (skillIcons_active.children.length > 0) {
             skillIcons_active.removeChildren();
-        }
-        if (characterStarts_active.children.length > 0) {
-            characterStarts_active.removeChildren();
         }
 
         let drawn_connections: { [id: number]: Array<number> } = {};
@@ -390,81 +481,11 @@ namespace App {
             if (frame !== null) {
                 skillIcons_active.addChild(frame);
             }
-
-            if (node.is(SkillNodeStates.Hovered)) {
-                let padding = 10;
-                let text = node.createTooltipText();
-                text.position.set(padding / 2, padding / 2);
-
-                tooltip = new PIXI.Graphics();
-                tooltip.beginFill(0x000000, .75);
-                tooltip.lineStyle(2, 0xCBB59C)
-                tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
-                tooltip.endFill();
-
-                tooltip.addChild(text);
-                let mouse = PIXI.utils.isMobile.phone
-                    ? new PIXI.Point(node.x + 50, node.y - 15) :
-                    pixi.renderer.plugins.interaction.mouse.getLocalPosition(viewport);
-                tooltip.position.set(mouse.x + 10, mouse.y - 5);
-            }
-
-            let highlight = node.createNodeHighlight();
-            if (highlight !== null) {
-                skillIcons_active.addChild(highlight)
-            }
         }
 
-        for (let id of skillTreeData.root.out) {
-            let node = skillTreeData.nodes[id];
-            if (node.spc.length !== 1 || !node.is(SkillNodeStates.Active)) {
-                continue;
-            }
-            let class_name = Utils.getKeyByValue(skillTreeData.constants.classes, node.spc[0]);
-            if (class_name === undefined) {
-                throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
-            }
-
-            let class_node_graphic = PIXI.Sprite.from(`Background${class_name.replace("Class", "")}`);
-            class_node_graphic.anchor.set(.5)
-            class_node_graphic.position.set(node.group.x * max_zoom, node.group.y * max_zoom);
-            backgrounds_active.addChild(class_node_graphic);
-
-            let common_name = skillTreeData.constants.classesToName[class_name];
-            let node_graphic = PIXI.Sprite.from(`center${common_name.toLocaleLowerCase()}`);
-            node_graphic.anchor.set(.5)
-            node_graphic.position.set(node.x, node.y);
-            characterStarts_active.addChild(node_graphic);
-        }
-
-        viewport.addChildAt(backgrounds_active, 1)
         viewport.addChildAt(connections_active, 3);
         viewport.addChildAt(skillIcons_active, 5);
-        viewport.addChild(characterStarts_active)
-        if (tooltip !== null) {
-            viewport.addChild(tooltip);
-            let bounds = tooltip.getBounds();
-            let scalex = tooltip.width / bounds.width;
-            let scaley = tooltip.height / bounds.height;
-            if (tooltip.worldTransform.tx + bounds.x > screen.width) {
-                if (!PIXI.utils.isMobile.phone) {
-                    tooltip.x -= tooltip.width * scalex;
-                } else {
-                    tooltip.x -= tooltip.width / 2;
-                }
-            }
-            if (tooltip.worldTransform.ty + bounds.y > screen.height) {
-                if (!PIXI.utils.isMobile.phone) {
-                    tooltip.y -= tooltip.height * scaley;
-                } else {
-                    tooltip.y -= tooltip.height / 2;
-                }
-            }
-            if (!PIXI.utils.isMobile.phone) {
 
-                tooltip.scale.set(scalex, scaley);
-            }
-        }
         requestAnimationFrame(drawActive);
     }
 }

@@ -24,6 +24,7 @@ export class SkillTreeData implements ISkillTreeData {
     skillTreeUtilities: SkillTreeUtilities;
     width: number;
     height: number;
+    maxZoom: number;
     classStartNodes: { [id: string]: SkillNode };
     ascedancyStartNodes: { [id: string]: SkillNode };
 
@@ -47,6 +48,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.constants = new Constants(skillTree.constants);
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
+        this.maxZoom = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
 
         // Setup in/out properties correctly
         {
@@ -76,7 +78,6 @@ export class SkillTreeData implements ISkillTreeData {
             }
         }
 
-        let scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
         this.nodes = {};
         this.classStartNodes = {};
         this.ascedancyStartNodes = {};
@@ -87,7 +88,7 @@ export class SkillTreeData implements ISkillTreeData {
                     skillTree.groups[skillTree.nodes[id].g],
                     skillTree.constants.orbitRadii,
                     skillTree.constants.skillsPerOrbit,
-                    scale,
+                    this.maxZoom,
                     this.skillTreeUtilities);
             if (node.spc.length > 0 && node.spc.indexOf(options.startClass) >= 0) {
                 node.add(SkillNodeStates.Active);
