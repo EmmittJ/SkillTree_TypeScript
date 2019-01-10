@@ -101,11 +101,8 @@ export class SkillTreeUtilities {
         let ascClass = ascClasses.classes[start];
         let name = ascClass !== undefined ? ascClass.name : undefined;
 
-        for (let id in this.skillTreeData.nodes) {
+        for (let id in this.skillTreeData.ascedancyNodes) {
             let node = this.skillTreeData.nodes[id];
-            if (node.ascendancyName === "") {
-                continue;
-            }
             if (node.ascendancyName !== name) {
                 node.remove(SkillNodeStates.Active);
                 continue;

@@ -26,7 +26,7 @@ export class SkillTreeData implements ISkillTreeData {
     height: number;
     maxZoom: number;
     classStartNodes: { [id: string]: SkillNode };
-    ascedancyStartNodes: { [id: string]: SkillNode };
+    ascedancyNodes: { [id: string]: SkillNode };
 
     constructor(skillTree: ISkillTreeData, options: ISkillTreeOptions) {
         this.version = skillTree.version = 4;
@@ -80,7 +80,7 @@ export class SkillTreeData implements ISkillTreeData {
 
         this.nodes = {};
         this.classStartNodes = {};
-        this.ascedancyStartNodes = {};
+        this.ascedancyNodes = {};
         for (let id in skillTree.nodes) {
             let node
                 = new SkillNode(
@@ -95,8 +95,8 @@ export class SkillTreeData implements ISkillTreeData {
             }
 
             this.nodes[id] = node;
-            if (node.isAscendancyStart) {
-                this.ascedancyStartNodes[id] = node;
+            if (node.ascendancyName !== "") {
+                this.ascedancyNodes[id] = node;
             }
             if (node.spc.length > 0) {
                 this.classStartNodes[id] = node;
@@ -114,8 +114,8 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getAscendancyClass = (): number => {
-        for (let id in this.ascedancyStartNodes) {
-            if (this.nodes[id].is(SkillNodeStates.Active)) {
+        for (let id in this.ascedancyNodes) {
+            if (this.nodes[id].isAscendancyStart && this.nodes[id].is(SkillNodeStates.Active)) {
                 for (let classid in this.skillTreeOtions.ascClasses) {
                     for (let ascid in this.skillTreeOtions.ascClasses[classid].classes) {
                         let asc = this.skillTreeOtions.ascClasses[classid].classes[ascid];
