@@ -265,3 +265,4 @@ __pycache__/
 !/scripts/*.map
 *.d.ts
 !/models/types/*.d.ts
+/index.html

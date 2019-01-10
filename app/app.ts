@@ -335,6 +335,7 @@ namespace App {
         skillTreeData.skillTreeUtilities.decodeURL();
         populateStartClasses($("#skillTreeControl_Class"));
         bindSearchBox($("#skillTreeControl_Search"));
+        $(".skillTreeControls").show();
     }
 
     let highlights: PIXI.Container = new PIXI.Container();
