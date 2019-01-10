@@ -1,4 +1,6 @@
-﻿import * as PIXI from "pixi.js";
+﻿import '../content/app.css';
+
+import * as PIXI from "pixi.js";
 import * as Viewport from "pixi-viewport";
 import * as $ from "jquery";
 import { SkillNodeStates } from "../models/SkillNode";
