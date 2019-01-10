@@ -1,10 +1,10 @@
-﻿import { SkillTreeData } from "../models/SkillTreeData";
-import { Utils } from "./utils";
-import * as PIXI from "pixi.js";;
+﻿import * as PIXI from "pixi.js";
 import * as Viewport from "pixi-viewport";
 import * as $ from "jquery";
-import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { SkillNodeStates } from "../models/SkillNode";
+import { SkillTreeData } from "../models/SkillTreeData";
+import { SkillTreeEvents } from "../models/SkillTreeEvents";
+import { Utils } from "./utils";
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -90,6 +90,7 @@ namespace App {
             }
         });
         PIXI.Loader.shared.onComplete.add(() => {
+            setupSkillTreeEvents();
             draw();
         });
 
@@ -104,6 +105,18 @@ namespace App {
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
             viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         });
+    }
+
+    let setupSkillTreeEvents = () => {
+        SkillTreeEvents.on("skilltree", "highlighted-nodes-update", drawHighlight);
+        SkillTreeEvents.on("skilltree", "class-change", drawCharacterStartsActive);
+
+        SkillTreeEvents.on("skilltree", "hovered-nodes-start", () => {
+            updateHover = true;
+            drawHover();
+        });
+        SkillTreeEvents.on("skilltree", "hovered-nodes-end", () => updateHover = false);
+        SkillTreeEvents.on("skilltree", "active-nodes-update", drawActive);
     }
 
     let populateStartClasses = (classControl: JQuery<HTMLElement>) => {
@@ -173,16 +186,16 @@ namespace App {
         })
     }
 
+    let background: PIXI.Container = new PIXI.Container();
+    let connections: PIXI.Container = new PIXI.Container();
+    let skillIcons: PIXI.Container = new PIXI.Container();
+    let characterStarts: PIXI.Container = new PIXI.Container();
     export const draw = (): void => {
         viewport.removeChildren();
-        let background: PIXI.Container = new PIXI.Container();
-        let connections: PIXI.Container = new PIXI.Container();
-        let skillIcons: PIXI.Container = new PIXI.Container();
-        let characterStarts: PIXI.Container = new PIXI.Container();
 
         let background_graphic = PIXI.TilingSprite.from("Background1", skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
         background_graphic.anchor.set(.5);
-        background.addChild(background_graphic);
+        viewport.addChild(background_graphic);
 
         for (let id in skillTreeData.groups) {
             let group = skillTreeData.groups[id];
@@ -317,19 +330,9 @@ namespace App {
         characterStarts.interactiveChildren = false;
         viewport.addChild(characterStarts);
 
-        drawCharacterStartsActive();
-        drawActive();
         skillTreeData.skillTreeUtilities.decodeURL();
         populateStartClasses($("#skillTreeControl_Class"));
         bindSearchBox($("#skillTreeControl_Search"));
-        SkillTreeEvents.on("skilltree", "highlighted-nodes-update", drawHighlight);
-        SkillTreeEvents.on("skilltree", "class-change", drawCharacterStartsActive);
-
-        SkillTreeEvents.on("skilltree", "hovered-nodes-start", () => {
-            updateTooltip = true;
-            drawTooltip();
-        });
-        SkillTreeEvents.on("skilltree", "hovered-nodes-end", () => updateTooltip = false);
     }
 
     let highlights: PIXI.Container = new PIXI.Container();
@@ -379,19 +382,59 @@ namespace App {
             characterStarts_active.addChild(node_graphic);
         }
 
-        viewport.addChildAt(backgrounds_active, 1);
+        viewport.addChildAt(backgrounds_active, viewport.getChildIndex(background));
         viewport.addChild(characterStarts_active);
     }
 
-    let updateTooltip = true;
+    let updateHover = true;
     let tooltip: PIXI.Graphics = new PIXI.Graphics();
-    export const drawTooltip = () => {
+    let pathing_connections: PIXI.Container = new PIXI.Container();
+    let pathing_skillIcons: PIXI.Container = new PIXI.Container();
+    export const drawHover = () => {
+        viewport.removeChild(pathing_connections);
+        viewport.removeChild(pathing_skillIcons);
         viewport.removeChild(tooltip);
         if (tooltip.children.length > 0) {
             tooltip.removeChildren();
         }
+        if (pathing_connections.children.length > 0) {
+            pathing_connections.removeChildren();
+        }
+        if (pathing_skillIcons.children.length > 0) {
+            pathing_skillIcons.removeChildren();
+        }
+
+        let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             let node = skillTreeData.nodes[id];
+            if (node.is(SkillNodeStates.Pathing)) {
+                let nodes = node.in
+                    .filter((outID) => {
+                        if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
+                            return true;
+                        } else {
+                            return drawn_connections[outID].indexOf(+id) < 0 && drawn_connections[+id].indexOf(outID) < 0;
+                        }
+                    })
+                    .map((outID) => {
+                        if (drawn_connections[outID] === undefined) {
+                            drawn_connections[outID] = new Array<number>();
+                        }
+                        if (drawn_connections[+id] === undefined) {
+                            drawn_connections[+id] = new Array<number>();
+                        }
+                        drawn_connections[outID].push(+id);
+                        drawn_connections[+id].push(outID);
+
+                        return skillTreeData.nodes[outID]
+                    });
+
+                pathing_connections.addChild(node.createConnections(nodes));
+                let frame = node.createNodeFrame();
+                if (frame !== null) {
+                    pathing_skillIcons.addChild(frame);
+                }
+            }
             if (node.is(SkillNodeStates.Hovered)) {
                 let padding = 10;
                 let text = node.createTooltipText();
@@ -411,7 +454,9 @@ namespace App {
             }
         }
 
-        if (updateTooltip) {
+        if (updateHover) {
+            viewport.addChildAt(pathing_connections, Math.max(viewport.getChildIndex(connections), viewport.getChildIndex(connections_active)) + 1);
+            viewport.addChildAt(pathing_skillIcons, Math.max(viewport.getChildIndex(skillIcons), viewport.getChildIndex(skillIcons_active)) + 1);
             viewport.addChild(tooltip);
             let bounds = tooltip.getBounds();
             if (tooltip.worldTransform.tx + bounds.width > screen.width) {
@@ -425,7 +470,7 @@ namespace App {
                 tooltip.scale.set(tooltip.width / bounds.width, tooltip.height / bounds.height);
             }
 
-            requestAnimationFrame(drawTooltip);
+            requestAnimationFrame(drawHover);
         }
     }
 
@@ -445,7 +490,7 @@ namespace App {
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in skillTreeData.nodes) {
             var node = skillTreeData.nodes[id];
-            if ((!node.is(SkillNodeStates.Active) && !node.is(SkillNodeStates.Pathing)) || node.spc.length > 0) {
+            if (!node.is(SkillNodeStates.Active) || node.spc.length > 0) {
                 continue;
             }
 
@@ -472,11 +517,9 @@ namespace App {
 
             connections_active.addChild(node.createConnections(nodes));
             for (let out of nodes) {
-                if (node.is(SkillNodeStates.Active)) {
-                    let frame = out.createNodeFrame();
-                    if (frame !== null) {
-                        skillIcons_active.addChild(frame);
-                    }
+                let frame = out.createNodeFrame();
+                if (frame !== null) {
+                    skillIcons_active.addChild(frame);
                 }
             }
 
@@ -487,10 +530,8 @@ namespace App {
             }
         }
 
-        viewport.addChildAt(connections_active, 3);
-        viewport.addChildAt(skillIcons_active, 5);
-
-        requestAnimationFrame(drawActive);
+        viewport.addChildAt(connections_active, viewport.getChildIndex(connections) + 1);
+        viewport.addChildAt(skillIcons_active, viewport.getChildIndex(skillIcons) + 1);
     }
 }
 

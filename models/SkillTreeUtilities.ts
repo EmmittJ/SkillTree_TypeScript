@@ -68,6 +68,7 @@ export class SkillTreeUtilities {
 
     private encodeURL = () => {
         window.location.hash = `#${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
+        SkillTreeEvents.fire("skilltree", "active-nodes-update");
     }
 
     public changeStartClass = (start: number, encode: boolean = true) => {
@@ -83,11 +84,11 @@ export class SkillTreeUtilities {
 
             node.add(SkillNodeStates.Active);
             SkillTreeEvents.fire("skilltree", "class-change", node);
-
             for (let i of this.getRefundNodes(node)) {
                 i.remove(SkillNodeStates.Active);
             }
         }
+
         this.changeAscendancyClass(0, false);
 
         if (encode) {
@@ -166,6 +167,7 @@ export class SkillTreeUtilities {
             }
         }
 
+        this.clearState(SkillNodeStates.Hovered);
         this.clearState(SkillNodeStates.Pathing);
         this.encodeURL();
     }
