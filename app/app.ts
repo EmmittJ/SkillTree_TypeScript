@@ -333,6 +333,7 @@ namespace App {
         viewport.addChild(characterStarts);
 
         skillTreeData.skillTreeUtilities.decodeURL();
+        drawCharacterStartsActive();
         populateStartClasses($("#skillTreeControl_Class"));
         bindSearchBox($("#skillTreeControl_Search"));
         $(".skillTreeControls").show();
@@ -340,7 +341,9 @@ namespace App {
 
     let highlights: PIXI.Container = new PIXI.Container();
     export const drawHighlight = () => {
-        viewport.removeChild(highlights);
+        if (viewport.children.indexOf(highlights) > 0) {
+            viewport.removeChild(highlights);
+        }
         if (highlights.children.length > 0) {
             highlights.removeChildren();
         }
@@ -357,11 +360,19 @@ namespace App {
     let backgrounds_active: PIXI.Container = new PIXI.Container();
     let characterStarts_active: PIXI.Container = new PIXI.Container();
     export const drawCharacterStartsActive = () => {
-        viewport.removeChild(backgrounds_active);
-        backgrounds_active.removeChildren();
+        if (viewport.children.indexOf(backgrounds_active) > 0) {
+            viewport.removeChild(backgrounds_active);
+        }
+        if (viewport.children.indexOf(characterStarts_active) > 0) {
+            viewport.removeChild(characterStarts_active);
+        }
 
-        viewport.removeChild(characterStarts_active);
-        characterStarts_active.removeChildren();
+        if (backgrounds_active.children.length > 0) {
+            backgrounds_active.removeChildren();
+        }
+        if (characterStarts_active.children.length > 0) {
+            characterStarts_active.removeChildren();
+        }
 
         for (let id of skillTreeData.root.out) {
             let node = skillTreeData.nodes[id];
@@ -394,9 +405,16 @@ namespace App {
     let pathing_connections: PIXI.Container = new PIXI.Container();
     let pathing_skillIcons: PIXI.Container = new PIXI.Container();
     export const drawHover = () => {
-        viewport.removeChild(pathing_connections);
-        viewport.removeChild(pathing_skillIcons);
-        viewport.removeChild(tooltip);
+        if (viewport.children.indexOf(pathing_connections) > 0) {
+            viewport.removeChild(pathing_connections);
+        }
+        if (viewport.children.indexOf(pathing_skillIcons) > 0) {
+            viewport.removeChild(pathing_skillIcons);
+        }
+        if (viewport.children.indexOf(tooltip) > 0) {
+            viewport.removeChild(tooltip);
+        }
+
         if (tooltip.children.length > 0) {
             tooltip.removeChildren();
         }
@@ -458,8 +476,8 @@ namespace App {
         }
 
         if (updateHover) {
-            viewport.addChildAt(pathing_connections, Math.max(viewport.getChildIndex(connections), viewport.getChildIndex(connections_active)) + 1);
-            viewport.addChildAt(pathing_skillIcons, Math.max(viewport.getChildIndex(skillIcons), viewport.getChildIndex(skillIcons_active)) + 1);
+            viewport.addChildAt(pathing_connections, Math.max(viewport.children.indexOf(connections), viewport.children.indexOf(connections_active)) + 1);
+            viewport.addChildAt(pathing_skillIcons, Math.max(viewport.children.indexOf(skillIcons), viewport.children.indexOf(skillIcons_active)) + 1);
             viewport.addChild(tooltip);
             let bounds = tooltip.getBounds();
             if (tooltip.worldTransform.tx + bounds.width > screen.width) {
@@ -480,8 +498,12 @@ namespace App {
     let connections_active: PIXI.Container = new PIXI.Container();
     let skillIcons_active: PIXI.Container = new PIXI.Container();
     export const drawActive = () => {
-        viewport.removeChild(connections_active);
-        viewport.removeChild(skillIcons_active);
+        if (viewport.children.indexOf(connections_active) > 0) {
+            viewport.removeChild(connections_active);
+        }
+        if (viewport.children.indexOf(skillIcons_active) > 0) {
+            viewport.removeChild(skillIcons_active);
+        }
 
         if (connections_active.children.length > 0) {
             connections_active.removeChildren();
@@ -532,7 +554,7 @@ namespace App {
                 skillIcons_active.addChild(frame);
             }
         }
-
+        
         viewport.addChildAt(connections_active, viewport.getChildIndex(connections) + 1);
         viewport.addChildAt(skillIcons_active, viewport.getChildIndex(skillIcons) + 1);
     }
