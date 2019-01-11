@@ -119,6 +119,11 @@ namespace App {
         });
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", () => updateHover = false);
         SkillTreeEvents.on("skilltree", "active-nodes-update", drawActive);
+
+        SkillTreeEvents.on("skilltree", "normal-node-count", (count: number) => $("#skillTreeNormalNodeCount").html(count.toString()));
+        SkillTreeEvents.on("skilltree", "normal-node-count-maximum", (count: number) => $("#skillTreeNormalNodeCountMaximum").html(count.toString()));
+        SkillTreeEvents.on("skilltree", "ascendancy-node-count", (count: number) => $("#skillTreeAscendancyNodeCount").html(count.toString()));
+        SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => $("#skillTreeAscendancyNodeCountMaximum").html(count.toString()));
     }
 
     let populateStartClasses = (classControl: JQuery<HTMLElement>) => {
@@ -149,20 +154,22 @@ namespace App {
             let val = classControl.find("option:selected").val();
             if (val !== undefined) {
                 SkillTreeEvents.fire("controls", "class-change", +val);
-                populateAscendancyClasses($("#skillTreeControl_Ascendancy"));
+                populateAscendancyClasses($("#skillTreeControl_Ascendancy"), +val);
             }
         })
 
         populateAscendancyClasses($("#skillTreeControl_Ascendancy"));
     }
 
-    let populateAscendancyClasses = (ascControl: JQuery<HTMLElement>) => {
+    let populateAscendancyClasses = (ascControl: JQuery<HTMLElement>, start: number | undefined = undefined) => {
         let ascStart = skillTreeData.getAscendancyClass();
+        console.log(ascStart);
         ascControl.children().remove();
         ascControl.append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
-        let startClass = skillTreeData.getStartClass();
+        let startClass = start !== undefined ? start : skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
             let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
+            console.log(startClass, asc);
             let e = $(`<option>${asc.displayName}</option>`).val(ascid);
             if (+ascid === ascStart) {
                 e.prop("selected", "selected");
@@ -337,6 +344,7 @@ namespace App {
         populateStartClasses($("#skillTreeControl_Class"));
         bindSearchBox($("#skillTreeControl_Search"));
         $(".skillTreeControls").show();
+        $(".skillTreePoints").show();
     }
 
     let highlights: PIXI.Container = new PIXI.Container();
@@ -554,7 +562,7 @@ namespace App {
                 skillIcons_active.addChild(frame);
             }
         }
-        
+
         viewport.addChildAt(connections_active, viewport.getChildIndex(connections) + 1);
         viewport.addChildAt(skillIcons_active, viewport.getChildIndex(skillIcons) + 1);
     }

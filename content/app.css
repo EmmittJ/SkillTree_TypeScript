@@ -1,6 +1,5 @@
-﻿skillTreeContainer, body, html {
+﻿body {
     overflow: hidden;
-    position: fixed;
     width: 100%;
     height: 100%;
     margin: 0;
@@ -26,4 +25,30 @@ input, select{
     color: #FFF;
     width: 120px;
     margin-left: 5px;
+}
+
+.skillTreePoints {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 30px;
+    width: 100%;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+.skillTreeNodes {
+    background-image: url('/data/assets/PSPointsFrame.png');
+    background-size: 110px 25px;
+    margin-right: 10px;
+    width: 110px;
+    height: 25px;
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    align-items: center;
+    font-size: larger;
+    color: #FFFFFF;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }

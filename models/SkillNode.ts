@@ -75,6 +75,10 @@ export class SkillNode implements ISkillNode {
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
 
+        if (this.passivePointsGranted > 0) {
+            this.sd.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
+        }
+
         SkillTreeEvents.subscribe("node", this.rebindNodeEvents);
     }
 

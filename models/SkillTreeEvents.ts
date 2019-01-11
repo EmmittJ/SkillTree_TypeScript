@@ -29,10 +29,10 @@ export class SkillTreeEvents {
         for (let fn of SkillTreeEvents.events[type][event]) {
             switch (arguments.length) {
                 case 2:
-                    fn();
+                    setTimeout(() => fn(), 0);
                     break;
                 case 3:
-                    fn(context);
+                    setTimeout(() => fn(context), 0);
                     break;
             }
         }
@@ -62,10 +62,10 @@ export class SkillTreeEvents {
         for (let fn of SkillTreeEvents._subscribers[type]) {
             switch (this.arguments.length) {
                 case 1:
-                    fn();
+                    setTimeout(() => fn(), 0);
                     break;
                 case 2:
-                    fn(context);
+                    setTimeout(() => fn(context), 0);
                     break;
             }
         }

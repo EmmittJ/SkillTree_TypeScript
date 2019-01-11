@@ -69,6 +69,31 @@ export class SkillTreeUtilities {
     private encodeURL = () => {
         window.location.hash = `#${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
         SkillTreeEvents.fire("skilltree", "active-nodes-update");
+        this.broadcastSkillCounts();
+    }
+
+    private broadcastSkillCounts = () => {
+        //need to add bandits here
+        let maximumNormalPoints = 121;
+        let maximumAscendancyPoints = 8;
+        let normalNodes = 0;
+        let ascNodes = 0;
+        for (let id in this.skillTreeData.nodes) {
+            let node = this.skillTreeData.nodes[id];
+            if (node.is(SkillNodeStates.Active) && node.spc.length === 0 && !node.isAscendancyStart) {
+                if (node.ascendancyName === "") {
+                    normalNodes++;
+                } else {
+                    ascNodes++;
+                }
+                maximumNormalPoints += node.passivePointsGranted;
+            }
+        }
+
+        SkillTreeEvents.fire("skilltree", "normal-node-count", normalNodes);
+        SkillTreeEvents.fire("skilltree", "normal-node-count-maximum", maximumNormalPoints);
+        SkillTreeEvents.fire("skilltree", "ascendancy-node-count", ascNodes);
+        SkillTreeEvents.fire("skilltree", "ascendancy-node-count-maximum", maximumAscendancyPoints);
     }
 
     public changeStartClass = (start: number, encode: boolean = true) => {
