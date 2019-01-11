@@ -163,13 +163,11 @@ namespace App {
 
     let populateAscendancyClasses = (ascControl: JQuery<HTMLElement>, start: number | undefined = undefined) => {
         let ascStart = skillTreeData.getAscendancyClass();
-        console.log(ascStart);
         ascControl.children().remove();
         ascControl.append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
         let startClass = start !== undefined ? start : skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
             let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
-            console.log(startClass, asc);
             let e = $(`<option>${asc.displayName}</option>`).val(ascid);
             if (+ascid === ascStart) {
                 e.prop("selected", "selected");
