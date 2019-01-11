@@ -24,7 +24,7 @@ namespace App {
         }
 
         let oxhr = new XMLHttpRequest();
-        oxhr.open("GET", `/data/Opts.json?t=${(new Date()).getTime()}`, false);
+        oxhr.open("GET", `data/Opts.json?t=${(new Date()).getTime()}`, false);
         oxhr.onload = () => {
             if (oxhr.status === 200) {
                 skillTreeOptions = JSON.parse(oxhr.responseText);
@@ -35,7 +35,7 @@ namespace App {
         oxhr.send();
 
         let dxhr = new XMLHttpRequest();
-        dxhr.open("GET", `/data/SkillTree.json?t=${(new Date()).getTime()}`, false);
+        dxhr.open("GET", `data/SkillTree.json?t=${(new Date()).getTime()}`, false);
         dxhr.onload = () => {
             if (dxhr.status === 200) {
                 skillTreeData = new SkillTreeData(JSON.parse(dxhr.responseText), skillTreeOptions);

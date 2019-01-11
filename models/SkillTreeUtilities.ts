@@ -145,17 +145,17 @@ export class SkillTreeUtilities {
 
     public searchChange = (str: string | undefined = undefined) => {
         this.clearState(SkillNodeStates.Highlighted);
-        if (str === undefined || str.length === 0) {
-            return;
-        }
-        let regex = new RegExp(str, "gi");
-        for (let id in this.skillTreeData.nodes) {
-            let node = this.skillTreeData.nodes[id];
-            if (node.isAscendancyStart || node.spc.length > 0) {
-                continue;
-            }
-            if (node.dn.match(regex) !== null || node.sd.find(stat => stat.match(regex) !== null) !== undefined) {
-                node.add(SkillNodeStates.Highlighted);
+
+        if (str !== undefined && str.length !== 0) {
+            let regex = new RegExp(str, "gi");
+            for (let id in this.skillTreeData.nodes) {
+                let node = this.skillTreeData.nodes[id];
+                if (node.isAscendancyStart || node.spc.length > 0) {
+                    continue;
+                }
+                if (node.dn.match(regex) !== null || node.sd.find(stat => stat.match(regex) !== null) !== undefined) {
+                    node.add(SkillNodeStates.Highlighted);
+                }
             }
         }
 
