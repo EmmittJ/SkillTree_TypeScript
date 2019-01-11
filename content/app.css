@@ -19,11 +19,18 @@
     align-items: center;
 }
 
-input, select{
+select {
+    width: 120px;
+}
+
+input {
+    width: 116px;
+}
+
+input, select {
     background: #333;
     border: 1px solid #999;
     color: #FFF;
-    width: 120px;
     margin-left: 5px;
 }
 
@@ -38,11 +45,12 @@ input, select{
     justify-content: center;
     align-items: center;
 }
+
 .skillTreeNodes {
     background-image: url('/data/assets/PSPointsFrame.png');
-    background-size: 110px 25px;
+    background-size: 120px 25px;
     margin-right: 10px;
-    width: 110px;
+    width: 120px;
     height: 25px;
     display: flex;
     flex-flow: row;

@@ -2,7 +2,6 @@
 
 import * as PIXI from "pixi.js";
 import * as Viewport from "pixi-viewport";
-import * as $ from "jquery";
 import { SkillNodeStates } from "../models/SkillNode";
 import { SkillTreeData } from "../models/SkillTreeData";
 import { SkillTreeEvents } from "../models/SkillTreeEvents";
@@ -19,16 +18,32 @@ namespace App {
             autoResize: true,
             resolution: devicePixelRatio
         });
-        $("#skillTreeContainer").append(pixi.view);
+        let container = document.getElementById("skillTreeContainer");
+        if (container !== null) {
+            container.append(pixi.view);
+        }
 
-        skillTreeOptions = await $.ajax({
-            url: `/data/Opts.json?t=${(new Date()).getTime()}`,
-            dataType: 'json'
-        });
-        skillTreeData = new SkillTreeData(await $.ajax({
-            url: `/data/SkillTree.json?t=${(new Date()).getTime()}`,
-            dataType: 'json'
-        }), skillTreeOptions);
+        let oxhr = new XMLHttpRequest();
+        oxhr.open("GET", `/data/Opts.json?t=${(new Date()).getTime()}`, false);
+        oxhr.onload = () => {
+            if (oxhr.status === 200) {
+                skillTreeOptions = JSON.parse(oxhr.responseText);
+            } else {
+                console.error("Failed to load options");
+            }
+        }
+        oxhr.send();
+
+        let dxhr = new XMLHttpRequest();
+        dxhr.open("GET", `/data/SkillTree.json?t=${(new Date()).getTime()}`, false);
+        dxhr.onload = () => {
+            if (dxhr.status === 200) {
+                skillTreeData = new SkillTreeData(JSON.parse(dxhr.responseText), skillTreeOptions);
+            } else {
+                console.error("Failed to load skill tree data");
+            }
+        }
+        dxhr.send();
 
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({
@@ -102,11 +117,11 @@ namespace App {
         viewport.on('touchend', () => SkillTreeEvents.fire("viewport", "touchend"));
         viewport.on('touchcancel', () => SkillTreeEvents.fire("viewport", "touchcancel"));
 
-        $(window).on("resize", () => {
+        window.onresize = () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
             viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
             viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
-        });
+        };
     }
 
     let setupSkillTreeEvents = () => {
@@ -120,77 +135,103 @@ namespace App {
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", () => updateHover = false);
         SkillTreeEvents.on("skilltree", "active-nodes-update", drawActive);
 
-        SkillTreeEvents.on("skilltree", "normal-node-count", (count: number) => $("#skillTreeNormalNodeCount").html(count.toString()));
-        SkillTreeEvents.on("skilltree", "normal-node-count-maximum", (count: number) => $("#skillTreeNormalNodeCountMaximum").html(count.toString()));
-        SkillTreeEvents.on("skilltree", "ascendancy-node-count", (count: number) => $("#skillTreeAscendancyNodeCount").html(count.toString()));
-        SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => $("#skillTreeAscendancyNodeCountMaximum").html(count.toString()));
+        SkillTreeEvents.on("skilltree", "normal-node-count", (count: number) => { let e = document.getElementById("skillTreeNormalNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.on("skilltree", "normal-node-count-maximum", (count: number) => { let e = document.getElementById("skillTreeNormalNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.on("skilltree", "ascendancy-node-count", (count: number) => { let e = document.getElementById("skillTreeAscendancyNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => { let e = document.getElementById("skillTreeAscendancyNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
     }
 
-    let populateStartClasses = (classControl: JQuery<HTMLElement>) => {
-        classControl.children().remove();
-        let classe: Array<JQuery> = new Array<JQuery>();
-        for (let id in skillTreeData.classStartNodes) {
-            let node = skillTreeData.nodes[id];
-            let e = $(`<option>${skillTreeOptions.ascClasses[node.spc[0]].name}</option>`).val(node.spc[0]);
-            if (node.spc[0] === skillTreeData.getStartClass()) {
-                e.prop("selected", "selected");
-            }
-            classe.push(e);
+    let populateStartClasses = (classControl: HTMLSelectElement) => {
+        while (classControl.firstChild) {
+            classControl.removeChild(classControl.firstChild);
         }
 
-        classe.sort((a, b) => {
-            let first = a.val();
-            let second = b.val();
-            if (first !== undefined && second !== undefined) {
+        let options = new Array<HTMLOptionElement>();
+        for (let id in skillTreeData.classStartNodes) {
+            let node = skillTreeData.nodes[id];
+
+            let e = document.createElement("option");
+            e.text = skillTreeOptions.ascClasses[node.spc[0]].name;
+            e.value = node.spc[0].toString();
+
+            if (node.spc[0] === skillTreeData.getStartClass()) {
+                e.setAttribute("selected", "selected");
+            }
+            options.push(e);
+        }
+
+        options.sort((a, b) => {
+            let first = a.value;
+            let second = b.value;
+            if (first !== null && second !== null) {
                 return +first - +second;
             }
             return 0;
         });
 
-        for (var e of classe) {
+        for (var e of options) {
             classControl.append(e);
         }
-        classControl.on("change", () => {
-            let val = classControl.find("option:selected").val();
-            if (val !== undefined) {
-                SkillTreeEvents.fire("controls", "class-change", +val);
-                populateAscendancyClasses($("#skillTreeControl_Ascendancy"), +val);
-            }
-        })
 
-        populateAscendancyClasses($("#skillTreeControl_Ascendancy"));
+        let ascControl = <HTMLSelectElement>document.getElementById("skillTreeControl_Ascendancy");
+        classControl.onchange = () => {
+            let val = classControl.value;
+            SkillTreeEvents.fire("controls", "class-change", +val);
+            if (ascControl !== null) {
+                populateAscendancyClasses(ascControl, +val, 0);
+            }
+        };
+
+        if (ascControl !== null) {
+            populateAscendancyClasses(ascControl);
+        }
     }
 
-    let populateAscendancyClasses = (ascControl: JQuery<HTMLElement>, start: number | undefined = undefined) => {
-        let ascStart = skillTreeData.getAscendancyClass();
-        ascControl.children().remove();
-        ascControl.append(`<option value='0' ${ascStart === 0 ? "selected='selected'" : ""}>None</option>`);
+    let populateAscendancyClasses = (ascControl: HTMLSelectElement, start: number | undefined = undefined, startasc: number | undefined = undefined) => {
+        while (ascControl.firstChild) {
+            ascControl.removeChild(ascControl.firstChild);
+        }
+
+        let ascStart = startasc !== undefined ? startasc : skillTreeData.getAscendancyClass();
+        let none = document.createElement("option");
+        none.text = "None";
+        none.value = "0";
+        if (ascStart === 0) {
+            none.setAttribute("selected", "selected");
+        }
+        ascControl.append(none);
+
         let startClass = start !== undefined ? start : skillTreeData.getStartClass();
         for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
             let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
-            let e = $(`<option>${asc.displayName}</option>`).val(ascid);
+
+            let e = document.createElement("option");
+            e.text = asc.displayName;
+            e.value = ascid;
+
             if (+ascid === ascStart) {
-                e.prop("selected", "selected");
+                e.setAttribute("selected", "selected");
             }
             ascControl.append(e);
         }
-        ascControl.on("change", () => {
-            let val = ascControl.find("option:selected").val();
-            SkillTreeEvents.fire("controls", "ascendancy-class-change", val !== undefined ? +val : 0);
-        });
+
+        ascControl.onchange = () => {
+            let val = ascControl.value;
+            SkillTreeEvents.fire("controls", "ascendancy-class-change", +val);
+        };
     }
 
     let searchTimout: number | null = null;
-    let bindSearchBox = (searchControl: JQuery<HTMLElement>) => {
-        searchControl.on("keyup", () => {
+    let bindSearchBox = (searchControl: HTMLInputElement) => {
+        searchControl.onkeyup = () => {
             if (searchTimout !== null) {
                 clearTimeout(searchTimout);
             }
             searchTimout = setTimeout(() => {
-                SkillTreeEvents.fire("controls", "search-change", searchControl.val());
+                SkillTreeEvents.fire("controls", "search-change", searchControl.value);
                 searchTimout = null;
             }, 250);
-        })
+        };
     }
 
     let background: PIXI.Container = new PIXI.Container();
@@ -339,10 +380,20 @@ namespace App {
 
         skillTreeData.skillTreeUtilities.decodeURL();
         drawCharacterStartsActive();
-        populateStartClasses($("#skillTreeControl_Class"));
-        bindSearchBox($("#skillTreeControl_Search"));
-        $(".skillTreeControls").show();
-        $(".skillTreePoints").show();
+        populateStartClasses(<HTMLSelectElement>document.getElementById("skillTreeControl_Class"));
+        bindSearchBox(<HTMLInputElement>document.getElementById("skillTreeControl_Search"));
+        let controls = <HTMLCollectionOf<HTMLDivElement>>document.getElementsByClassName("skillTreeControls");
+        for (let i in controls) {
+            if (controls[i].style !== undefined) {
+                controls[i].style.removeProperty('display');
+            }
+        }
+        let points = <HTMLCollectionOf<HTMLDivElement>>document.getElementsByClassName("skillTreePoints");
+        for (let i in points) {
+            if (points[i].style !== undefined) {
+                points[i].style.removeProperty('display');
+            }
+        }
     }
 
     let highlights: PIXI.Container = new PIXI.Container();
@@ -566,6 +617,6 @@ namespace App {
     }
 }
 
-$(window).on("load", () => {
+window.onload = () => {
     App.main();
-});
+};
