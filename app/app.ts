@@ -49,8 +49,8 @@ namespace App {
         viewport = new Viewport({
             screenWidth: pixi.screen.width,
             screenHeight: pixi.screen.height,
-            worldWidth: skillTreeData.width * (skillTreeData.maxZoom * 1.25),
-            worldHeight: skillTreeData.height * (skillTreeData.maxZoom * 1.25),
+            worldWidth: skillTreeData.width * (skillTreeData.scale * 1.25),
+            worldHeight: skillTreeData.height * (skillTreeData.scale * 1.25),
             interaction: pixi.renderer.plugins.interaction
         });
         viewport
@@ -67,7 +67,7 @@ namespace App {
         let added_assets = new Array<string>();
         for (let id in skillTreeData.assets) {
             let asset = skillTreeData.assets[id];
-            if (asset[skillTreeData.maxZoom] && added_assets.indexOf(id) < 0) {
+            if (asset[skillTreeData.scale] && added_assets.indexOf(id) < 0) {
                 added_assets.push(id);
                 PIXI.Loader.shared.add(id, `data/assets/${id}.png`);
             }
@@ -119,7 +119,7 @@ namespace App {
 
         window.onresize = () => {
             pixi.renderer.resize(window.innerWidth, window.innerHeight);
-            viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
+            viewport.resize(pixi.renderer.width, pixi.renderer.height, skillTreeData.width * (skillTreeData.scale * 1.25), skillTreeData.height * (skillTreeData.scale * 1.25));
             viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         };
     }
@@ -234,16 +234,18 @@ namespace App {
         };
     }
 
-    let background: PIXI.Container = new PIXI.Container();
-    let connections: PIXI.Container = new PIXI.Container();
+    let background: PIXI.Sprite = new PIXI.Sprite();
+    let connections: PIXI.Sprite = new PIXI.Sprite();
     let skillIcons: PIXI.Container = new PIXI.Container();
     let characterStarts: PIXI.Container = new PIXI.Container();
     export const draw = (): void => {
         viewport.removeChildren();
+        let backgroundContainer: PIXI.Container = new PIXI.Container();
+        let connectionsContainer: PIXI.Container = new PIXI.Container();
 
-        let background_graphic = PIXI.TilingSprite.from("Background1", skillTreeData.width * (skillTreeData.maxZoom * 1.25), skillTreeData.height * (skillTreeData.maxZoom * 1.25));
-        background_graphic.anchor.set(.5);
-        viewport.addChild(background_graphic);
+        let backgroundSprite = PIXI.TilingSprite.from("Background1", skillTreeData.width * (skillTreeData.scale * 1.25), skillTreeData.height * (skillTreeData.scale * 1.25));
+        backgroundSprite.anchor.set(.5);
+        viewport.addChild(backgroundSprite);
 
         for (let id in skillTreeData.groups) {
             let group = skillTreeData.groups[id];
@@ -271,17 +273,17 @@ namespace App {
             }
 
             let sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
-            sprite.position.set(Math.ceil(group.x * skillTreeData.maxZoom), Math.ceil(group.y * skillTreeData.maxZoom));
+            sprite.position.set(Math.ceil(group.x * skillTreeData.scale), Math.ceil(group.y * skillTreeData.scale));
             sprite.anchor.set(.5);
-            background.addChild(sprite);
+            backgroundContainer.addChild(sprite);
 
             if (max === 3) {
                 sprite.anchor.set(.5, 1);
                 let sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
                 sprite2.rotation = Math.PI;
-                sprite2.position.set(Math.ceil(group.x * skillTreeData.maxZoom), Math.ceil(group.y * skillTreeData.maxZoom));
+                sprite2.position.set(Math.ceil(group.x * skillTreeData.scale), Math.ceil(group.y * skillTreeData.scale));
                 sprite2.anchor.set(.5, 1);
-                background.addChild(sprite2);
+                backgroundContainer.addChild(sprite2);
             }
         }
 
@@ -292,9 +294,9 @@ namespace App {
             }
             let ascendancyName = group.n.map(id => skillTreeData.nodes[id].ascendancyName)[0];
             let sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
-            sprite.position.set(Math.ceil(group.x * skillTreeData.maxZoom), Math.ceil(group.y * skillTreeData.maxZoom));
+            sprite.position.set(Math.ceil(group.x * skillTreeData.scale), Math.ceil(group.y * skillTreeData.scale));
             sprite.anchor.set(.5);
-            background.addChild(sprite);
+            backgroundContainer.addChild(sprite);
 
             for (let id in skillTreeOptions.ascClasses) {
                 let ascClasses = skillTreeOptions.ascClasses[id];
@@ -302,8 +304,8 @@ namespace App {
                     let ascClass = ascClasses.classes[classid];
                     if (ascClass.name === ascendancyName) {
                         let rect = ascClass.flavourTextRect.split(",");
-                        let x = Math.ceil((group.x + +rect[0]) * skillTreeData.maxZoom) - sprite.width / 2;
-                        let y = Math.ceil((group.y + +rect[1]) * skillTreeData.maxZoom) - sprite.height / 2;
+                        let x = Math.ceil((group.x + +rect[0]) * skillTreeData.scale) - sprite.width / 2;
+                        let y = Math.ceil((group.y + +rect[1]) * skillTreeData.scale) - sprite.height / 2;
                         let c = ascClass.flavourTextColour.split(",");
                         let r = +c[0];
                         let g = +c[1];
@@ -311,8 +313,8 @@ namespace App {
                         let colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
                         let text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
                         text.position.set(x, y);
-                        text.scale.set(skillTreeData.maxZoom);
-                        background.addChild(text);
+                        text.scale.set(skillTreeData.scale);
+                        backgroundContainer.addChild(text);
                     }
                 }
             }
@@ -341,7 +343,7 @@ namespace App {
 
                     return skillTreeData.nodes[outID]
                 });
-            connections.addChild(node.createConnections(nodes));
+            connectionsContainer.addChild(node.createConnections(nodes));
             skillIcons.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
             let frame = node.createNodeFrame();
             if (frame !== null) {
@@ -357,17 +359,21 @@ namespace App {
             }
 
             let graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
-            graphic.position.set(node.group.x * skillTreeData.maxZoom, node.group.y * skillTreeData.maxZoom);
+            graphic.position.set(node.group.x * skillTreeData.scale, node.group.y * skillTreeData.scale);
             graphic.anchor.set(.5);
             characterStarts.addChild(graphic);
         }
 
+        // Render background as a texture
+        background = createRenderTextureSprite(backgroundContainer, new PIXI.Point(backgroundContainer.width / 2 * 1.1, backgroundContainer.height / 2 * 1.1));
         background.interactive = false;
-        background.interactiveChildren = false;
+        backgroundContainer.destroy();
         viewport.addChild(background);
 
+        // Render connections as a texture
+        connections = createRenderTextureSprite(connectionsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
         connections.interactive = false;
-        connections.interactiveChildren = false;
+        connectionsContainer.destroy();
         viewport.addChild(connections);
 
         skillIcons.interactive = false;
@@ -396,39 +402,42 @@ namespace App {
         }
     }
 
-    let highlights: PIXI.Container = new PIXI.Container();
+    let highlights: PIXI.Sprite = new PIXI.Sprite();
     export const drawHighlight = () => {
         if (viewport.children.indexOf(highlights) > 0) {
             viewport.removeChild(highlights);
         }
-        if (highlights.children.length > 0) {
-            highlights.removeChildren();
-        }
+
+        let highlightsContainer: PIXI.Container = new PIXI.Container();
         for (let id in skillTreeData.nodes) {
             let node = skillTreeData.nodes[id];
             let highlight = node.createNodeHighlight();
             if (highlight !== null) {
-                highlights.addChild(highlight)
+                highlightsContainer.addChild(highlight)
             }
         }
+
+        highlights = createRenderTextureSprite(highlightsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
+        highlights.interactive = false;
+        highlightsContainer.destroy();
         viewport.addChild(highlights);
     }
 
-    let backgrounds_active: PIXI.Container = new PIXI.Container();
-    let characterStarts_active: PIXI.Container = new PIXI.Container();
+    let backgroundActive: PIXI.Container = new PIXI.Container();
+    let characterStartsActive: PIXI.Container = new PIXI.Container();
     export const drawCharacterStartsActive = () => {
-        if (viewport.children.indexOf(backgrounds_active) > 0) {
-            viewport.removeChild(backgrounds_active);
+        if (viewport.children.indexOf(backgroundActive) > 0) {
+            viewport.removeChild(backgroundActive);
         }
-        if (viewport.children.indexOf(characterStarts_active) > 0) {
-            viewport.removeChild(characterStarts_active);
+        if (viewport.children.indexOf(characterStartsActive) > 0) {
+            viewport.removeChild(characterStartsActive);
         }
 
-        if (backgrounds_active.children.length > 0) {
-            backgrounds_active.removeChildren();
+        if (backgroundActive.children.length > 0) {
+            backgroundActive.removeChildren();
         }
-        if (characterStarts_active.children.length > 0) {
-            characterStarts_active.removeChildren();
+        if (characterStartsActive.children.length > 0) {
+            characterStartsActive.removeChildren();
         }
 
         for (let id of skillTreeData.root.out) {
@@ -443,18 +452,18 @@ namespace App {
 
             let class_node_graphic = PIXI.Sprite.from(`Background${class_name.replace("Class", "")}`);
             class_node_graphic.anchor.set(.5)
-            class_node_graphic.position.set(node.group.x * skillTreeData.maxZoom, node.group.y * skillTreeData.maxZoom);
-            backgrounds_active.addChild(class_node_graphic);
+            class_node_graphic.position.set(node.group.x * skillTreeData.scale, node.group.y * skillTreeData.scale);
+            backgroundActive.addChild(class_node_graphic);
 
             let common_name = skillTreeData.constants.classesToName[class_name];
             let node_graphic = PIXI.Sprite.from(`center${common_name.toLocaleLowerCase()}`);
             node_graphic.anchor.set(.5)
             node_graphic.position.set(node.x, node.y);
-            characterStarts_active.addChild(node_graphic);
+            characterStartsActive.addChild(node_graphic);
         }
 
-        viewport.addChildAt(backgrounds_active, viewport.getChildIndex(background));
-        viewport.addChild(characterStarts_active);
+        viewport.addChildAt(backgroundActive, viewport.children.indexOf(background));
+        viewport.addChild(characterStartsActive);
     }
 
     let updateHover = true;
@@ -533,8 +542,8 @@ namespace App {
         }
 
         if (updateHover) {
-            viewport.addChildAt(pathing_connections, Math.max(viewport.children.indexOf(connections), viewport.children.indexOf(connections_active)) + 1);
-            viewport.addChildAt(pathing_skillIcons, Math.max(viewport.children.indexOf(skillIcons), viewport.children.indexOf(skillIcons_active)) + 1);
+            viewport.addChildAt(pathing_connections, Math.max(viewport.children.indexOf(connections), viewport.children.indexOf(connectionsActive)) + 1);
+            viewport.addChildAt(pathing_skillIcons, Math.max(viewport.children.indexOf(skillIcons), viewport.children.indexOf(skillIconsActive)) + 1);
             viewport.addChild(tooltip);
             let bounds = tooltip.getBounds();
             if (tooltip.worldTransform.tx + bounds.width > screen.width) {
@@ -552,21 +561,21 @@ namespace App {
         }
     }
 
-    let connections_active: PIXI.Container = new PIXI.Container();
-    let skillIcons_active: PIXI.Container = new PIXI.Container();
+    let connectionsActive: PIXI.Container = new PIXI.Container();
+    let skillIconsActive: PIXI.Container = new PIXI.Container();
     export const drawActive = () => {
-        if (viewport.children.indexOf(connections_active) > 0) {
-            viewport.removeChild(connections_active);
+        if (viewport.children.indexOf(connectionsActive) > 0) {
+            viewport.removeChild(connectionsActive);
         }
-        if (viewport.children.indexOf(skillIcons_active) > 0) {
-            viewport.removeChild(skillIcons_active);
+        if (viewport.children.indexOf(skillIconsActive) > 0) {
+            viewport.removeChild(skillIconsActive);
         }
 
-        if (connections_active.children.length > 0) {
-            connections_active.removeChildren();
+        if (connectionsActive.children.length > 0) {
+            connectionsActive.removeChildren();
         }
-        if (skillIcons_active.children.length > 0) {
-            skillIcons_active.removeChildren();
+        if (skillIconsActive.children.length > 0) {
+            skillIconsActive.removeChildren();
         }
 
         let drawn_connections: { [id: number]: Array<number> } = {};
@@ -597,23 +606,39 @@ namespace App {
                     return skillTreeData.nodes[outID]
                 });
 
-            connections_active.addChild(node.createConnections(nodes));
+            connectionsActive.addChild(node.createConnections(nodes));
             for (let out of nodes) {
                 let frame = out.createNodeFrame();
                 if (frame !== null) {
-                    skillIcons_active.addChild(frame);
+                    skillIconsActive.addChild(frame);
                 }
             }
 
-            skillIcons_active.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
+            skillIconsActive.addChild(node.createNodeGraphic(skillTreeData.skillSprites, skillTreeData.imageZoomLevels.length - 1));
             let frame = node.createNodeFrame();
             if (frame !== null) {
-                skillIcons_active.addChild(frame);
+                skillIconsActive.addChild(frame);
             }
         }
 
-        viewport.addChildAt(connections_active, viewport.getChildIndex(connections) + 1);
-        viewport.addChildAt(skillIcons_active, viewport.getChildIndex(skillIcons) + 1);
+        connectionsActive.interactive = false;
+        skillIconsActive.interactive = false;
+
+        viewport.addChildAt(connectionsActive, viewport.children.indexOf(connections) + 1);
+        viewport.addChildAt(skillIconsActive, viewport.children.indexOf(skillIcons) + 1);
+    }
+
+    export const createRenderTextureSprite = (obj: PIXI.Container, offset: PIXI.PointLike): PIXI.Sprite => {
+        obj.position.set(offset.x, offset.y);
+        let sprite = new PIXI.Sprite(createRenderTexture(obj));
+        sprite.position.set(-offset.x, -offset.y);
+        return sprite
+    }
+
+    export const createRenderTexture = (obj: PIXI.Container): PIXI.RenderTexture => {
+        let renderTexture = PIXI.RenderTexture.create({ width: obj.width * 1.25, height: obj.height * 1.25, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: 1 });
+        pixi.renderer.render(obj, renderTexture);
+        return renderTexture;
     }
 }
 

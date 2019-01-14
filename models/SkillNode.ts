@@ -1,6 +1,5 @@
 ﻿import { SkillTreeUtilities } from "./SkillTreeUtilities";
 import { SkillTreeEvents } from "./SkillTreeEvents";
-import { SkillTreeCodec } from "./SkillTreeCodec";
 
 export class SkillNode implements ISkillNode {
     id: number;
@@ -302,14 +301,14 @@ export class SkillNode implements ISkillNode {
         return container;
     }
 
-    public createConnection = (other: SkillNode): PIXI.Sprite | null => {
+    private createConnection = (other: SkillNode): PIXI.Sprite | PIXI.Container | null => {
         if ((this.ascendancyName !== "" && other.ascendancyName === "") || (this.ascendancyName === "" && other.ascendancyName !== "")) {
             return null;
         }
         if (this.spc.length > 0 || other.spc.length > 0) {
             return null;
         }
-        if ((this.is(SkillNodeStates.Pathing) || this.is(SkillNodeStates.Hovered)) && (!other.is(SkillNodeStates.Pathing) && !other.is(SkillNodeStates.Hovered) && !other.is(SkillNodeStates.Active) )) {
+        if ((this.is(SkillNodeStates.Pathing) || this.is(SkillNodeStates.Hovered)) && (!other.is(SkillNodeStates.Pathing) && !other.is(SkillNodeStates.Hovered) && !other.is(SkillNodeStates.Active))) {
             return null;
         }
         if (this.g === other.g && this.o === other.o) {
@@ -319,54 +318,49 @@ export class SkillNode implements ISkillNode {
         }
     }
 
-    private createArcConnection = (other: SkillNode): PIXI.Sprite => {
-        let connectionType = this.getConnectionType(other);
-        var oidx = this.getMidpoint(this, other, this.skillsPerOrbit);
-        let arc = this.getArc(oidx);
-        let x = this.getX(arc);
-        let y = this.getY(arc);
-        let arc_offset = 0.3125;
-        switch (connectionType) {
-            case "Active":
-                switch (this.o) {
-                    case 1:
-                        arc_offset = .42;
-                        break;
-                    case 2:
-                        arc_offset = .37;
-                        break;
-                    case 3:
-                        arc_offset = .34;
-                        break;
-                    case 4:
-                        arc_offset = .33;
-                        break;
-                    default:
-                        break;
-                }
-                break;
-            case "Intermediate":
-            case "Normal":
-                break;
+    public createArcConnection = (other: SkillNode): PIXI.Container => {
+        let startAngle = this.arc < other.arc ? this.arc : other.arc;
+        let endAngle = this.arc < other.arc ? other.arc : this.arc;
+
+        var diff = endAngle - startAngle;
+        if (diff > Math.PI) {
+            var c = 2 * Math.PI - diff;
+            startAngle = endAngle;
+            endAngle = startAngle + c;
+        }
+        startAngle -= Math.PI / 2;
+        endAngle -= Math.PI / 2;
+
+        let angle = endAngle - startAngle;
+        let arcsNeeded = Math.ceil(angle / (Math.PI / 2));
+        let initial_rotation = Math.PI / 2 + startAngle;
+        let arcContainer = new PIXI.Container();
+
+        for (var i = 0; i < arcsNeeded; ++i) {
+            let mask = new PIXI.Graphics();
+            mask.lineStyle(8, 0x00FF00);
+            mask.arc(this.group.x * this.scale, this.group.y * this.scale, this.orbitRadii[this.o] * this.scale, startAngle, endAngle, false);
+            arcContainer.addChild(mask);
+
+            let texture = PIXI.Texture.from(`Orbit${this.o}${this.getConnectionType(other)}`);
+            let sprite = new PIXI.Sprite(texture);
+            sprite.rotation = angle + initial_rotation;
+            sprite.position.set(this.group.x * this.scale, this.group.y * this.scale);
+            sprite.anchor.set(1);
+            sprite.mask = mask;
+            arcContainer.addChild(sprite);
+
+            if (this.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
+                sprite.tint = 0xFF0000;
+            }
+
+            if (angle < Math.PI / 2) {
+                continue
+            }
+            angle -= Math.PI / 2
         }
 
-        //Calculate the bounds of the arc
-        let texture = PIXI.Texture.from(`Orbit${this.o}${connectionType}`);
-        let length = Math.hypot(this.x - x, this.y - y) * 2;
-        let rectw = Math.min(length * .75, texture.baseTexture.width);
-        let recth = Math.min(length * .75, texture.baseTexture.height);
-        let rect = new PIXI.Rectangle((texture.baseTexture.width - rectw) * arc_offset, (texture.baseTexture.height - recth) * arc_offset, rectw, recth);
-
-        //Apply the bounds of the arc
-        var arcTexture = new PIXI.Texture(texture.baseTexture, rect);
-        let arcGraphic = new PIXI.Sprite(arcTexture);
-        arcGraphic.position.set(x, y);
-        arcGraphic.rotation = arc + Math.PI / 4;
-        arcGraphic.anchor.set(arc_offset);
-        if (this.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
-            arcGraphic.tint = 0xFF0000;
-        }
-        return arcGraphic;
+        return arcContainer;
     }
 
     private createLineConnection = (other: SkillNode): PIXI.Sprite => {
@@ -392,34 +386,6 @@ export class SkillNode implements ISkillNode {
 
     private getConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {
         return this.is(SkillNodeStates.Active) && other.is(SkillNodeStates.Active) ? "Active" : (this.is(SkillNodeStates.Active) || other.is(SkillNodeStates.Active) || (this.is(SkillNodeStates.Pathing) && other.is(SkillNodeStates.Pathing)) ? "Intermediate" : "Normal");
-    }
-
-    private getMidpoint = (n1: SkillNode, n2: SkillNode, skillsPerOrbit: Array<number>): number => {
-        /* We nee to figure out what direction we are going, so we know where the midpoint needs to end up.
-         * Basically, if we are going clockwise and this node is greater than the out node, add a full orbit.
-         * orbit 11 -> orbit 0: (11 + 0) / 2 = 5.5, but we are on the wrong side of the circle.
-         * (11 + 0 + 12) / 2 = 11.5, this is the correct side.
-         * same goes for:
-         * orbit 11 <- orbit 2: (11 + 2) / 2 = 6.5, but, again, wrong side
-         * (11 + 2 + 12) / 2 = 13, oh no... well, we subtract 12 (a full orbit)
-         * 13 - 12 = 1, this is correct!
-         */
-        let oidx = n1.oidx + n2.oidx;
-        if ((!n1.isCounterclockwise(n2.arc - n1.arc) && n1.oidx > n2.oidx)
-            || (n1.isCounterclockwise(n2.arc - n1.arc) && n1.oidx < n2.oidx)) {
-            oidx += skillsPerOrbit[n1.o]
-        }
-        oidx /= 2;
-        while (oidx >= skillsPerOrbit[n1.o]) {
-            oidx -= skillsPerOrbit[n1.o];
-        }
-        return oidx;
-    }
-
-    private isCounterclockwise = (angle: number): boolean => {
-        while (angle <= -Math.PI) angle += Math.PI * 2;
-        while (angle > Math.PI) angle -= Math.PI * 2;
-        return angle < 0;
     }
 
     private createOrbitLocationsText = (): Array<PIXI.Container> => {
