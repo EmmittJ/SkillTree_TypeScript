@@ -1,4 +1,5 @@
 ﻿type SkillTreeEvent = "node" | "skilltree" | "viewport" | "controls";
+
 export class SkillTreeEvents {
     public static events: { [type: string]: { [event: string]: Array<Function> } } = {};
     public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify: boolean = true) => {
@@ -27,14 +28,7 @@ export class SkillTreeEvents {
             return;
         }
         for (let fn of SkillTreeEvents.events[type][event]) {
-            switch (arguments.length) {
-                case 2:
-                    setTimeout(() => fn(), 0);
-                    break;
-                case 3:
-                    setTimeout(() => fn(context), 0);
-                    break;
-            }
+            setTimeout(() => fn(context), 0);
         }
     }
 
@@ -60,14 +54,7 @@ export class SkillTreeEvents {
             return;
         }
         for (let fn of SkillTreeEvents._subscribers[type]) {
-            switch (this.arguments.length) {
-                case 1:
-                    setTimeout(() => fn(), 0);
-                    break;
-                case 2:
-                    setTimeout(() => fn(context), 0);
-                    break;
-            }
+            setTimeout(() => fn(context), 0);
         }
     }
 }

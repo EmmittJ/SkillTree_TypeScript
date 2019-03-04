@@ -97,15 +97,19 @@ export class SkillNode implements ISkillNode {
         this.state &= ~state;
     }
 
-    public createNodeHighlight = (): PIXI.Graphics | null => {
-        if (!this.is(SkillNodeStates.Highlighted) || this.nodeFrame === null) {
+    public createNodeHighlight = (color: number | undefined = undefined): PIXI.Graphics | null => {
+        if ((!this.is(SkillNodeStates.Highlighted) || this.nodeFrame === null) && color === undefined) {
             return null;
+        }
+
+        if (color === undefined) {
+            color = 0x00FFCC;
         }
 
         let graphic = new PIXI.Graphics();
         graphic.beginFill(0x000000, 0);
-        graphic.lineStyle(5, 0x00FFCC);
-        graphic.drawCircle(0, 0, Math.max(this.nodeSprite.texture.width, this.nodeSprite.texture.height) * 1.5 / 2);
+        graphic.lineStyle(5, color);
+        graphic.drawCircle(0, 0, Math.max(this.nodeSprite.texture.width, this.nodeSprite.texture.height) * .75 * (this.m ? .5 : 1));
         graphic.endFill();
         graphic.position.set(this.x, this.y);
         return graphic;
@@ -415,5 +419,6 @@ export enum SkillNodeStates {
     Active = 1 << 0,
     Hovered = 1 << 1,
     Pathing = 1 << 2,
-    Highlighted = 1 << 3
+    Highlighted = 1 << 3,
+    Compared = 1 << 4
 }

@@ -50,6 +50,14 @@ export class SkillTreeData implements ISkillTreeData {
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
 
+        // Fix for old school array style nodes
+        let temp: { [id: string]: ISkillNode } = {};
+        for (let i in skillTree.nodes) {
+            let node = skillTree.nodes[i];
+            temp[node.id] = node;
+        }
+        skillTree.nodes = temp;
+
         // Setup in/out properties correctly
         {
             for (let id in skillTree.nodes) {
