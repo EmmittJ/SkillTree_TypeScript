@@ -234,8 +234,8 @@ namespace App {
         };
     }
 
-    let background: PIXI.Sprite = new PIXI.Sprite();
-    let connections: PIXI.Sprite = new PIXI.Sprite();
+    let background: PIXI.Container = new PIXI.Container();
+    let connections: PIXI.Container = new PIXI.Container();
     let skillIcons: PIXI.Container = new PIXI.Container();
     let characterStarts: PIXI.Container = new PIXI.Container();
     export const draw = (): void => {
@@ -365,13 +365,13 @@ namespace App {
         }
 
         // Render background as a texture
-        background = createRenderTextureSprite(backgroundContainer, new PIXI.Point(backgroundContainer.width / 2 * 1.1, backgroundContainer.height / 2 * 1.1));
+        background = createRenderTextureContainer(backgroundContainer, new PIXI.Point(backgroundContainer.width / 2 * 1.1, backgroundContainer.height / 2 * 1.1));
         background.interactive = false;
         backgroundContainer.destroy();
         viewport.addChild(background);
 
         // Render connections as a texture
-        connections = createRenderTextureSprite(connectionsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
+        connections = createRenderTextureContainer(connectionsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
         connections.interactive = false;
         connectionsContainer.destroy();
         viewport.addChild(connections);
@@ -402,7 +402,7 @@ namespace App {
         }
     }
 
-    let highlights: PIXI.Sprite = new PIXI.Sprite();
+    let highlights: PIXI.Container = new PIXI.Container();
     export const drawHighlight = () => {
         if (viewport.children.indexOf(highlights) > 0) {
             viewport.removeChild(highlights);
@@ -417,7 +417,7 @@ namespace App {
             }
         }
 
-        highlights = createRenderTextureSprite(highlightsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
+        highlights = createRenderTextureContainer(highlightsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
         highlights.interactive = false;
         highlightsContainer.destroy();
         viewport.addChild(highlights);
@@ -628,15 +628,34 @@ namespace App {
         viewport.addChildAt(skillIconsActive, viewport.children.indexOf(skillIcons) + 1);
     }
 
-    export const createRenderTextureSprite = (obj: PIXI.Container, offset: PIXI.PointLike): PIXI.Sprite => {
+    const MAX_COL_WIDTH: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
+    const MAX_ROW_HEIGHT: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
+    export const createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.PointLike): PIXI.Container => {
+        let returnContainer = new PIXI.Container();
         obj.position.set(offset.x, offset.y);
-        let sprite = new PIXI.Sprite(createRenderTexture(obj));
-        sprite.position.set(-offset.x, -offset.y);
-        return sprite
+
+        let cols = Math.ceil((obj.width * 1.25) / MAX_COL_WIDTH);
+        let rows = Math.ceil((obj.height * 1.25) / MAX_ROW_HEIGHT);
+
+        for (let i = 0; i < cols; i++) {
+            var x = i * MAX_COL_WIDTH;
+            obj.position.x = offset.x - x;
+
+            for (let j = 0; j < rows; j++) {
+                var y = j * MAX_ROW_HEIGHT;
+                obj.position.y = offset.y - y;
+
+                let sprite = new PIXI.Sprite(createRenderTexture(obj, MAX_ROW_HEIGHT, MAX_COL_WIDTH));
+                sprite.position.set(-obj.position.x, -obj.position.y);
+                returnContainer.addChild(sprite);
+            }
+        }
+
+        return returnContainer;
     }
 
-    export const createRenderTexture = (obj: PIXI.Container): PIXI.RenderTexture => {
-        let renderTexture = PIXI.RenderTexture.create({ width: obj.width * 1.25, height: obj.height * 1.25, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: 1 });
+    export const createRenderTexture = (obj: PIXI.Container, width: number, height: number): PIXI.RenderTexture => {
+        let renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: 1 });
         pixi.renderer.render(obj, renderTexture);
         return renderTexture;
     }
