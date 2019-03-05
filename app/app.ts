@@ -672,7 +672,7 @@ namespace App {
 
                     tooltip_compare = new PIXI.Graphics();
                     tooltip_compare.beginFill(0x000000, .75);
-                    tooltip_compare.lineStyle(2, 0xCBB59C)
+                    tooltip_compare.lineStyle(2, 0xFFB000)
                     tooltip_compare.drawRect(0, 0, text.width + padding, text.height + padding);
                     tooltip_compare.endFill();
 
