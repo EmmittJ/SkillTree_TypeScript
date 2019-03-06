@@ -408,7 +408,7 @@ namespace App {
                 for (let s of node.sd) {
                     let found = false;
                     for (let s2 of node2.sd) {
-                        if (s === s2) {
+                        if (s.toUpperCase() === s2.toUpperCase()) {
                             found = true;
                         }
                     }
@@ -654,7 +654,8 @@ namespace App {
                         if (!n.is(SkillNodeStates.Compared)) {
                             continue;
                         }
-                        if (Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5) {
+
+                        if (n.id === node.id || (Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
                             n.add(SkillNodeStates.Hovered);
                         }
                     }
@@ -802,11 +803,16 @@ namespace App {
         viewport.addChildAt(skillIconsActive, viewport.children.indexOf(skillIcons) + 1);
     }
 
-    const MAX_COL_WIDTH: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
-    const MAX_ROW_HEIGHT: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
+    var MAX_COL_WIDTH: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
+    var MAX_ROW_HEIGHT: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
     export const createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.PointLike): PIXI.Container => {
         let returnContainer = new PIXI.Container();
         obj.position.set(offset.x, offset.y);
+
+        if (!PIXI.utils.isMobile.phone) {
+            MAX_COL_WIDTH = (obj.width * 1.25);
+            MAX_ROW_HEIGHT = (obj.height * 1.25);
+        }
 
         let cols = Math.ceil((obj.width * 1.25) / MAX_COL_WIDTH);
         let rows = Math.ceil((obj.height * 1.25) / MAX_ROW_HEIGHT);
