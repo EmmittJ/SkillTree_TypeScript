@@ -461,13 +461,13 @@ namespace App {
         }
 
         // Render background as a texture
-        background = createRenderTextureContainer(backgroundContainer, new PIXI.Point(backgroundContainer.width / 2 * 1.1, backgroundContainer.height / 2 * 1.1));
+        background = createRenderTextureContainer(backgroundContainer);
         background.interactive = false;
         backgroundContainer.destroy();
         viewport.addChild(background);
 
         // Render connections as a texture
-        connections = createRenderTextureContainer(connectionsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
+        connections = createRenderTextureContainer(connectionsContainer);
         connections.interactive = false;
         connectionsContainer.destroy();
         viewport.addChild(connections);
@@ -507,6 +507,9 @@ namespace App {
         if (viewport.children.indexOf(highlights) > 0) {
             viewport.removeChild(highlights);
         }
+        if (highlights.children.length > 0) {
+            highlights.removeChildren();
+        }
 
         let highlightsContainer: PIXI.Container = new PIXI.Container();
         for (let id in skillTreeData.nodes) {
@@ -517,7 +520,7 @@ namespace App {
             }
         }
 
-        highlights = createRenderTextureContainer(highlightsContainer, new PIXI.Point(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.1, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.1));
+        highlights = createRenderTextureContainer(highlightsContainer);
         highlights.interactive = false;
         highlightsContainer.destroy();
         viewport.addChild(highlights);
@@ -805,17 +808,17 @@ namespace App {
 
     var MAX_COL_WIDTH: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
     var MAX_ROW_HEIGHT: number = PIXI.utils.isMobile.phone ? 2048 : 4096;
-    export const createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.PointLike): PIXI.Container => {
+    export const createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.Rectangle | null = null): PIXI.Container => {
+        const DEFAULT_OFFSET: PIXI.Rectangle = new PIXI.Rectangle(Math.abs(skillTreeData.min_x * skillTreeData.scale) * 1.25, Math.abs(skillTreeData.min_y * skillTreeData.scale) * 1.35, skillTreeData.width * skillTreeData.scale, skillTreeData.height * skillTreeData.scale);
+        if (offset === null) {
+            offset = DEFAULT_OFFSET;
+        }
+
         let returnContainer = new PIXI.Container();
         obj.position.set(offset.x, offset.y);
 
-        if (!PIXI.utils.isMobile.phone) {
-            MAX_COL_WIDTH = (obj.width * 1.25);
-            MAX_ROW_HEIGHT = (obj.height * 1.25);
-        }
-
-        let cols = Math.ceil((obj.width * 1.25) / MAX_COL_WIDTH);
-        let rows = Math.ceil((obj.height * 1.25) / MAX_ROW_HEIGHT);
+        let cols = Math.ceil((offset.width * 1.15) / MAX_COL_WIDTH);
+        let rows = Math.ceil((offset.height * 1.15) / MAX_ROW_HEIGHT);
 
         for (let i = 0; i < cols; i++) {
             var x = i * MAX_COL_WIDTH;
