@@ -240,9 +240,9 @@ namespace App {
         }
 
         if (!skillTreeOptions.ascClasses) {
-            ascControl.hidden = true;
+            ascControl.style.display = "none";
             let e = (<HTMLDivElement>document.getElementById("skillTreeAscendancy"));
-            if (e !== null) e.hidden = true;
+            if (e !== null) e.style.display = "none";
             return;
         }
 
