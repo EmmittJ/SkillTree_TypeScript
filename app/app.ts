@@ -15,7 +15,7 @@ namespace App {
     let pixi: PIXI.Application;
     let viewport: Viewport;
 
-    export const main = async () => {
+    export const main = async (version: string, version_compare: string) => {
         pixi = new PIXI.Application(window.innerWidth, window.innerHeight, {
             autoResize: true,
             resolution: devicePixelRatio
@@ -26,7 +26,7 @@ namespace App {
         }
 
         let oxhr = new XMLHttpRequest();
-        oxhr.open("GET", `data/Opts.json?t=${(new Date()).getTime()}`, false);
+        oxhr.open("GET", `data/${version}/Opts.json?t=${(new Date()).getTime()}`, false);
         oxhr.onload = () => {
             if (oxhr.status === 200) {
                 skillTreeOptions = JSON.parse(oxhr.responseText);
@@ -37,7 +37,7 @@ namespace App {
         oxhr.send();
 
         let dxhr = new XMLHttpRequest();
-        dxhr.open("GET", `data/SkillTree.json?t=${(new Date()).getTime()}`, false);
+        dxhr.open("GET", `data/${version}/SkillTree.json?t=${(new Date()).getTime()}`, false);
         dxhr.onload = () => {
             if (dxhr.status === 200) {
                 skillTreeData = new SkillTreeData(JSON.parse(dxhr.responseText), skillTreeOptions);
@@ -47,28 +47,31 @@ namespace App {
         }
         dxhr.send();
 
-        // Load Compare Data
-        //let ocxhr = new XMLHttpRequest();
-        //ocxhr.open("GET", `data/Opts.compare.json?t=${(new Date()).getTime()}`, false);
-        //ocxhr.onload = () => {
-        //    if (ocxhr.status === 200) {
-        //        skillTreeOptions_compare = JSON.parse(ocxhr.responseText);
-        //    } else {
-        //        console.error("Failed to load options");
-        //    }
-        //}
-        //ocxhr.send();
+        if (version_compare != '') {
+            // Load Compare Data
+            let ocxhr = new XMLHttpRequest();
+            ocxhr.open("GET", `data/${version_compare}/Opts.json?t=${(new Date()).getTime()}`, false);
+            ocxhr.onload = () => {
+                if (ocxhr.status === 200) {
+                    skillTreeOptions_compare = JSON.parse(ocxhr.responseText);
+                } else {
+                    console.error("Failed to load options");
+                }
+            }
+            ocxhr.send();
 
-        //let dxchr = new XMLHttpRequest();
-        //dxchr.open("GET", `data/SkillTree.compare.json?t=${(new Date()).getTime()}`, false);
-        //dxchr.onload = () => {
-        //    if (dxchr.status === 200) {
-        //        skillTreeData_compare = new SkillTreeData(JSON.parse(dxchr.responseText), skillTreeOptions_compare);
-        //    } else {
-        //        console.error("Failed to load skill tree data");
-        //    }
-        //}
-        //dxchr.send();
+            let dxchr = new XMLHttpRequest();
+            dxchr.open("GET", `data/${version_compare}/SkillTree.json?t=${(new Date()).getTime()}`, false);
+            dxchr.onload = () => {
+                if (dxchr.status === 200) {
+                    skillTreeData_compare = new SkillTreeData(JSON.parse(dxchr.responseText), skillTreeOptions_compare);
+                } else {
+                    console.error("Failed to load skill tree data");
+                }
+            }
+            dxchr.send();
+        }
+
 
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({
@@ -94,7 +97,7 @@ namespace App {
             let asset = skillTreeData.assets[id];
             if (asset[skillTreeData.scale] && added_assets.indexOf(id) < 0) {
                 added_assets.push(id);
-                PIXI.Loader.shared.add(id, `data/assets/${id}.png`);
+                PIXI.Loader.shared.add(id, `data/${version}/assets/${id}.png`);
             }
         }
         for (let id in skillTreeData.skillSprites) {
@@ -102,7 +105,7 @@ namespace App {
             let sprite = sprites[sprites.length - 1];
             if (sprite && added_assets.indexOf(sprite.filename) < 0) {
                 added_assets.push(sprite.filename);
-                PIXI.Loader.shared.add(sprite.filename, `data/assets/${sprite.filename}`);
+                PIXI.Loader.shared.add(sprite.filename, `data/${version}/assets/${sprite.filename}`);
             }
         }
 
@@ -112,7 +115,7 @@ namespace App {
                 let asset = skillTreeData_compare.assets[id];
                 if (asset[skillTreeData_compare.scale] && added_assets.indexOf(id) < 0) {
                     added_assets.push(id);
-                    PIXI.Loader.shared.add(id, `data/assets.compare/${id}.png`);
+                    PIXI.Loader.shared.add(id, `data/${version_compare}/assets/${id}.png`);
                 }
             }
             for (let id in skillTreeData_compare.skillSprites) {
@@ -120,7 +123,7 @@ namespace App {
                 let sprite = sprites[sprites.length - 1];
                 if (sprite && added_assets.indexOf(sprite.filename) < 0) {
                     added_assets.push(sprite.filename);
-                    PIXI.Loader.shared.add(sprite.filename, `data/assets.compare/${sprite.filename}`);
+                    PIXI.Loader.shared.add(sprite.filename, `data/${version_compare}/assets/${sprite.filename}`);
                 }
             }
         }
@@ -195,7 +198,7 @@ namespace App {
             let node = skillTreeData.nodes[id];
 
             let e = document.createElement("option");
-            e.text = skillTreeOptions.ascClasses[node.spc[0]].name;
+            e.text = skillTreeData.constants.classIdToName[node.spc[0]];
             e.value = node.spc[0].toString();
 
             if (node.spc[0] === skillTreeData.getStartClass()) {
@@ -234,6 +237,13 @@ namespace App {
     let populateAscendancyClasses = (ascControl: HTMLSelectElement, start: number | undefined = undefined, startasc: number | undefined = undefined) => {
         while (ascControl.firstChild) {
             ascControl.removeChild(ascControl.firstChild);
+        }
+
+        if (!skillTreeOptions.ascClasses) {
+            ascControl.hidden = true;
+            let e = (<HTMLDivElement>document.getElementById("skillTreeAscendancy"));
+            if (e !== null) e.hidden = true;
+            return;
         }
 
         let ascStart = startasc !== undefined ? startasc : skillTreeData.getAscendancyClass();
@@ -842,8 +852,34 @@ namespace App {
         pixi.renderer.render(obj, renderTexture);
         return renderTexture;
     }
+
+    export const decodeURLParams = (search = ''): { [id: string]: string } =>  {
+        const hashes = search.slice(search.indexOf("?") + 1).split("&");
+        return hashes.reduce((params, hash) => {
+            const split = hash.indexOf("=");
+
+            if (split < 0) {
+                return Object.assign(params, {
+                    [hash]: null
+                });
+            }
+
+            const key = hash.slice(0, split);
+            const val = hash.slice(split + 1);
+
+            return Object.assign(params, { [key]: decodeURIComponent(val) });
+        }, {});
+    };
 }
 
 window.onload = () => {
-    App.main();
+    var query = App.decodeURLParams(window.location.search);
+    console.log(query['v'])
+    if (!query['v']) {
+        query['v'] = '3.6.0';
+    }
+    if (!query['c']) {
+        query['c'] = '';
+    }
+    App.main(query['v'], query['c']);
 };

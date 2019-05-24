@@ -1,6 +1,4 @@
-﻿import { SkillTreeData } from "./SkillTreeData";
-
-export class SkillTreeCodec implements ISkillTreeCodec {
+﻿export class SkillTreeCodec implements ISkillTreeCodec {
     encodeURL(skillTreeData: ISkillTreeData): string {
         let classid = skillTreeData.getStartClass();
         let ascid = skillTreeData.getAscendancyClass();

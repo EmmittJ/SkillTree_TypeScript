@@ -47,7 +47,7 @@ input, select {
 }
 
 .skillTreeNodes {
-    background-image: url('/data/assets/PSPointsFrame.png');
+    background-image: url('/data/PSPointsFrame.png');
     background-size: 120px 25px;
     margin-right: 10px;
     width: 120px;

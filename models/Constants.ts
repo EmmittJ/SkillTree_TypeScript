@@ -1,10 +1,12 @@
 ﻿export class Constants implements IConstants {
     classes: { [id: string]: number; };
-    classesToName: { [id: string]: string };
     characterAttributes: { [id: string]: number; };
     PSSCentreInnerRadius: number;
     skillsPerOrbit: number[];
     orbitRadii: number[];
+
+    classesToName: { [id: string]: string };
+    classIdToName: { [id: number]: string };
 
     constructor(constants: IConstants) {
         this.classes = constants.classes;
@@ -22,5 +24,15 @@
             "DexIntClass": "shadow",
             "StrDexIntClass": "scion"
         };
+
+        this.classIdToName = {
+            0: "Scion",
+            1: "Marauder",
+            2: "Ranger",
+            3: "Witch",
+            4: "Duelist",
+            5: "Templar",
+            6: "Shadow"
+        }
     }
 }
