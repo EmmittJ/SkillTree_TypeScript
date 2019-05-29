@@ -5,8 +5,8 @@ import * as PIXI from "pixi.js";
 import { SkillTreeCodec } from "./SkillTreeCodec";
 
 export class SkillTreeUtilities {
-    private drag_start: PIXI.PointLike;
-    private drag_end: PIXI.PointLike;
+    private drag_start: PIXI.Point;
+    private drag_end: PIXI.Point;
     private DRAG_THRESHOLD_SQUARED = 5 * 5;
     private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
@@ -26,8 +26,8 @@ export class SkillTreeUtilities {
 
         this.drag_start = new PIXI.Point(0, 0);
         this.drag_end = new PIXI.Point(0, 0);
-        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.PointLike) => this.drag_start = JSON.parse(JSON.stringify(point)), false);
-        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.PointLike) => this.drag_end = JSON.parse(JSON.stringify(point)), false);
+        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.IPoint) => this.drag_start = JSON.parse(JSON.stringify(point)), false);
+        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.IPoint) => this.drag_end = JSON.parse(JSON.stringify(point)), false);
         SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), false);
         SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);
         SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.drag_start = JSON.parse(JSON.stringify(this.drag_end)), 250), true);

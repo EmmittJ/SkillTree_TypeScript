@@ -1,6 +1,7 @@
 ﻿const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
     mode: 'production',
@@ -34,6 +35,9 @@ module.exports = {
             title: 'Skill Tree - TypeScript Example',
             template: './templates/index.html',
             filename: '../index.html'
+        }),
+        new webpack.ProvidePlugin({
+            PIXI: 'pixi.js'
         })
     ],
     optimization: {

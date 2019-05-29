@@ -16,8 +16,8 @@ namespace App {
     let viewport: Viewport;
 
     export const main = async (version: string, version_compare: string) => {
-        pixi = new PIXI.Application(window.innerWidth, window.innerHeight, {
-            autoResize: true,
+        pixi = new PIXI.Application({
+            resizeTo: window,
             resolution: devicePixelRatio
         });
         let container = document.getElementById("skillTreeContainer");
@@ -874,7 +874,6 @@ namespace App {
 
 window.onload = () => {
     var query = App.decodeURLParams(window.location.search);
-    console.log(query['v'])
     if (!query['v']) {
         query['v'] = '3.6.0';
     }
