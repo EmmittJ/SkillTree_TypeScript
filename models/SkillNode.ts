@@ -1,5 +1,6 @@
 ﻿import { SkillTreeUtilities } from "./SkillTreeUtilities";
 import { SkillTreeEvents } from "./SkillTreeEvents";
+import * as PIXI from "pixi.js";
 
 export class SkillNode implements ISkillNode {
     id: number;
