@@ -19,6 +19,17 @@
     align-items: center;
 }
 
+.skillTreeVersions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 25px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: center;
+}
+
 select {
     width: 120px;
 }
@@ -27,7 +38,11 @@ input {
     width: 116px;
 }
 
-input, select {
+button {
+    height: 20px;
+}
+
+input, select, button {
     background: #333;
     border: 1px solid #999;
     color: #FFF;

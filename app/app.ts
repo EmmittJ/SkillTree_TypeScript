@@ -72,6 +72,49 @@ namespace App {
             dxchr.send();
         }
 
+        fetch(`data/versions.json?t=${(new Date()).getTime()}`).then(response => {
+            return response.json();
+        }).then((json: IVersions) => {
+            var versionSelect = <HTMLSelectElement>document.getElementById("skillTreeControl_Version")
+            var compareSelect = <HTMLSelectElement>document.getElementById("skillTreeControl_VersionCompare");
+            for (var ver of json.versions) {
+                let v = document.createElement("option");
+                v.text = v.value = ver;
+                if (ver === version) {
+                    v.setAttribute('selected', 'selected');
+                }
+                versionSelect.appendChild(v);
+
+                let c = document.createElement("option");
+                c.text = c.value = ver;
+                if (ver === version_compare) {
+                    c.setAttribute('selected', 'selected');
+                }
+                compareSelect.appendChild(c);
+            }
+
+            let controls = <HTMLCollectionOf<HTMLDivElement>>document.getElementsByClassName("skillTreeVersions");
+            for (let i in controls) {
+                if (controls[i].style !== undefined) {
+                    controls[i].style.removeProperty('display');
+                }
+            }
+            var go = <HTMLSelectElement>document.getElementById("skillTreeControl_VersionGo");
+            go.addEventListener("click", () => {
+                var search = '?';
+                if (versionSelect.value !== '0') {
+                    search += `v=${versionSelect.value}`;
+                }
+
+                if (!search.endsWith('?') && compareSelect.value !== '0') search += '&';
+
+                if (compareSelect.value !== '0') {
+                    search += `c=${compareSelect.value}`;
+                }
+
+                window.location.search = search;
+            });
+        });
 
         let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         viewport = new Viewport({
@@ -853,7 +896,7 @@ namespace App {
         return renderTexture;
     }
 
-    export const decodeURLParams = (search = ''): { [id: string]: string } =>  {
+    export const decodeURLParams = (search = ''): { [id: string]: string } => {
         const hashes = search.slice(search.indexOf("?") + 1).split("&");
         return hashes.reduce((params, hash) => {
             const split = hash.indexOf("=");
@@ -875,7 +918,7 @@ namespace App {
 window.onload = () => {
     var query = App.decodeURLParams(window.location.search);
     if (!query['v']) {
-        query['v'] = '3.6.0';
+        query['v'] = '3.6.2';
     }
     if (!query['c']) {
         query['c'] = '';

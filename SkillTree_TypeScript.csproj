@@ -3300,6 +3300,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="app\app.ts" />
     <TypeScriptCompile Include="app\Utils.ts" />
+    <None Include="data\versions.json" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
     <TypeScriptCompile Include="models\SkillTreeCodec.ts" />
     <TypeScriptCompile Include="models\SkillTreeData.ts" />
@@ -3316,6 +3317,7 @@
     <TypeScriptCompile Include="models\types\ISkillTreeOptions.d.ts" />
     <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeCodec.d.ts" />
+    <TypeScriptCompile Include="models\types\IVersions.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
