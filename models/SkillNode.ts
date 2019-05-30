@@ -201,9 +201,25 @@ export class SkillNode implements ISkillNode {
         }
 
         let spriteSheets = skillSprites[spriteSheetKey];
-        if (zoomLevel >= spriteSheets.length) {
-            throw Error(`Not sprite sheet for at zoomLevel: ${zoomLevel}`);
+        if (spriteSheets === undefined || zoomLevel >= spriteSheets.length) {
+            if (skillSprites[drawType.toLowerCase()] && skillSprites[drawType.toLowerCase()].length - 1 <= zoomLevel) {
+                spriteSheets = new Array<ISpriteSheet>();
+                for (var i = 0; i < skillSprites[drawType.toLowerCase()].length; i++) {
+                    var old_style_sprites: ISpriteSheetOld = <any>skillSprites[drawType.toLowerCase()][i];
+                    if (this.ks && old_style_sprites.keystoneCoords !== undefined) {
+                        spriteSheets.push({ filename: old_style_sprites.filename, coords: old_style_sprites.keystoneCoords });
+                    } else if (this.not && old_style_sprites.notableCoords !== undefined) {
+                        spriteSheets.push({ filename: old_style_sprites.filename, coords: old_style_sprites.notableCoords });
+                    } else {
+                        spriteSheets.push({ filename: old_style_sprites.filename, coords: old_style_sprites.coords });
+                    }
+                }
+            }
+            else {
+                throw Error(`Not sprite sheet for at zoomLevel: ${zoomLevel}`);
+            }
         }
+
         var spriteSheet = spriteSheets[zoomLevel];
         if (!spriteSheet) {
             throw Error(`Sprite Sheet (${spriteSheetKey}) not found in SpriteSheets (${spriteSheets})`);

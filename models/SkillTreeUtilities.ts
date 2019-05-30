@@ -122,7 +122,11 @@ export class SkillTreeUtilities {
     }
 
     public changeAscendancyClass = (start: number, encode: boolean = true) => {
-        let ascClasses = this.skillTreeData.skillTreeOtions.ascClasses[this.skillTreeData.getStartClass()];
+        if (this.skillTreeData.skillTreeOptions.ascClasses === undefined) {
+            return;
+        }
+
+        let ascClasses = this.skillTreeData.skillTreeOptions.ascClasses[this.skillTreeData.getStartClass()];
         let ascClass = ascClasses.classes[start];
         let name = ascClass !== undefined ? ascClass.name : undefined;
 
