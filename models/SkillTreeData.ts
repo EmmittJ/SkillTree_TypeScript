@@ -44,7 +44,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.assets = skillTree.assets;
         this.imageRoot = skillTree.imageRoot;
         this.imageZoomLevels = skillTree.imageZoomLevels;
-        this.skillSprites = skillTree.skillSprites
+        this.skillSprites = skillTree.skillSprites;
         this.constants = new Constants(skillTree.constants);
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);

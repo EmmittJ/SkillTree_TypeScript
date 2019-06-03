@@ -9,9 +9,7 @@ import { Utils } from "./utils";
 
 namespace App {
     let skillTreeData: SkillTreeData;
-    let skillTreeOptions: ISkillTreeOptions;
     let skillTreeData_compare: SkillTreeData;
-    let skillTreeOptions_compare: ISkillTreeOptions;
     let pixi: PIXI.Application;
     let viewport: Viewport;
 
@@ -25,51 +23,25 @@ namespace App {
             container.append(pixi.view);
         }
 
-        let oxhr = new XMLHttpRequest();
-        oxhr.open("GET", `data/${version}/Opts.json?t=${(new Date()).getTime()}`, false);
-        oxhr.onload = () => {
-            if (oxhr.status === 200) {
-                skillTreeOptions = JSON.parse(oxhr.responseText);
-            } else {
-                console.error("Failed to load options");
+        for (let i of [version, version_compare]) {
+            if (i === '') {
+                continue;
             }
-        }
-        oxhr.send();
 
-        let dxhr = new XMLHttpRequest();
-        dxhr.open("GET", `data/${version}/SkillTree.json?t=${(new Date()).getTime()}`, false);
-        dxhr.onload = () => {
-            if (dxhr.status === 200) {
-                skillTreeData = new SkillTreeData(JSON.parse(dxhr.responseText), skillTreeOptions);
-            } else {
-                console.error("Failed to load skill tree data");
-            }
-        }
-        dxhr.send();
+            var options: ISkillTreeOptions = await fetch(`data/${i}/Opts.json`).then(response => {
+                return response.json();
+            });
+            var data: ISkillTreeData = await fetch(`data/${i}/SkillTree.json`).then(response => {
+                return response.json();
+            });
 
-        if (version_compare != '') {
-            // Load Compare Data
-            let ocxhr = new XMLHttpRequest();
-            ocxhr.open("GET", `data/${version_compare}/Opts.json?t=${(new Date()).getTime()}`, false);
-            ocxhr.onload = () => {
-                if (ocxhr.status === 200) {
-                    skillTreeOptions_compare = JSON.parse(ocxhr.responseText);
-                } else {
-                    console.error("Failed to load options");
-                }
+            if (i === version) {
+                skillTreeData = new SkillTreeData(data, options);
             }
-            ocxhr.send();
 
-            let dxchr = new XMLHttpRequest();
-            dxchr.open("GET", `data/${version_compare}/SkillTree.json?t=${(new Date()).getTime()}`, false);
-            dxchr.onload = () => {
-                if (dxchr.status === 200) {
-                    skillTreeData_compare = new SkillTreeData(JSON.parse(dxchr.responseText), skillTreeOptions_compare);
-                } else {
-                    console.error("Failed to load skill tree data");
-                }
+            if (i === version_compare) {
+                skillTreeData_compare = new SkillTreeData(data, options);
             }
-            dxchr.send();
         }
 
         fetch(`data/versions.json?t=${(new Date()).getTime()}`).then(response => {
@@ -99,6 +71,7 @@ namespace App {
                     controls[i].style.removeProperty('display');
                 }
             }
+
             var go = <HTMLSelectElement>document.getElementById("skillTreeControl_VersionGo");
             go.addEventListener("click", () => {
                 var search = '?';
@@ -136,37 +109,25 @@ namespace App {
         PIXI.utils.destroyTextureCache();
         PIXI.Loader.shared.reset();
         let added_assets = new Array<string>();
-        for (let id in skillTreeData.assets) {
-            let asset = skillTreeData.assets[id];
-            if (asset[skillTreeData.scale] && added_assets.indexOf(id) < 0) {
-                added_assets.push(id);
-                PIXI.Loader.shared.add(id, `data/${version}/assets/${id}.png`);
+        for (let i of [skillTreeData, skillTreeData_compare]) {
+            if (i === undefined) {
+                continue;
             }
-        }
-        for (let id in skillTreeData.skillSprites) {
-            let sprites = skillTreeData.skillSprites[id];
-            let sprite = sprites[sprites.length - 1];
-            if (sprite && added_assets.indexOf(sprite.filename) < 0) {
-                added_assets.push(sprite.filename);
-                PIXI.Loader.shared.add(sprite.filename, `data/${version}/assets/${sprite.filename}`);
-            }
-        }
 
-        if (skillTreeData_compare !== undefined) {
-            // Load Compare Assets (where possible)
-            for (let id in skillTreeData_compare.assets) {
-                let asset = skillTreeData_compare.assets[id];
-                if (asset[skillTreeData_compare.scale] && added_assets.indexOf(id) < 0) {
+            for (let id in i.assets) {
+                let asset = i.assets[id];
+                if (asset[i.scale] && added_assets.indexOf(id) < 0) {
                     added_assets.push(id);
-                    PIXI.Loader.shared.add(id, `data/${version_compare}/assets/${id}.png`);
+                    PIXI.Loader.shared.add(id, `data/${i.skillTreeOptions.version}/assets/${id}.png`);
                 }
             }
-            for (let id in skillTreeData_compare.skillSprites) {
-                let sprites = skillTreeData_compare.skillSprites[id];
+
+            for (let id in i.skillSprites) {
+                let sprites = i.skillSprites[id];
                 let sprite = sprites[sprites.length - 1];
                 if (sprite && added_assets.indexOf(sprite.filename) < 0) {
                     added_assets.push(sprite.filename);
-                    PIXI.Loader.shared.add(sprite.filename, `data/${version_compare}/assets/${sprite.filename}`);
+                    PIXI.Loader.shared.add(sprite.filename, `data/${i.skillTreeOptions.version}/assets/${sprite.filename}`);
                 }
             }
         }
@@ -196,6 +157,7 @@ namespace App {
                 viewport.addChild(text);
             }
         });
+
         PIXI.Loader.shared.onComplete.add(() => {
             setupSkillTreeEvents();
             draw();
@@ -282,7 +244,7 @@ namespace App {
             ascControl.removeChild(ascControl.firstChild);
         }
 
-        if (!skillTreeOptions.ascClasses) {
+        if (!skillTreeData.skillTreeOptions.ascClasses) {
             ascControl.style.display = "none";
             let e = (<HTMLDivElement>document.getElementById("skillTreeAscendancy"));
             if (e !== null) e.style.display = "none";
@@ -299,8 +261,8 @@ namespace App {
         ascControl.append(none);
 
         let startClass = start !== undefined ? start : skillTreeData.getStartClass();
-        for (let ascid in skillTreeOptions.ascClasses[startClass].classes) {
-            let asc = skillTreeOptions.ascClasses[startClass].classes[ascid];
+        for (let ascid in skillTreeData.skillTreeOptions.ascClasses[startClass].classes) {
+            let asc = skillTreeData.skillTreeOptions.ascClasses[startClass].classes[ascid];
 
             let e = document.createElement("option");
             e.text = asc.displayName;
@@ -396,8 +358,8 @@ namespace App {
             sprite.anchor.set(.5);
             backgroundContainer.addChild(sprite);
 
-            for (let id in skillTreeOptions.ascClasses) {
-                let ascClasses = skillTreeOptions.ascClasses[id];
+            for (let id in skillTreeData.skillTreeOptions.ascClasses) {
+                let ascClasses = skillTreeData.skillTreeOptions.ascClasses[id];
                 for (let classid in ascClasses.classes) {
                     let ascClass = ascClasses.classes[classid];
                     if (ascClass.name === ascendancyName) {

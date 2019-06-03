@@ -1,4 +1,4 @@
-﻿export class Constants implements IConstants {
+export class Constants implements IConstants {
     classes: { [id: string]: number; };
     characterAttributes: { [id: string]: number; };
     PSSCentreInnerRadius: number;
@@ -33,6 +33,6 @@
             4: "Duelist",
             5: "Templar",
             6: "Shadow"
-        }
+        };
     }
 }
