@@ -3354,6 +3354,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="app\app.ts" />
     <TypeScriptCompile Include="app\utils.ts" />
+    <TypeScriptCompile Include="models\PIXISkillNodeRenderer.ts" />
     <TypeScriptCompile Include="models\PIXISkillTreeRenderer.ts" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
     <TypeScriptCompile Include="models\SkillTreeCodec.ts" />
@@ -3367,6 +3368,7 @@
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillNodeRenderer.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeData.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeOptions.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeRenderer.d.ts" />

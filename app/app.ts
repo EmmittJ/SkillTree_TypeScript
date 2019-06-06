@@ -87,7 +87,7 @@ namespace App {
                     skillTreeData.skillTreeUtilities.decodeURL();
                     renderer.RenderCharacterStartsActive();
                 })
-                .catch(() => alert("There was an issue initializing the renderer"));
+                .catch((reason) => alert(`There was an issue initializing the renderer\n${reason}`));
         }
     }
 

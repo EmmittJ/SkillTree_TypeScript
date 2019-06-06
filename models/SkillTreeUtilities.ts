@@ -240,7 +240,6 @@ export class SkillTreeUtilities {
     }
 
     private mouseout = (node: SkillNode) => {
-        node.destroyTooltip();
         this.clearState(SkillNodeStates.Hovered);
         this.clearState(SkillNodeStates.Pathing);
         SkillTreeEvents.fire("skilltree", "hovered-nodes-end", node);
