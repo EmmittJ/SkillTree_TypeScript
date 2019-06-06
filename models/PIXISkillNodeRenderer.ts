@@ -8,11 +8,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     private SkillSpritesCompare: { [id: string]: Array<ISpriteSheet> };
     private ZoomLevel: number;
 
-    private NodeSprites: { [id: string]: PIXI.Sprite };
-    private NodeSpriteTextures: { [id: string]: PIXI.Texture };
-    private NodeFrameTextures: { [id: string]: PIXI.Texture };
-    private NodeTooltips: { [id: string]: PIXI.Container };
-    private NodeConnectionTextures: { [id: string]: PIXI.Texture };
+    private NodeSprites: { [id: string]: PIXI.Sprite | undefined };
+    private NodeSpriteTextures: { [id: string]: PIXI.Texture | undefined };
+    private NodeFrameTextures: { [id: string]: PIXI.Texture | undefined };
+    private NodeTooltips: { [id: string]: PIXI.Container | undefined };
+    private NodeConnectionTextures: { [id: string]: PIXI.Texture | undefined };
 
     constructor(skillSprites: { [id: string]: Array<ISpriteSheet> }, skillSpritesCompare: { [id: string]: Array<ISpriteSheet> } | undefined, zoomLevel: number = 3) {
         this.SkillSprites = skillSprites;
@@ -200,7 +200,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
 
         tooltip.destroy({ children: true, texture: true, baseTexture: true });
-        delete this.NodeTooltips[`${node.id}_${source}`];
+        this.NodeTooltips[`${node.id}_${source}`] = undefined;
     }
 
     public CreateConnections = (node: SkillNode, others: SkillNode[]) => {
