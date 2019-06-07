@@ -50,15 +50,15 @@ export class SkillTreeData implements ISkillTreeData {
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
 
-        // Fix for old school array style nodes
+        // #region Fix for old school array style nodes
         let temp: { [id: string]: ISkillNode } = {};
         for (let i in skillTree.nodes) {
             let node = skillTree.nodes[i];
             temp[node.id] = node;
         }
         skillTree.nodes = temp;
-
-        // Setup in/out properties correctly
+        // #endregion
+        // #region Setup in/out properties correctly
         {
             for (let id in skillTree.nodes) {
                 skillTree.nodes[id].in = [];
@@ -85,6 +85,81 @@ export class SkillTreeData implements ISkillTreeData {
                 }
             }
         }
+        // #endregion
+        // #region Fix ascendancy groups
+        let groupsCompleted: { [id: string]: boolean | undefined } = {};
+        for (let id in skillTree.nodes) {
+            let node = skillTree.nodes[id];
+            if (node.isAscendancyStart && groupsCompleted[node.g] === undefined) {
+                let startNode: ISkillNode | undefined = undefined;
+                for (let o of node.out) {
+                    if (skillTree.nodes[o].spc.length > 0) {
+                        startNode = skillTree.nodes[o];
+                    }
+                }
+
+                for (let o of node.in) {
+                    if (skillTree.nodes[o].spc.length > 0) {
+                        startNode = skillTree.nodes[o];
+                    }
+                }
+
+                if (startNode === undefined) {
+                    continue;
+                }
+
+                let offset = 0;
+                let classes = this.skillTreeOptions.ascClasses[startNode.spc[0]].classes;
+                for (let i in classes) {
+                    if (classes[i].name.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
+                        offset = +i - 1;
+                        break;
+                    }
+                }
+
+                let center_threshold = 100;
+                let offset_distance = 1450;
+                let base_x = 0;
+                let base_y = 0;
+                let start_group = this.groups[startNode.g];
+                if (start_group.x > -center_threshold && start_group.x < center_threshold) {
+                    base_x = 0 ;
+                    base_y = Math.sign(start_group.y) > 0 ? this.max_y * .95 : this.min_y;
+                } else {
+                    base_x = start_group.x < 0 ? this.min_x * .80 : this.max_x * .95;
+                    base_y = start_group.y;
+                }
+
+                if (start_group.y > -center_threshold && start_group.y < center_threshold && base_x === 0) {
+                    base_y = 0;
+                } else if (base_x === 0) {
+                    base_x += (Math.sign(start_group.x) * (offset - 1) * offset_distance)
+                } else {
+                    base_y += (Math.sign(start_group.y) * offset * offset_distance)
+                }
+
+                if (base_x === 0 && base_y === 0) {
+                    base_x = this.min_x * .55;
+                    base_y = this.max_y * .80;
+                }
+
+                groupsCompleted[node.g] = true;
+                for (let oid in skillTree.nodes) {
+                    let other = skillTree.nodes[oid];
+                    if (groupsCompleted[other.g] === undefined && other.ascendancyName === node.ascendancyName) {
+                        let diff_x = this.groups[node.g].x - this.groups[other.g].x;
+                        let diff_y = this.groups[node.g].y - this.groups[other.g].y;
+                        this.groups[other.g].x = base_x - diff_x;
+                        this.groups[other.g].y = base_y - diff_y;
+                        groupsCompleted[other.g] = true;
+                    }
+                }
+
+                this.groups[node.g].x = base_x;
+                this.groups[node.g].y = base_y;
+            }
+        }
+        // #endregion
 
         this.nodes = {};
         this.classStartNodes = {};
