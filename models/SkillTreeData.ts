@@ -122,25 +122,16 @@ export class SkillTreeData implements ISkillTreeData {
                 let base_x = 0;
                 let base_y = 0;
                 let start_group = this.groups[startNode.g];
-                if (start_group.x > -center_threshold && start_group.x < center_threshold) {
-                    base_x = 0 ;
+
+                if ((start_group.x > -center_threshold && start_group.x < center_threshold) && (start_group.y > -center_threshold && start_group.y < center_threshold)) {
+                    base_x = this.min_x * .55;
+                    base_y = this.max_y * .80;
+                } else if (start_group.x > -center_threshold && start_group.x < center_threshold) {
+                    base_x = start_group.x + (Math.sign(start_group.x) * (offset - 1) * offset_distance);
                     base_y = Math.sign(start_group.y) > 0 ? this.max_y * .95 : this.min_y;
                 } else {
                     base_x = start_group.x < 0 ? this.min_x * .80 : this.max_x * .95;
-                    base_y = start_group.y;
-                }
-
-                if (start_group.y > -center_threshold && start_group.y < center_threshold && base_x === 0) {
-                    base_y = 0;
-                } else if (base_x === 0) {
-                    base_x += (Math.sign(start_group.x) * (offset - 1) * offset_distance)
-                } else {
-                    base_y += (Math.sign(start_group.y) * offset * offset_distance)
-                }
-
-                if (base_x === 0 && base_y === 0) {
-                    base_x = this.min_x * .55;
-                    base_y = this.max_y * .80;
+                    base_y = start_group.y + (Math.sign(start_group.y) * offset * offset_distance);
                 }
 
                 groupsCompleted[node.g] = true;
