@@ -4,6 +4,7 @@ import { SkillTreeData } from "../models/SkillTreeData";
 import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
+import * as download from 'downloadjs';
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -86,6 +87,13 @@ namespace App {
                     renderer.RenderBase();
                     skillTreeData.skillTreeUtilities.decodeURL();
                     renderer.RenderCharacterStartsActive();
+
+                    var screenshot = <HTMLSelectElement>document.getElementById("skillTreeControl_Screenshot");
+                    screenshot.style.removeProperty('display');
+                    screenshot.addEventListener("click", () => {
+                        let mimeType: 'image/jpeg' = 'image/jpeg';
+                        download(renderer.CreateScreenshot(mimeType), `${version.replace(/\./g, '')}_skilltree.jpg`, mimeType);
+                    });
                 })
                 .catch((reason) => alert(`There was an issue initializing the renderer\n${reason}`));
         }
@@ -112,6 +120,7 @@ namespace App {
                 controls[i].style.removeProperty('display');
             }
         }
+
         let points = <HTMLCollectionOf<HTMLDivElement>>document.getElementsByClassName("skillTreePoints");
         for (let i in points) {
             if (points[i].style !== undefined) {

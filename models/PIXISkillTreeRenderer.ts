@@ -674,6 +674,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.addChild(this.highlights);
     }
 
+    public CreateScreenshot = (mimeType: 'image/jpeg' | 'image/webp'): string => {
+        return this.pixi.renderer.plugins.extract.base64(this.viewport, mimeType, 1);
+    }
+
     private MAX_COL_WIDTH: number = 2048;
     private MAX_ROW_HEIGHT: number = 2048;
     private createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.Rectangle | null = null): PIXI.Container => {
@@ -710,4 +714,5 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.pixi.renderer.render(obj, renderTexture);
         return renderTexture;
     }
+
 }

@@ -22,8 +22,10 @@
     "typescript": "^3.5.1"
   },
   "dependencies": {
+    "@types/downloadjs": "^1.4.1",
     "clean-webpack-plugin": "^1.0.1",
     "css-loader": "^2.1.1",
+    "downloadjs": "^1.4.7",
     "html-webpack-plugin": "^3.2.0",
     "pixi-viewport": "^3.23.2",
     "pixi.js": "^5.0.3",

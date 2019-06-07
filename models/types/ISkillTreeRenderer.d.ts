@@ -12,4 +12,5 @@ interface ISkillTreeRenderer {
     RenderHighlight(): void;
     StartRenderHover(): void;
     StopRenderHover(): void;
+    CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
 }
