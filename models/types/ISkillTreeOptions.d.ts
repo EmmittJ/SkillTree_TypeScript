@@ -6,4 +6,10 @@
     fullScreen: boolean;
     version: string;
     build: {};
+    circles: { [id: string]: ICircleOption[] } | undefined
+}
+
+interface ICircleOption {
+    level: number;
+    width: number;
 }

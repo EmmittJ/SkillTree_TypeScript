@@ -7,6 +7,28 @@
 </head>
 <body style="background-color: black;">
     <div id="skillTreeContainer">
+        <div id="skillTreeJewelPopup" style="display: none;">
+            <label for="skillTreeJewelPopupSize">Size: </label><select id="skillTreeJewelPopupSize">
+                <option value="Small">Small</option>
+                <option value="Medium">Medium</option>
+                <option value="Large">Large</option>
+            </select>
+            <br>
+            <label for="skillTreeJewelPopupType">Type: </label><select id="skillTreeJewelPopupType">
+                <option value="">Default</option>
+                <option value="EternalEmpire">Eternal Empire</option>
+                <option value="Karui">Karui</option>
+                <option value="Maraketh">Maraketh</option>
+                <option value="Templar">Templar</option>
+                <option value="Vaal">Vaal</option>
+            </select>
+            <br>
+            <label for="skillTreeJewelPopupSeed">Seed: </label><input id="skillTreeJewelPopupSeed">
+            <br>
+            <label for="skillTreeJewelPopupName">Name: </label><input id="skillTreeJewelPopupName">
+            <br>
+            <button id="skillTreeJewelPopupOk">Ok</button>
+        </div>
         <div class="skillTreePoints" style="display: none;">
             <div id="skillTreeNormal" class="skillTreeNodes"><span id="skillTreeNormalNodeCount">0</span>/<span id="skillTreeNormalNodeCountMaximum">121</span></div>
             <div id="skillTreeAscendancy" class="skillTreeNodes"><span id="skillTreeAscendancyNodeCount">0</span>/<span id="skillTreeAscendancyNodeCountMaximum">8</span></div>

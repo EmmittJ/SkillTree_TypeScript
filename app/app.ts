@@ -5,6 +5,7 @@ import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import * as download from 'downloadjs';
+import { SkillNode } from '../models/SkillNode';
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -112,6 +113,8 @@ namespace App {
         SkillTreeEvents.on("skilltree", "ascendancy-node-count", (count: number) => { let e = document.getElementById("skillTreeAscendancyNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
         SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => { let e = document.getElementById("skillTreeAscendancyNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
 
+        SkillTreeEvents.on("skilltree", "jewel-click-start", showJewelPopup);
+
         populateStartClasses(<HTMLSelectElement>document.getElementById("skillTreeControl_Class"));
         bindSearchBox(<HTMLInputElement>document.getElementById("skillTreeControl_Search"));
         let controls = <HTMLCollectionOf<HTMLDivElement>>document.getElementsByClassName("skillTreeControls");
@@ -127,6 +130,23 @@ namespace App {
                 points[i].style.removeProperty('display');
             }
         }
+    }
+
+    let showJewelPopup = (node: SkillNode) => {
+        let popup = <HTMLDivElement>document.getElementById("skillTreeJewelPopup");
+        popup.style.removeProperty('display');
+        let button = <HTMLButtonElement>document.getElementById("skillTreeJewelPopupOk");
+        button.onclick = () => {
+            popup.style.setProperty('display', 'none');
+            SkillTreeEvents.fire("skilltree", "jewel-click-end",
+                {
+                    node: node,
+                    size: (<HTMLSelectElement>document.getElementById("skillTreeJewelPopupSize")).value,
+                    type: (<HTMLSelectElement>document.getElementById("skillTreeJewelPopupType")).value,
+                    seed: (<HTMLInputElement>document.getElementById("skillTreeJewelPopupSeed")).value,
+                    name: (<HTMLInputElement>document.getElementById("skillTreeJewelPopupName")).value
+                });
+        };
     }
 
     let populateStartClasses = (classControl: HTMLSelectElement) => {

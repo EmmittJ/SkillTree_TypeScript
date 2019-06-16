@@ -31,7 +31,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.icon}_${source}`;
+        return `${node.icon}_${node.not}_${node.m}_${node.ks}_${source}`;
     }
 
     public CreateFrame = (node: SkillNode): PIXI.Sprite | null => {
@@ -120,12 +120,19 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
     private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
         sprite.removeAllListeners();
+        sprite.name = `${node.id}`;
 
         if (!node.m && SkillTreeEvents.events["node"] !== undefined) {
             sprite.interactive = true;
 
             for (let event in SkillTreeEvents.events["node"]) {
-                sprite.on(event, () => SkillTreeEvents.fire("node", event, node));
+                sprite.on(event, (interaction: PIXI.interaction.InteractionEvent) => {
+                    if ((event === "click" || event === "tap") && (interaction.data.originalEvent.shiftKey || interaction.data.originalEvent.ctrlKey || interaction.data.originalEvent.altKey)) {
+                        return;
+                    }
+
+                    SkillTreeEvents.fire("node", event, node);
+                });
             }
         }
     }

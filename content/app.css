@@ -11,7 +11,7 @@
     position: fixed;
     bottom: 0;
     left: 0;
-    height: 25px;
+    height: 1.5em;
     width: 100%;
     display: flex;
     flex-flow: row nowrap;
@@ -23,37 +23,46 @@
     position: fixed;
     bottom: 0;
     left: 0;
-    height: 25px;
+    height: 1.5em;
     display: flex;
     flex-flow: row nowrap;
     justify-content: center;
     align-items: center;
 }
 
+label {
+    width: 4em;
+    height: 1.5em;
+    display: inline-block;
+}
+
 select {
-    width: 120px;
+    width: 8em;
+    height: 1.5em;
 }
 
 input {
-    width: 116px;
+    width: 7.7em;
+    height: 1.2em;
 }
 
 button {
-    height: 20px;
+    height: 1.5em;
 }
 
 input, select, button {
     background: #333;
     border: 1px solid #999;
     color: #FFF;
-    margin-left: 5px;
+    margin: 0 0 0.25em 0.25em;
+    display: inline-block;
 }
 
 .skillTreePoints {
     position: fixed;
     top: 0;
     left: 0;
-    height: 30px;
+    height: 1.5em;
     width: 100%;
     display: flex;
     flex-flow: row nowrap;
@@ -64,7 +73,7 @@ input, select, button {
 .skillTreeNodes {
     background-image: url('/data/PSPointsFrame.png');
     background-size: 120px 25px;
-    margin-right: 10px;
+    margin-right: 0.5em;
     width: 120px;
     height: 25px;
     display: flex;
@@ -74,4 +83,21 @@ input, select, button {
     font-size: larger;
     color: #FFFFFF;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+#skillTreeJewelPopupOk {
+    float: right;
+    margin-right: .2em;
+    margin-top: .5em;
+}
+
+#skillTreeJewelPopup {
+    background: #333;
+    border: 1px solid #999;
+    color: #FFF;
+    width: 11em;
+    padding: 0.5em;
+    position: fixed;
+    left: 45%;
+    top: 30%;
 }

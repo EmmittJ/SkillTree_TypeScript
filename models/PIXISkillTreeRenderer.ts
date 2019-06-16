@@ -32,7 +32,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, this.skillTreeData_compare !== undefined ? this.skillTreeData_compare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Base"));
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Compare"));
-
+        SkillTreeEvents.on("skilltree", "jewel-click-end", this.CreateJewelSocketHightlight);
         container.appendChild(this.pixi.view);
 
         // #region Setup pixi-viewport
@@ -54,8 +54,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.on('mouseup', () => SkillTreeEvents.fire("viewport", "mouseup"));
         this.viewport.on('touchend', () => SkillTreeEvents.fire("viewport", "touchend"));
         this.viewport.on('touchcancel', () => SkillTreeEvents.fire("viewport", "touchcancel"));
-        this.viewport.on('click', (click) => click.data.originalEvent.ctrlKey ? this.viewport.zoomPercent(zoomPercent * 2, false) : true);
-        this.viewport.on('rightclick', (click) => click.data.originalEvent.ctrlKey ? this.viewport.zoomPercent(-zoomPercent * 2, false) : true);
+        this.viewport.on('click', (click) => this.HandleZoomClick(click, zoomPercent * 2));
+        this.viewport.on('click', this.HandleShiftClick);
+        this.viewport.on('rightclick', (click) => this.HandleZoomClick(click, -zoomPercent * 2));
         this.pixi.stage.addChild(this.viewport);
         // #endregion 
 
@@ -69,6 +70,88 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         promise.then(_ => this.Initialized = true);
         //promise.catch(_ => this.Initialized = false);
         return promise;
+    }
+
+    private HandleZoomClick = (click: PIXI.interaction.InteractionEvent, zoom: number) => {
+        if (!click.data.originalEvent.ctrlKey) {
+            return;
+        }
+
+        this.viewport.zoomPercent(zoom, false);
+    }
+
+    private JewelSocketHighlightMap: { [id: number]: PIXI.Container | undefined } = {};
+    private jewelSocketHighlights: PIXI.Container = new PIXI.Container();
+    private HandleShiftClick = (click: PIXI.interaction.InteractionEvent) => {
+        if (!click.data.originalEvent.shiftKey || this.skillTreeData.skillTreeOptions.circles === undefined) {
+            return;
+        }
+
+        let interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.skillIcons);
+        if (interactiveObject === null || interactiveObject.name === undefined || interactiveObject.name === null || interactiveObject.name === "") {
+            return;
+        }
+
+        let node = this.skillTreeData.nodes[+interactiveObject.name];
+        if (!node.isJewelSocket) {
+            return;
+        }
+
+        if (this.JewelSocketHighlightMap[node.id] !== undefined) {
+            this.pixi.ticker.remove(this.RotateJewelHighlights, this.JewelSocketHighlightMap[node.id]);
+            this.jewelSocketHighlights.removeChild(<PIXI.Container>this.JewelSocketHighlightMap[node.id]);
+            (<PIXI.Container>this.JewelSocketHighlightMap[node.id]).destroy({ children: true });
+            this.JewelSocketHighlightMap[node.id] = undefined;
+
+        } else {
+            SkillTreeEvents.fire("skilltree", "jewel-click-start", node);
+        }
+
+        this.UpdateJewelSocketHighlightPosition();
+    }
+
+    private CreateJewelSocketHightlight = (event: { node: SkillNode, size: string, type: string, seed: string, name: string }) => {
+        if (this.skillTreeData.skillTreeOptions.circles === undefined) {
+            return;
+        }
+
+        let sprite1 = PIXI.Sprite.from(`PassiveSkillScreen${event.type}JewelCircle1`);
+        let sprite2 = PIXI.Sprite.from(`PassiveSkillScreen${event.type}JewelCircle${event.type === "" ? 1 : 2}`);
+        sprite1.width = sprite1.height = sprite2.width = sprite2.height = this.skillTreeData.skillTreeOptions.circles[event.size][this.skillTreeData.imageZoomLevels.length - 1].width;
+        sprite1.x = sprite2.x = event.node.x;
+        sprite1.y = sprite2.y = event.node.y;
+        sprite1.anchor.set(.5);
+        sprite2.anchor.set(.5);
+
+        let container = new PIXI.Container();
+        container.addChild(sprite2);
+        container.addChild(sprite1);
+
+        this.jewelSocketHighlights.addChild(container);
+        this.JewelSocketHighlightMap[event.node.id] = container;
+        this.pixi.ticker.add(this.RotateJewelHighlights, this.JewelSocketHighlightMap[event.node.id]);
+        this.UpdateJewelSocketHighlightPosition();
+    }
+
+    private RotateJewelHighlights(delta: number) {
+        console.log("tick");
+        if (this instanceof PIXI.Container) {
+            let rotation = 0.0005;
+            for (var sprite of this.children) {
+                sprite.rotation += rotation * delta;
+                rotation *= -1;
+            }
+        }
+    }
+
+    private UpdateJewelSocketHighlightPosition = () => {
+        if (this.viewport.children.indexOf(this.jewelSocketHighlights) < 0) {
+            this.viewport.addChild(this.jewelSocketHighlights);
+        }
+
+        if (this.viewport.children.indexOf(this.jewelSocketHighlights) !== this.viewport.children.length - 1) {
+            this.viewport.setChildIndex(this.jewelSocketHighlights, this.viewport.children.length - 1);
+        }
     }
 
     private LoadAssets = (data: (SkillTreeData | undefined)[]): Promise<boolean> => {
@@ -346,6 +429,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.characterStarts.interactive = false;
         this.characterStarts.interactiveChildren = false;
         this.viewport.addChild(this.characterStarts);
+        this.UpdateJewelSocketHighlightPosition();
     }
 
     private connectionsActive: PIXI.Container = new PIXI.Container();
@@ -417,6 +501,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.viewport.addChildAt(this.connectionsActive, this.viewport.children.indexOf(this.connections) + 1);
         this.viewport.addChildAt(this.skillIconsActive, this.viewport.children.indexOf(this.skillIcons) + 1);
+        this.UpdateJewelSocketHighlightPosition();
     }
 
     private backgroundActive: PIXI.Container = new PIXI.Container();
@@ -464,6 +549,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.viewport.addChildAt(this.backgroundActive, this.viewport.children.indexOf(this.background));
         this.viewport.addChild(this.characterStartsActive);
+        this.UpdateJewelSocketHighlightPosition();
     }
 
     public StopRenderHover = (): void => {
@@ -641,7 +727,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 }
             }
 
-
+            this.UpdateJewelSocketHighlightPosition();
             requestAnimationFrame(this.RenderHover);
         }
     }
@@ -672,6 +758,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.highlights.interactive = false;
         highlightsContainer.destroy();
         this.viewport.addChild(this.highlights);
+        this.UpdateJewelSocketHighlightPosition();
     }
 
     public CreateScreenshot = (mimeType: 'image/jpeg' | 'image/webp'): string => {
