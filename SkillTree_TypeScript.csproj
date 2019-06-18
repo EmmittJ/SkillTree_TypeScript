@@ -21,7 +21,7 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
-    <TypeScriptToolsVersion>3.4</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>3.5</TypeScriptToolsVersion>
     <Use64BitIISExpress />
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -79,6 +79,7 @@
     <TypeScriptCompile Include="models\PIXISkillNodeRenderer.ts" />
     <TypeScriptCompile Include="models\PIXISkillTreeRenderer.ts" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
+    <TypeScriptCompile Include="models\SkillTreeAlternate.ts" />
     <TypeScriptCompile Include="models\SkillTreeCodec.ts" />
     <TypeScriptCompile Include="models\SkillTreeData.ts" />
     <TypeScriptCompile Include="models\Constants.ts" />
@@ -90,10 +91,14 @@
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillNodeAlternate.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillTreeAlternateJewelSettings.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNodeRenderer.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillTreeBuild.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeData.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeOptions.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeRenderer.d.ts" />
+    <TypeScriptCompile Include="models\types\ISkillTreeAlternate.d.ts" />
     <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeCodec.d.ts" />
     <TypeScriptCompile Include="models\types\IVersions.d.ts" />

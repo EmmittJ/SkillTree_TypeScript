@@ -2,10 +2,13 @@
 import { SkillNode, SkillNodeStates } from './SkillNode'
 import * as PIXI from "pixi.js";
 import { SkillTreeEvents } from "./SkillTreeEvents";
+import { SkillTreeAlternate } from "./SkillTreeAlternate";
+import { utils } from "../app/utils";
 
 export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     private SkillSprites: { [id: string]: Array<ISpriteSheet> };
     private SkillSpritesCompare: { [id: string]: Array<ISpriteSheet> };
+    private skillTreeAlternate: SkillTreeAlternate;
     private ZoomLevel: number;
 
     private NodeSprites: { [id: string]: PIXI.Sprite | undefined };
@@ -14,9 +17,10 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     private NodeTooltips: { [id: string]: PIXI.Container | undefined };
     private NodeConnectionTextures: { [id: string]: PIXI.Texture | undefined };
 
-    constructor(skillSprites: { [id: string]: Array<ISpriteSheet> }, skillSpritesCompare: { [id: string]: Array<ISpriteSheet> } | undefined, zoomLevel: number = 3) {
+    constructor(skillSprites: { [id: string]: Array<ISpriteSheet> }, skillTreeAlternate: SkillTreeAlternate, skillSpritesCompare: { [id: string]: Array<ISpriteSheet> } | undefined, zoomLevel: number = 3) {
         this.SkillSprites = skillSprites;
         this.SkillSpritesCompare = skillSpritesCompare || {};
+        this.skillTreeAlternate = skillTreeAlternate;
         this.ZoomLevel = zoomLevel;
 
         this.NodeSprites = {};
@@ -27,15 +31,15 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private GetNodeKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.id}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.id}_${node.alternate_id}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
     private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.icon}_${node.not}_${node.m}_${node.ks}_${source}`;
+        return `${node.icon}_${node.alternate_id}_${node.not}_${node.m}_${node.ks}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
-    public CreateFrame = (node: SkillNode): PIXI.Sprite | null => {
-        var asset = node.GetFrameAssetKey();
+    public CreateFrame = (node: SkillNode, others: SkillNode[]): PIXI.Sprite | null => {
+        var asset = node.GetFrameAssetKey(others);
         if (asset === "") {
             return null;
         }
@@ -73,7 +77,14 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
 
         let texture: PIXI.Texture | undefined = this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)];
-        let skillSprites = source === "Compare" ? this.SkillSpritesCompare : this.SkillSprites;
+        let skillSprites = this.SkillSprites;
+        let icon = node.icon;
+        if (source === "Compare") {
+            skillSprites = this.SkillSpritesCompare;
+        } else if (node.alternate_id !== undefined && this.skillTreeAlternate.nodes[node.alternate_id].icon !== "") {
+            skillSprites = this.skillTreeAlternate.skillSprites;
+            icon = this.skillTreeAlternate.nodes[node.alternate_id].icon;
+        }
         if (texture === undefined) {
             let spriteSheets = skillSprites[spriteSheetKey];
             if (spriteSheets === undefined || this.ZoomLevel >= spriteSheets.length) {
@@ -100,7 +111,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                 throw Error(`Sprite Sheet (${spriteSheetKey}) not found in SpriteSheets (${spriteSheets})`);
             }
             var spriteSheetTexture = PIXI.Texture.from(`${spriteSheet.filename}`);
-            var coords = spriteSheet.coords[node.icon];
+            var coords = spriteSheet.coords[icon];
             texture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
             this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)] = texture;
         }
@@ -164,9 +175,36 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
         if (tooltip === undefined) {
             let title: PIXI.Text | null = node.dn.length > 0 ? new PIXI.Text(`${node.dn}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
-            let stats: PIXI.Text | null = node.sd.length > 0 ? new PIXI.Text(`\n${node.sd.join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
-            let flavour: PIXI.Text | null = node.flavourText.length > 0 ? new PIXI.Text(`\n${node.flavourText.join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
-            let reminder: PIXI.Text | null = node.reminderText.length > 0 ? new PIXI.Text(`\n${node.reminderText.join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;
+            let stats: PIXI.Text | null = node.sd.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.sd.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
+            let flavour: PIXI.Text | null = node.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
+            let reminder: PIXI.Text | null = node.reminderText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.reminderText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;
+
+            if (node.alternate_id !== undefined) {
+                let alternate = this.skillTreeAlternate.nodes[node.alternate_id];
+                let text: string[] = [];
+                for (let stat of alternate.stats) {
+                    for (let i = stat.values.length - 1; i >= 0; i--) {
+                        let selector = '#'.repeat(i + 1);
+                        if (stat.values[i].length === 1) {
+                            stat.text[i] = stat.text[i].replace(new RegExp(selector, "g"), stat.values[i][0].toString());
+                            text.push(stat.text[i]);
+                        }
+                    }
+                }
+
+                if (!alternate.isAddition) {
+                    title = alternate.name.length > 0 ? new PIXI.Text(`${alternate.name}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
+                    stats = text.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${text.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
+                    flavour = alternate.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${alternate.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
+                    reminder = null;
+                }
+                else {
+                    for (let stat of node.sd) {
+                        text.push(stat);
+                    }
+                    stats = text.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${text.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
+                }
+            }
 
             tooltip = new PIXI.Container();
             tooltip.position.set(0, 0);

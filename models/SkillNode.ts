@@ -27,7 +27,6 @@ export class SkillNode implements ISkillNode {
     in: number[];
     state: SkillNodeStates;
 
-    skillTreeUtilities: SkillTreeUtilities;
     group: IGroup;
     orbitRadii: Array<number>;
     skillsPerOrbit: Array<number>;
@@ -35,10 +34,10 @@ export class SkillNode implements ISkillNode {
     arc: number;
     x: number;
     y: number;
+    alternate_id: string | undefined = undefined;
     hoverText: string | null = null;
 
-    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number, skillTreeUtilities: SkillTreeUtilities) {
-        this.skillTreeUtilities = skillTreeUtilities;
+    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
         this.id = node.id || -1;
         this.dn = node.dn || "";
         this.icon = node.icon || "";
@@ -94,12 +93,12 @@ export class SkillNode implements ISkillNode {
         this.state &= ~state;
     }
 
-    public GetDrawType = (): "Allocated" | "CanAllocate" | "Unallocated" | "Normal" => {
+    public GetDrawType = (others: SkillNode[]): "Allocated" | "CanAllocate" | "Unallocated" | "Normal" => {
         let drawType: "Allocated" | "CanAllocate" | "Unallocated" | "Normal";
 
         if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
             drawType = "Allocated";
-        } else if (this.skillTreeUtilities.isAnyActive(this.out)) {
+        } else if (others.filter(x => x.is(SkillNodeStates.Active)).length > 0) {
             drawType = "CanAllocate";
         } else if (this.ascendancyName !== "") {
             drawType = "Normal";
@@ -110,8 +109,8 @@ export class SkillNode implements ISkillNode {
         return drawType;
     }
 
-    public GetFrameAssetKey = (): string => {
-        let drawType = this.GetDrawType();
+    public GetFrameAssetKey = (others: SkillNode[]): string => {
+        let drawType = this.GetDrawType(others);
 
         let assetKey = "";
         if (this.isAscendancyStart) {

@@ -35,7 +35,8 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("controls", "class-change", this.changeStartClass, false);
         SkillTreeEvents.on("controls", "ascendancy-class-change", this.changeAscendancyClass, false);
         SkillTreeEvents.on("controls", "search-change", this.searchChange, true)
-        window.onhashchange = this.decodeURL;
+
+        SkillTreeEvents.on("skilltree", "jewel-click-end", this.encodeURL);
     }
 
     private lastHash = "";
@@ -45,29 +46,37 @@ export class SkillTreeUtilities {
         }
         this.lastHash = window.location.hash;
 
-        let def = this.skillTreeCodec.decodeURL(window.location.hash.replace("#", ""), this.skillTreeData);
-        this.skillTreeData.version = def.Version;
-        this.skillTreeData.fullscreen = def.Fullscreen;
-        this.changeStartClass(def.Class, false);
-        this.changeAscendancyClass(def.Ascendancy, false);
-        for (let node of def.Nodes) {
-            this.skillTreeData.nodes[node.id].add(SkillNodeStates.Active);
-        }
+        try {
+            this.skillTreeData.Build = JSON.parse(atob(window.location.hash.replace("#", "")));
+            let def = this.skillTreeCodec.decodeURL(this.skillTreeData.Build.TreeHash, this.skillTreeData);
+            this.skillTreeData.version = def.Version;
+            this.skillTreeData.fullscreen = def.Fullscreen;
+            this.changeStartClass(def.Class, false);
+            this.changeAscendancyClass(def.Ascendancy, false);
+            for (let node of def.Nodes) {
+                this.skillTreeData.nodes[node.id].add(SkillNodeStates.Active);
+            }
 
-        for (let id in this.skillTreeData.classStartNodes) {
-            if (this.skillTreeData.nodes[id].is(SkillNodeStates.Active)) {
-                let refund = this.getRefundNodes(this.skillTreeData.nodes[id], true);
-                for (let i of refund) {
-                    i.remove(SkillNodeStates.Active);
+            for (let id in this.skillTreeData.classStartNodes) {
+                if (this.skillTreeData.nodes[id].is(SkillNodeStates.Active)) {
+                    let refund = this.getRefundNodes(this.skillTreeData.nodes[id], true);
+                    for (let i of refund) {
+                        i.remove(SkillNodeStates.Active);
+                    }
                 }
             }
-        }
 
-        this.encodeURL();
+            SkillTreeEvents.fire("skilltree", "jewel-click-end", undefined);
+            this.encodeURL();
+        }
+        catch (ex) {
+            console.log(ex);
+        }
     }
 
     private encodeURL = () => {
-        window.location.hash = `#${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
+        this.skillTreeData.Build.TreeHash = `${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
+        window.location.hash = `#${btoa(JSON.stringify(this.skillTreeData.Build, (key, value) => key === "extra_data" ? undefined : value))}`;
         SkillTreeEvents.fire("skilltree", "active-nodes-update");
         this.broadcastSkillCounts();
     }

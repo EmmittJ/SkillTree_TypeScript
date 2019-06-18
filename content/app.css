@@ -95,9 +95,9 @@ input, select, button {
     background: #333;
     border: 1px solid #999;
     color: #FFF;
-    width: 11em;
+    width: 12em;
     padding: 0.5em;
     position: fixed;
-    left: 45%;
+    left: 1em;
     top: 30%;
 }

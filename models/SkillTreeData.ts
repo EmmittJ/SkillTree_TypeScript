@@ -1,6 +1,7 @@
 ﻿import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { Constants } from "./Constants";
 import { SkillTreeUtilities } from "./SkillTreeUtilities";
+import { ISkillTreeBuild } from "./types/ISkillTreeBuild";
 
 export class SkillTreeData implements ISkillTreeData {
     version: number;
@@ -27,6 +28,7 @@ export class SkillTreeData implements ISkillTreeData {
     scale: number;
     classStartNodes: { [id: string]: SkillNode };
     ascedancyNodes: { [id: string]: SkillNode };
+    Build: ISkillTreeBuild;
 
     constructor(skillTree: ISkillTreeData, options: ISkillTreeOptions) {
         this.version = skillTree.version = 4;
@@ -49,6 +51,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
+        this.Build = <ISkillTreeBuild>{ JewelSettings: {}, TreeHash: '' };
 
         // #region Fix for old school array style nodes
         let temp: { [id: string]: ISkillNode } = {};
@@ -156,14 +159,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.classStartNodes = {};
         this.ascedancyNodes = {};
         for (let id in skillTree.nodes) {
-            let node
-                = new SkillNode(
-                    skillTree.nodes[id],
-                    skillTree.groups[skillTree.nodes[id].g],
-                    skillTree.constants.orbitRadii,
-                    skillTree.constants.skillsPerOrbit,
-                    this.scale,
-                    this.skillTreeUtilities);
+            let node = new SkillNode(skillTree.nodes[id], skillTree.groups[skillTree.nodes[id].g], skillTree.constants.orbitRadii, skillTree.constants.skillsPerOrbit, this.scale);
             if (node.spc.length > 0 && node.spc.indexOf(options.startClass) >= 0) {
                 node.add(SkillNodeStates.Active);
             }
@@ -236,5 +232,25 @@ export class SkillTreeData implements ISkillTreeData {
         }
 
         return n;
+    }
+
+    public getNodesInRange = (x: number, y: number, range: number) => {
+        let _nodes: SkillNode[] = [];
+        for (var id in this.nodes) {
+            let n = this.nodes[id];
+            let dx = Math.abs(n.x - x);
+            let dy = Math.abs(n.y - y)
+            if (dx * dx + dy * dy < range * range && Math.abs(n.y - y) < range) {
+                _nodes.push(n);
+            }
+        }
+
+        return _nodes;
+    }
+
+    public clearAlternateIds = () => {
+        for (let id in this.nodes) {
+            this.nodes[id].alternate_id = undefined;
+        }
     }
 }
