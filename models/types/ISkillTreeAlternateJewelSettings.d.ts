@@ -1,7 +1,5 @@
-﻿import { SkillNode } from "../SkillNode";
-
-interface ISkillTreeAlternateJewelSettings {
-    node: SkillNode;
+﻿interface ISkillTreeAlternateJewelSettings {
+    node_id: number;
     size: string;
     factionId: number;
     seed: string;

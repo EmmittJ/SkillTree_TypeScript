@@ -6,6 +6,8 @@
     skillSprites: { [id: string]: ISpriteSheet[] } = {};
     version: string = "";
 
+    nodesByPassiveType: ISkillNodeAlternate[][] = [];
+
     constructor(alternate: ISkillTreeAlternate | undefined) {
         if (alternate === undefined) {
             return;
@@ -17,6 +19,18 @@
         this.passiveTypes = alternate.passiveTypes;
         this.skillSprites = alternate.skillSprites;
         this.version = alternate.version
+
+        for (let id in this.nodes) {
+            let n = this.nodes[id];
+            for (let i in this.passiveTypes) {
+                if (n.passiveType.indexOf(+i) >= 0) {
+                    if (this.nodesByPassiveType[i] === undefined) {
+                        this.nodesByPassiveType[i] = [];
+                    }
+                    this.nodesByPassiveType[i].push(n);
+                }
+            }
+        }
     }
 
     getJewelCircleNameFromFaction = (faction_id: number) => this.factions[faction_id] !== undefined ? this.factions[faction_id].name.replace('Eternal', 'EternalEmpire').replace('None', '') : '';

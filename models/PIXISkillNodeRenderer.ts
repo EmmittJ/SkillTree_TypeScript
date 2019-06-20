@@ -31,11 +31,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private GetNodeKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.id}_${node.alternate_id}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.id}_${node.alternate_ids}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
     private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.icon}_${node.alternate_id}_${node.not}_${node.m}_${node.ks}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.icon}_${node.alternate_ids}_${node.not}_${node.m}_${node.ks}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
     public CreateFrame = (node: SkillNode, others: SkillNode[]): PIXI.Sprite | null => {
@@ -81,9 +81,12 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let icon = node.icon;
         if (source === "Compare") {
             skillSprites = this.SkillSpritesCompare;
-        } else if (node.alternate_id !== undefined && this.skillTreeAlternate.nodes[node.alternate_id].icon !== "") {
-            skillSprites = this.skillTreeAlternate.skillSprites;
-            icon = this.skillTreeAlternate.nodes[node.alternate_id].icon;
+        } else if (node.alternate_ids !== undefined) {
+            let alternate_id = node.alternate_ids.find(x => this.skillTreeAlternate.nodes[x].icon !== "");
+            if (alternate_id !== undefined) {
+                skillSprites = this.skillTreeAlternate.skillSprites;
+                icon = this.skillTreeAlternate.nodes[alternate_id].icon;
+            }
         }
         if (texture === undefined) {
             let spriteSheets = skillSprites[spriteSheetKey];
@@ -179,20 +182,23 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             let flavour: PIXI.Text | null = node.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
             let reminder: PIXI.Text | null = node.reminderText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.reminderText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;
 
-            if (node.alternate_id !== undefined) {
-                let alternate = this.skillTreeAlternate.nodes[node.alternate_id];
+            if (node.alternate_ids !== undefined) {
                 let text: string[] = [];
-                for (let stat of alternate.stats) {
-                    for (let i = stat.values.length - 1; i >= 0; i--) {
-                        let selector = '#'.repeat(i + 1);
-                        if (stat.values[i].length === 1) {
-                            stat.text[i] = stat.text[i].replace(new RegExp(selector, "g"), stat.values[i][0].toString());
-                            text.push(stat.text[i]);
+                for (let alternate of node.alternate_ids.map(x => this.skillTreeAlternate.nodes[x])) {
+                    for (let stat of alternate.stats) {
+                        for (let i = stat.values.length - 1; i >= 0; i--) {
+                            let selector = '#'.repeat(i + 1);
+                            if (stat.values[i].length === 1) {
+                                stat.text[i] = stat.text[i].replace(new RegExp(selector, "g"), stat.values[i][0].toString());
+                                text.push(stat.text[i]);
+                            }
                         }
                     }
                 }
 
-                if (!alternate.isAddition) {
+                let id = node.alternate_ids.find(x => !this.skillTreeAlternate.nodes[x].isAddition)
+                if (id !== undefined) {
+                    let alternate = this.skillTreeAlternate.nodes[id];
                     title = alternate.name.length > 0 ? new PIXI.Text(`${alternate.name}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
                     stats = text.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${text.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
                     flavour = alternate.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${alternate.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;

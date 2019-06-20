@@ -6,7 +6,6 @@ import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode } from "./SkillNode";
 import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
 import { SkillTreeAlternate } from "./SkillTreeAlternate";
-import { ISkillTreeAlternateJewelSettings } from "./types/ISkillTreeAlternateJewelSettings";
 
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     Initialized: boolean = false;
@@ -96,14 +95,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         let node = this.skillTreeData.nodes[+interactiveObject.name];
-        if (!node.isJewelSocket) {
-            return;
+        if (node.isJewelSocket) {
+            let settings = this.skillTreeData.Build.JewelSettings[node.id];
+            if (settings === undefined) {
+                settings = <ISkillTreeAlternateJewelSettings>{ node_id: node.id };
+            }
+            SkillTreeEvents.fire("skilltree", "jewel-click-start", settings);
         }
-        let settings = this.skillTreeData.Build.JewelSettings[node.id];
-        if (settings === undefined) {
-            settings = <ISkillTreeAlternateJewelSettings>{ node: node };
-        }
-        SkillTreeEvents.fire("skilltree", "jewel-click-start", settings);
     }
 
     private CreateJewelSocketHightlight = (new_settings: ISkillTreeAlternateJewelSettings | undefined) => {
@@ -113,8 +111,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.skillTreeData.clearAlternateIds();
 
-        if (new_settings !== undefined && this.skillTreeData.Build.JewelSettings[new_settings.node.id] === undefined) {
-            this.skillTreeData.Build.JewelSettings[new_settings.node.id] = JSON.parse(JSON.stringify(new_settings));
+        if (new_settings !== undefined && this.skillTreeData.Build.JewelSettings[new_settings.node_id] === undefined) {
+            this.skillTreeData.Build.JewelSettings[new_settings.node_id] = JSON.parse(JSON.stringify(new_settings));
         }
 
         for (let i in this.skillTreeData.Build.JewelSettings) {
@@ -130,22 +128,26 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 settings.extra_data = undefined;
             }
 
-            if (new_settings !== undefined && settings.node.id === new_settings.node.id) {
-                this.skillTreeData.Build.JewelSettings[new_settings.node.id] = <ISkillTreeAlternateJewelSettings>JSON.parse(JSON.stringify(new_settings));
-                settings = this.skillTreeData.Build.JewelSettings[new_settings.node.id];
+            if (new_settings !== undefined && settings.node_id === new_settings.node_id) {
+                this.skillTreeData.Build.JewelSettings[new_settings.node_id] = <ISkillTreeAlternateJewelSettings>JSON.parse(JSON.stringify(new_settings));
+                settings = this.skillTreeData.Build.JewelSettings[new_settings.node_id];
                 if (settings === undefined) {
                     continue;
                 }
             }
 
             if (settings.size !== "None" && settings.extra_data === undefined) {
+                let node = this.skillTreeData.nodes[settings.node_id];
+                if (node === undefined) {
+                    continue;
+                }
                 let jewelWidth = this.skillTreeData.skillTreeOptions.circles[settings.size][this.skillTreeData.imageZoomLevels.length - 1].width;
                 let factionCircleName = this.skillTreeAlternate.getJewelCircleNameFromFaction(settings.factionId);
                 let sprite1 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle1`);
                 let sprite2 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
                 sprite1.width = sprite1.height = sprite2.width = sprite2.height = jewelWidth;
-                sprite1.x = sprite2.x = settings.node.x;
-                sprite1.y = sprite2.y = settings.node.y;
+                sprite1.x = sprite2.x = node.x;
+                sprite1.y = sprite2.y = node.y;
                 sprite1.anchor.set(.5);
                 sprite2.anchor.set(.5);
 
@@ -158,36 +160,32 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
                 let faction = this.skillTreeAlternate.factions[settings.factionId];
                 let keystone_id: string | undefined = settings.factionId in this.skillTreeAlternate.alternate_tree_keystones ? this.skillTreeAlternate.alternate_tree_keystones[settings.factionId][settings.name] : undefined;
-                let nodes: ISkillNodeAlternate[][] = [];
-                for (let id in this.skillTreeAlternate.nodes) {
-                    let n = this.skillTreeAlternate.nodes[id];
-                    if (n.faction === settings.factionId) {
-                        for (let i in this.skillTreeAlternate.passiveTypes) {
-                            if (n.passiveType.indexOf(+i) >= 0) {
-                                if (nodes[i] === undefined) {
-                                    nodes[i] = [];
-                                } 
-                                nodes[i].push(n);
-                            }
-                        }
-                    }
+                let regular1_id: string | undefined = undefined;
+                let n1 = this.skillTreeAlternate.nodesByPassiveType[1].filter(x => x.faction === (<ISkillTreeAlternateJewelSettings>settings).factionId);
+                if (n1.length === 1) {
+                    regular1_id = n1[0].id;
                 }
-                let regular1_id: string | undefined = nodes[1] !== undefined && nodes[1].length === 1 ? nodes[1][0].id : undefined;
-                let regular2_id: string | undefined = nodes[2] !== undefined && nodes[2].length === 1 ? nodes[2][0].id : undefined;;
-                for (let o of this.skillTreeData.getNodesInRange(settings.node.x, settings.node.y, Math.floor(jewelWidth / 2))) {
+
+                let regular2_id: string | undefined = undefined;
+                let n2 = this.skillTreeAlternate.nodesByPassiveType[2].filter(x => x.faction === (<ISkillTreeAlternateJewelSettings>settings).factionId);
+                if (n2.length === 1) {
+                    regular2_id = n2[0].id;
+                }
+
+                for (let o of this.skillTreeData.getNodesInRange(node.x, node.y, Math.floor(jewelWidth / 2))) {
                     if (o.isJewelSocket) {
                         continue;
                     }
                     if (o.ks) {
-                        o.alternate_id = keystone_id;
+                        o.alternate_ids = keystone_id === undefined ? keystone_id : [keystone_id];
                     }
 
                     if (!o.ks && !o.not && !o.isJewelSocket && !o.m) {
                         if ((o.sa > 0 || o.da > 0 || o.ia > 0) && o.sd.filter(utils.NotNullOrWhiteSpace).length === 1) {
-                            o.alternate_id = regular1_id;
+                            o.alternate_ids = regular1_id === undefined ? regular1_id : [regular1_id];
                         }
                         else {
-                            o.alternate_id = regular2_id;
+                            o.alternate_ids = regular2_id === undefined ? regular2_id : [regular2_id];
                         }
                     }
                 }
@@ -507,7 +505,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 if (this.skillTreeData.nodes[node.id] === undefined) {
                     node.add(SkillNodeStates.Compared);
                     this.skillIcons_compare.addChild(this.SkillNodeRenderer.CreateIcon(node, "Compare"));
-                    let frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
+                    let frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (<SkillTreeData>this.skillTreeData_compare).nodes[x]));
                     if (frame !== null) {
                         this.skillIcons_compare.addChild(frame);
                     }
@@ -550,7 +548,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         let drawn_connections: { [id: number]: Array<number> } = {};
         for (let id in this.skillTreeData.nodes) {
             var node = this.skillTreeData.nodes[id];
-            if ((!node.is(SkillNodeStates.Active) && node.alternate_id === undefined) || node.spc.length > 0) {
+            if ((!node.is(SkillNodeStates.Active) && node.alternate_ids === undefined) || node.spc.length > 0) {
                 continue;
             }
 

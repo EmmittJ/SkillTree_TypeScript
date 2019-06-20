@@ -5,14 +5,14 @@ import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import * as download from 'downloadjs';
-import { SkillNode } from '../models/SkillNode';
 import { SkillTreeAlternate } from '../models/SkillTreeAlternate';
-import { ISkillTreeAlternateJewelSettings } from '../models/types/ISkillTreeAlternateJewelSettings';
+import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
 
 namespace App {
     let skillTreeData: SkillTreeData;
     let skillTreeData_compare: SkillTreeData | undefined;
     let skillTreeAlternate: SkillTreeAlternate;
+    let skillTreeUtilities: SkillTreeUtilities;
     let renderer: ISkillTreeRenderer;
 
     export const main = async (version: string, version_compare: string) => {
@@ -34,6 +34,7 @@ namespace App {
                 skillTreeData_compare = data;
             }
         }
+        skillTreeUtilities = new SkillTreeUtilities(skillTreeData, skillTreeAlternate);
 
         fetch(`data/versions.json?t=${(new Date()).getTime()}`).then(response => {
             return response.json();
@@ -86,7 +87,7 @@ namespace App {
                 .then(() => {
                     SetupEventsAndControls();
                     renderer.RenderBase();
-                    skillTreeData.skillTreeUtilities.decodeURL();
+                    skillTreeUtilities.decodeURL();
                     renderer.RenderCharacterStartsActive();
 
                     var screenshot = <HTMLSelectElement>document.getElementById("skillTreeControl_Screenshot");
@@ -191,7 +192,7 @@ namespace App {
 
             SkillTreeEvents.fire("skilltree", "jewel-click-end",
                 <ISkillTreeAlternateJewelSettings>{
-                    node: settings.node,
+                    node_id: settings.node_id,
                     size: sizeSelect.value,
                     factionId: sizeSelect.value !== "None" ? +factionSelect.value : 0,
                     seed: seedInput.value,

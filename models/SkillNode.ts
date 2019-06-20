@@ -1,6 +1,4 @@
-﻿import { SkillTreeUtilities } from "./SkillTreeUtilities";
-
-export class SkillNode implements ISkillNode {
+﻿export class SkillNode implements ISkillNode {
     id: number;
     dn: string;
     icon: string;
@@ -34,7 +32,7 @@ export class SkillNode implements ISkillNode {
     arc: number;
     x: number;
     y: number;
-    alternate_id: string | undefined = undefined;
+    alternate_ids: string[] | undefined = undefined;
     hoverText: string | null = null;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {

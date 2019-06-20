@@ -1,7 +1,5 @@
 ﻿import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { Constants } from "./Constants";
-import { SkillTreeUtilities } from "./SkillTreeUtilities";
-import { ISkillTreeBuild } from "./types/ISkillTreeBuild";
 
 export class SkillTreeData implements ISkillTreeData {
     version: number;
@@ -22,7 +20,6 @@ export class SkillTreeData implements ISkillTreeData {
     constants: Constants;
 
     skillTreeOptions: ISkillTreeOptions;
-    skillTreeUtilities: SkillTreeUtilities;
     width: number;
     height: number;
     scale: number;
@@ -34,7 +31,6 @@ export class SkillTreeData implements ISkillTreeData {
         this.version = skillTree.version = 4;
         this.fullscreen = skillTree.fullscreen = 0;
         this.skillTreeOptions = options;
-        this.skillTreeUtilities = new SkillTreeUtilities(this);
         this.characterData = skillTree.characterData;
         this.groups = skillTree.groups;
         this.root = skillTree.root;
@@ -250,7 +246,7 @@ export class SkillTreeData implements ISkillTreeData {
 
     public clearAlternateIds = () => {
         for (let id in this.nodes) {
-            this.nodes[id].alternate_id = undefined;
+            this.nodes[id].alternate_ids = undefined;
         }
     }
 }
