@@ -164,6 +164,7 @@ namespace App {
             });
         };
 
+        let alt_ids: string[] = JSON.parse(JSON.stringify(event.node.alternate_ids || []));
         (<HTMLSelectElement>replaceSelect).onchange = _onchange;
         if (replaceSelect !== null) {
             while (replaceSelect.firstChild) {
@@ -183,8 +184,9 @@ namespace App {
                 let o = document.createElement("option");
                 o.value = c.id;
                 o.text = c.name;
-                if (event.node.alternate_ids !== undefined && event.node.alternate_ids.indexOf(c.id) > -1) {
+                if (alt_ids.indexOf(c.id) > -1) {
                     o.selected = true;
+                    alt_ids.splice(alt_ids.indexOf(c.id), 1);
                 }
                 replaceSelect.appendChild(o);
             }
@@ -222,6 +224,7 @@ namespace App {
             o.text = "None";
             additionSelect.appendChild(o);
 
+            let selected = false;
             for (let c of event.choices) {
                 if (!c.isAddition) {
                     continue;
@@ -230,8 +233,10 @@ namespace App {
                 let o = document.createElement("option");
                 o.value = c.id;
                 o.text = c.stats.map(x => x.text).map(y => y.join('\n')).join('\n');
-                if (event.node.alternate_ids !== undefined && event.node.alternate_ids.indexOf(c.id) > -1) {
+                if (!selected && alt_ids.indexOf(c.id) > -1) {
                     o.selected = true;
+                    selected = true;
+                    alt_ids.splice(alt_ids.indexOf(c.id), 1);
                 }
                 additionSelect.appendChild(o);
                 additionSelect.style.removeProperty('display');
