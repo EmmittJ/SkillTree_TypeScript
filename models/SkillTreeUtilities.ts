@@ -88,13 +88,12 @@ export class SkillTreeUtilities {
         for (let id in this.skillTreeData.nodes) {
             let node = this.skillTreeData.nodes[id];
             if (node.alternate_ids !== undefined
-                && !node.ks 
-                && node.alternate_ids.filter(x => this.skillTreeAlternate.nodesByPassiveType[this.skillTreeAlternate.nodes[x].faction].length > 1).length > 0) {
+                && (node.isRegular2 || node.not)
+                && node.alternate_ids.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[x].faction).length > 1).length > 0) {
                 this.skillTreeData.Build.NodeAlternateIdMap[node.id] = node.alternate_ids;
             }
         }
         window.location.hash = `#${lzstring.compressToEncodedURIComponent(JSON.stringify(this.skillTreeData.Build, (key, value) => key === "extra_data" ? undefined : value))}`;
-        console.log(window.location.hash.length);
         SkillTreeEvents.fire("skilltree", "active-nodes-update");
         this.broadcastSkillCounts();
     }

@@ -1,4 +1,6 @@
-﻿export class SkillNode implements ISkillNode {
+﻿import { utils } from "../app/utils";
+
+export class SkillNode implements ISkillNode {
     id: number;
     dn: string;
     icon: string;
@@ -32,7 +34,10 @@
     arc: number;
     x: number;
     y: number;
+    isRegular2: boolean;
+    isRegular1: boolean;
     alternate_ids: string[] | undefined = undefined;
+    faction: number = 0;
     hoverText: string | null = null;
 
     constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
@@ -69,6 +74,8 @@
         this.arc = this.getArc(this.oidx);
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
+        this.isRegular2 = !this.ks && !this.not && !this.isJewelSocket && !this.m;
+        this.isRegular1 = this.isRegular2 && (this.sa > 0 || this.da > 0 || this.ia > 0) && this.sd.filter(utils.NotNullOrWhiteSpace).length === 1;
 
         if (this.passivePointsGranted > 0) {
             this.sd.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
@@ -144,6 +151,26 @@
 
     public GetConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {
         return this.is(SkillNodeStates.Active) && other.is(SkillNodeStates.Active) ? "Active" : (this.is(SkillNodeStates.Active) || other.is(SkillNodeStates.Active) || (this.is(SkillNodeStates.Pathing) && other.is(SkillNodeStates.Pathing)) ? "Intermediate" : "Normal");
+    }
+
+    public GetPassiveType = (): 0 | 1 | 2 | 3 | 4 => {
+        if (this.isRegular1) {
+            return 1;
+        }
+
+        if (this.isRegular2) {
+            return 2;
+        }
+
+        if (this.not) {
+            return 3;
+        }
+
+        if (this.ks) {
+            return 4;
+        }
+
+        return 0;
     }
 }
 

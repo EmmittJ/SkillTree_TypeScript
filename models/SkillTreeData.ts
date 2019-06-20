@@ -234,6 +234,10 @@ export class SkillTreeData implements ISkillTreeData {
         let _nodes: SkillNode[] = [];
         for (var id in this.nodes) {
             let n = this.nodes[id];
+            if (n.m) {
+                continue;
+            }
+
             let dx = Math.abs(n.x - x);
             let dy = Math.abs(n.y - y)
             if (dx * dx + dy * dy < range * range && Math.abs(n.y - y) < range) {
@@ -244,9 +248,14 @@ export class SkillTreeData implements ISkillTreeData {
         return _nodes;
     }
 
-    public clearAlternateIds = () => {
+    public clearAlternates = (used_nodes: string[]) => {
         for (let id in this.nodes) {
+            if (used_nodes.indexOf(id) > -1) {
+                continue;
+            }
+
             this.nodes[id].alternate_ids = undefined;
+            this.nodes[id].faction = 0;
         }
     }
 }

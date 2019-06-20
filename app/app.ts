@@ -166,12 +166,15 @@ namespace App {
             nameSelect.value = settings.name;
         }
 
-        let _onchange = (ev: Event | null = null) => {
+        let _onchange = () => {
             if (factionDiv !== null) {
                 if (factionSelect.value !== "0") {
                     factionDiv.style.removeProperty('display');
+                    sizeSelect.value = "Large";
+                    sizeSelect.disabled = true;
                 } else {
                     factionDiv.style.setProperty('display', 'none');
+                    sizeSelect.disabled = false;
                 }
             }
 
