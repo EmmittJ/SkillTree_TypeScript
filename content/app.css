@@ -85,13 +85,15 @@ input, select, button {
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
-#skillTreeJewelPopupOk {
+#skillTreeJewelPopupOk,
+#skillTreeAlternateNodePopupOk {
     float: right;
     margin-right: .2em;
     margin-top: .5em;
 }
 
-#skillTreeJewelPopup {
+#skillTreeJewelPopup,
+#skillTreeAlternateNodePopup {
     background: #333;
     border: 1px solid #999;
     color: #FFF;
@@ -100,4 +102,9 @@ input, select, button {
     position: fixed;
     left: 1em;
     top: 30%;
+}
+
+#skillTreeAlternateNodePopup {
+    width: 13em;
+    margin-top: 150px;
 }

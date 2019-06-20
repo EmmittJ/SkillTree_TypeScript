@@ -35,7 +35,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, skillTreeAlternate, this.skillTreeData_compare !== undefined ? this.skillTreeData_compare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Base"));
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Compare"));
-        SkillTreeEvents.on("skilltree", "jewel-click-end", this.CreateJewelSocketHightlight);
+        SkillTreeEvents.on("skilltree", "jewel-click-end", this.CreateJewelSocketHightlights);
+        SkillTreeEvents.on("skilltree", "faction-node-end", this.UpdateFactionNode);
         container.appendChild(this.pixi.view);
 
         // #region Setup pixi-viewport
@@ -106,11 +107,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
             SkillTreeEvents.fire("skilltree", "jewel-click-start", settings);
         } else if (node.faction !== 0) {
-            SkillTreeEvents.fire("skilltree", "faction-node-start", node);
+            SkillTreeEvents.fire("skilltree", "faction-node-start", { node: node, choices: this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(x => x.faction === node.faction) });
         }
     }
 
-    private CreateJewelSocketHightlight = (new_settings: ISkillTreeAlternateJewelSettings | undefined) => {
+    private UpdateFactionNode = (event: { node_id: number, alterante_ids: string[] }) => {
+        let node = this.skillTreeData.nodes[event.node_id];
+        node.alternate_ids = event.alterante_ids.length > 0 ? event.alterante_ids : undefined;
+
+        this.CreateJewelSocketHightlights();
+    }
+
+    private CreateJewelSocketHightlights = (new_settings: ISkillTreeAlternateJewelSettings | undefined = undefined) => {
         if (this.skillTreeData.skillTreeOptions.circles === undefined) {
             return;
         }
@@ -200,6 +208,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.skillTreeData.clearAlternates(used_nodes);
         this.UpdateJewelSocketHighlightPosition();
         this.RenderActive();
+        SkillTreeEvents.fire("skilltree", "encode-url");
     }
 
     private RotateJewelHighlights(delta: number) {

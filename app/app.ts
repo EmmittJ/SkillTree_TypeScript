@@ -7,6 +7,7 @@ import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import * as download from 'downloadjs';
 import { SkillTreeAlternate } from '../models/SkillTreeAlternate';
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
+import { SkillNode } from '../models/SkillNode';
 
 namespace App {
     let skillTreeData: SkillTreeData;
@@ -115,6 +116,7 @@ namespace App {
         SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => { let e = document.getElementById("skillTreeAscendancyNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
 
         SkillTreeEvents.on("skilltree", "jewel-click-start", showJewelPopup);
+        SkillTreeEvents.on("skilltree", "faction-node-start", showNodePopup);
 
         populateStartClasses(<HTMLSelectElement>document.getElementById("skillTreeControl_Class"));
         bindSearchBox(<HTMLInputElement>document.getElementById("skillTreeControl_Search"));
@@ -131,6 +133,119 @@ namespace App {
                 points[i].style.removeProperty('display');
             }
         }
+    }
+
+    let showNodePopup = (event: { node: SkillNode, choices: ISkillNodeAlternate[] }) => {
+        let popup = <HTMLDivElement>document.getElementById("skillTreeAlternateNodePopup");
+        if (event.choices.length > 1) {
+            popup.style.removeProperty('display');
+        } else {
+            popup.style.setProperty('display', 'none');
+        }
+
+        let replaceSelect = document.getElementById("skillTreeAlternateNodePopupReplace");
+        let _onchange = () => {
+            let alt_ids: string[] = [];
+            if ((<HTMLSelectElement>replaceSelect).value !== "") {
+                alt_ids.push((<HTMLSelectElement>replaceSelect).value);
+            }
+
+            for (let i of [1, 2, 3, 4]) {
+                let additionSelect = document.getElementById(`skillTreeAlternateNodePopupAdditional${i}`);
+                if (additionSelect === null || (<HTMLSelectElement>additionSelect).value === "") {
+                    continue;
+                }
+                alt_ids.push((<HTMLSelectElement>additionSelect).value);
+            }
+
+            SkillTreeEvents.fire("skilltree", "faction-node-end", {
+                node_id: event.node.id,
+                alterante_ids: alt_ids
+            });
+        };
+
+        (<HTMLSelectElement>replaceSelect).onchange = _onchange;
+        if (replaceSelect !== null) {
+            while (replaceSelect.firstChild) {
+                replaceSelect.removeChild(replaceSelect.firstChild);
+            }
+
+            let o = document.createElement("option");
+            o.value = "";
+            o.text = "None";
+            replaceSelect.appendChild(o);
+
+            for (let c of event.choices) {
+                if (c.isAddition) {
+                    continue;
+                }
+
+                let o = document.createElement("option");
+                o.value = c.id;
+                o.text = c.name;
+                if (event.node.alternate_ids !== undefined && event.node.alternate_ids.indexOf(c.id) > -1) {
+                    o.selected = true;
+                }
+                replaceSelect.appendChild(o);
+            }
+        }
+
+        let vaal = document.getElementById("skillTreeAlternateNodePopupVaalRequired");
+        if (vaal !== null) {
+            if (event.node.faction === 1) {
+                vaal.style.removeProperty('display');
+            }
+            else {
+                vaal.style.setProperty('display', 'none');
+            }
+        }
+
+        for (let i of [1, 2, 3, 4]) {
+            let additionSelect = document.getElementById(`skillTreeAlternateNodePopupAdditional${i}`);
+            let additionLabel = document.getElementById(`skillTreeAlternateNodePopupAdditional${i}Label`);
+            if (additionSelect === null) {
+                continue;
+            }
+            additionSelect.style.setProperty('display', 'none');
+            (<HTMLSelectElement>additionSelect).onchange = _onchange;
+
+            if (additionLabel !== null) {
+                additionLabel.style.setProperty('display', 'none');
+            }
+
+            while (additionSelect.firstChild) {
+                additionSelect.removeChild(additionSelect.firstChild);
+            }
+
+            let o = document.createElement("option");
+            o.value = "";
+            o.text = "None";
+            additionSelect.appendChild(o);
+
+            for (let c of event.choices) {
+                if (!c.isAddition) {
+                    continue;
+                }
+
+                let o = document.createElement("option");
+                o.value = c.id;
+                o.text = c.stats.map(x => x.text).map(y => y.join('\n')).join('\n');
+                if (event.node.alternate_ids !== undefined && event.node.alternate_ids.indexOf(c.id) > -1) {
+                    o.selected = true;
+                }
+                additionSelect.appendChild(o);
+                additionSelect.style.removeProperty('display');
+                if (additionLabel !== null) {
+                    additionLabel.style.removeProperty('display');
+                }
+            }
+        }
+
+        let button = <HTMLButtonElement>document.getElementById("skillTreeAlternateNodePopupOk");
+        button.onclick = () => {
+            popup.style.setProperty('display', 'none');
+            _onchange();
+        };
     }
 
     let seedTimeout: number | null = null;

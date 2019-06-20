@@ -188,10 +188,8 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                     for (let stat of alternate.stats) {
                         for (let i = stat.values.length - 1; i >= 0; i--) {
                             let selector = '#'.repeat(i + 1);
-                            if (stat.values[i].length === 1) {
-                                stat.text[i] = stat.text[i].replace(new RegExp(selector, "g"), stat.values[i][0].toString());
-                                text.push(stat.text[i]);
-                            }
+                            stat.text[i] = stat.text[i].replace(new RegExp(selector, "g"), stat.values[i][0].toString().replace(',', '-'));
+                            text.push(stat.text[i]);
                         }
                     }
                 }

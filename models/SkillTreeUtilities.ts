@@ -40,7 +40,7 @@ export class SkillTreeUtilities {
         SkillTreeEvents.on("controls", "ascendancy-class-change", this.changeAscendancyClass, false);
         SkillTreeEvents.on("controls", "search-change", this.searchChange, true)
 
-        SkillTreeEvents.on("skilltree", "jewel-click-end", this.encodeURL);
+        SkillTreeEvents.on("skilltree", "encode-url", this.encodeURL);
     }
 
     private lastHash = "";
