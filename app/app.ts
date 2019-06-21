@@ -145,9 +145,9 @@ namespace App {
 
         let replaceSelect = document.getElementById("skillTreeAlternateNodePopupReplace");
         let _onchange = () => {
-            let alt_ids: string[] = [];
+            let alt_ids: ISkillNodeAlternateState[] = [];
             if ((<HTMLSelectElement>replaceSelect).value !== "") {
-                alt_ids.push((<HTMLSelectElement>replaceSelect).value);
+                alt_ids.push(<ISkillNodeAlternateState>{ id: (<HTMLSelectElement>replaceSelect).value, values: [] });
             }
 
             for (let i of [1, 2, 3, 4]) {
@@ -155,7 +155,7 @@ namespace App {
                 if (additionSelect === null || (<HTMLSelectElement>additionSelect).value === "") {
                     continue;
                 }
-                alt_ids.push((<HTMLSelectElement>additionSelect).value);
+                alt_ids.push(<ISkillNodeAlternateState>{ id: (<HTMLSelectElement>additionSelect).value, values: [] });
             }
 
             SkillTreeEvents.fire("skilltree", "faction-node-end", {
@@ -232,7 +232,7 @@ namespace App {
 
                 let o = document.createElement("option");
                 o.value = c.id;
-                o.text = c.stats.map(x => x.text).map(y => y.join('\n')).join('\n');
+                o.text = c.stats.map(x => x.text).join('\n');
                 if (!selected && alt_ids.indexOf(c.id) > -1) {
                     o.selected = true;
                     selected = true;

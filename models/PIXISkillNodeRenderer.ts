@@ -82,10 +82,10 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         if (source === "Compare") {
             skillSprites = this.SkillSpritesCompare;
         } else if (node.alternate_ids !== undefined) {
-            let alternate_id = node.alternate_ids.find(x => this.skillTreeAlternate.nodes[x].icon !== "");
-            if (alternate_id !== undefined) {
+            let alternate = node.alternate_ids.find(x => this.skillTreeAlternate.nodes[x.id].icon !== "");
+            if (alternate !== undefined) {
                 skillSprites = this.skillTreeAlternate.skillSprites;
-                icon = this.skillTreeAlternate.nodes[alternate_id].icon;
+                icon = this.skillTreeAlternate.nodes[alternate.id].icon;
             }
         }
         if (texture === undefined) {
@@ -184,18 +184,16 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
             if (node.alternate_ids !== undefined) {
                 let text: string[] = [];
-                for (let alternate of node.alternate_ids.map(x => this.skillTreeAlternate.nodes[x])) {
+                for (let state of node.alternate_ids) {
+                    let alternate = this.skillTreeAlternate.nodes[state.id];
                     for (let stat of alternate.stats) {
-                        for (let i = stat.values.length - 1; i >= 0; i--) {
-                            let selector = '#'.repeat(i + 1);
-                            text.push(stat.text[i].replace(new RegExp(selector, "g"), stat.values[i][0].toString().replace(',', '-')));
-                        }
+                        text.push(stat.text.replace(/#/g, stat.min === stat.max ? stat.min : `${stat.min}-${stat.max}`));
                     }
                 }
 
-                let id = node.alternate_ids.find(x => !this.skillTreeAlternate.nodes[x].isAddition)
-                if (id !== undefined) {
-                    let alternate = this.skillTreeAlternate.nodes[id];
+                let state = node.alternate_ids.find(x => !this.skillTreeAlternate.nodes[x.id].isAddition)
+                if (state !== undefined) {
+                    let alternate = this.skillTreeAlternate.nodes[state.id];
                     title = alternate.name.length > 0 ? new PIXI.Text(`${alternate.name}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
                     stats = text.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${text.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
                     flavour = alternate.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${alternate.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;

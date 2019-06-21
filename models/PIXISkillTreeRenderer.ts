@@ -111,7 +111,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private UpdateFactionNode = (event: { node_id: number, alterante_ids: string[] }) => {
+    private UpdateFactionNode = (event: { node_id: number, alterante_ids: ISkillNodeAlternateState[] }) => {
         let node = this.skillTreeData.nodes[event.node_id];
         node.alternate_ids = event.alterante_ids.length > 0 ? event.alterante_ids : undefined;
 
@@ -171,26 +171,30 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 this.jewelSocketHighlights.addChild(container);
                 settings.extra_data = container;
 
-                let singleNodes: { [id: number]: string[] | undefined } = {};
-                singleNodes[4] = settings.factionId in this.skillTreeAlternate.alternate_tree_keystones ? [this.skillTreeAlternate.alternate_tree_keystones[settings.factionId][settings.name]] : undefined;
+                let singleNodes: { [id: number]: ISkillNodeAlternateState[] | undefined } = {};
+                if (settings.factionId in this.skillTreeAlternate.alternate_tree_keystones) {
+                    let keystone_id = this.skillTreeAlternate.alternate_tree_keystones[settings.factionId][settings.name];
+                    singleNodes[4] = [<ISkillNodeAlternateState>{ id: keystone_id, values: [] }];
+                }
+
                 for (var passiveType in this.skillTreeAlternate.passiveTypes) {
                     if (this.skillTreeAlternate.nodesByPassiveType[+passiveType] === undefined) {
                         continue;
                     }
                     let ns = this.skillTreeAlternate.nodesByPassiveType[+passiveType].filter(x => x.faction === (<ISkillTreeAlternateJewelSettings>settings).factionId);
                     if (ns.length === 1) {
-                        singleNodes[+passiveType] = [ns[0].id];
+                        singleNodes[+passiveType] = [<ISkillNodeAlternateState>{ id: ns[0].id, values: ns[0].stats.map(x => x.min === x.max ? x.min : `${x.min}-${x.max}`) }];
                     }
                 }
 
-                for (let o of this.skillTreeData.getNodesInRange(node.x, node.y, Math.floor(jewelWidth / 2))) {
+                for (let o of this.skillTreeData.getNodesInRange(node.x, node.y, jewelWidth / 2)) {
                     if (o.isJewelSocket) {
                         continue;
                     }
                     used_nodes.push(o.id.toString());
                     o.faction = settings.factionId;
 
-                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[x].faction !== (<ISkillTreeAlternateJewelSettings>settings).factionId).length > 0) {
+                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[x.id].faction !== (<ISkillTreeAlternateJewelSettings>settings).factionId).length > 0) {
                         o.alternate_ids = undefined;
                     }
 

@@ -36,7 +36,7 @@ export class SkillNode implements ISkillNode {
     y: number;
     isRegular2: boolean;
     isRegular1: boolean;
-    alternate_ids: string[] | undefined = undefined;
+    alternate_ids: ISkillNodeAlternateState[] | undefined = undefined;
     faction: number = 0;
     hoverText: string | null = null;
 
@@ -83,8 +83,8 @@ export class SkillNode implements ISkillNode {
     }
 
     private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.o ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.o] : 0;
-    private getX = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.x * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
-    private getY = (arc: number): number => this.orbitRadii.length > this.o ? Math.ceil((this.group.y * this.scale)) - Math.ceil(this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
+    private getX = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.x * this.scale) - (this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
+    private getY = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.y * this.scale) - (this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
 
     public is = (test: SkillNodeStates) => {
         return (this.state & test) === test;

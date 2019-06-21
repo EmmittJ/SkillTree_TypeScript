@@ -13,6 +13,12 @@
 }
 
 interface ISkillNodeAlternateStat {
-    text: string[];
-    values: number[][];
+    text: string;
+    min: string;
+    max: string;
+}
+
+interface ISkillNodeAlternateState {
+    id: string;
+    values: string[];
 }
