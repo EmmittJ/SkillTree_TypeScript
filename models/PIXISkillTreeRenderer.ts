@@ -194,7 +194,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     used_nodes.push(o.id.toString());
                     o.faction = settings.factionId;
 
-                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[x.id].faction !== (<ISkillTreeAlternateJewelSettings>settings).factionId).length > 0) {
+                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction !== (<ISkillTreeAlternateJewelSettings>settings).factionId).length > 0) {
                         o.alternate_ids = undefined;
                     }
 

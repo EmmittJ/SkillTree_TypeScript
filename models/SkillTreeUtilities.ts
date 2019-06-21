@@ -89,7 +89,7 @@ export class SkillTreeUtilities {
             let node = this.skillTreeData.nodes[id];
             if (node.alternate_ids !== undefined
                 && (node.isRegular2 || node.not)
-                && node.alternate_ids.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[x.id].faction).length > 1).length > 0) {
+                && node.alternate_ids.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction).length > 1).length > 0) {
                 this.skillTreeData.Build.NodeAlternateIdMap[node.id] = node.alternate_ids;
             }
         }
