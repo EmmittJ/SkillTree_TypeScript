@@ -174,7 +174,7 @@ export class SkillTreeUtilities {
     }
 
     public searchChange = (str: string | undefined = undefined) => {
-        this.clearState(SkillNodeStates.Highlighted);
+        this.skillTreeData.clearState(SkillNodeStates.Highlighted);
 
         if (str !== undefined && str.length !== 0) {
             let regex = new RegExp(str, "gi");
@@ -219,8 +219,8 @@ export class SkillTreeUtilities {
             }
         }
 
-        this.clearState(SkillNodeStates.Hovered);
-        this.clearState(SkillNodeStates.Pathing);
+        this.skillTreeData.clearState(SkillNodeStates.Hovered);
+        this.skillTreeData.clearState(SkillNodeStates.Pathing);
         this.encodeURL();
     }
 
@@ -238,8 +238,8 @@ export class SkillTreeUtilities {
     }
 
     private mouseover = (node: SkillNode) => {
-        this.clearState(SkillNodeStates.Hovered);
-        this.clearState(SkillNodeStates.Pathing);
+        this.skillTreeData.clearState(SkillNodeStates.Hovered);
+        this.skillTreeData.clearState(SkillNodeStates.Pathing);
 
         if (node.spc.length === 0) {
             node.add(SkillNodeStates.Hovered);
@@ -266,19 +266,9 @@ export class SkillTreeUtilities {
     }
 
     private mouseout = (node: SkillNode) => {
-        this.clearState(SkillNodeStates.Hovered);
-        this.clearState(SkillNodeStates.Pathing);
+        this.skillTreeData.clearState(SkillNodeStates.Hovered);
+        this.skillTreeData.clearState(SkillNodeStates.Pathing);
         SkillTreeEvents.fire("skilltree", "hovered-nodes-end", node);
-    }
-
-    private clearState = (state: SkillNodeStates) => {
-        for (let id in this.skillTreeData.getNodes(state)) {
-            this.skillTreeData.nodes[id].remove(state);
-
-            if (state === SkillNodeStates.Hovered) {
-                this.skillTreeData.nodes[id].hoverText = null;
-            }
-        }
     }
 
     private getShortestPath = (target: SkillNode): Array<SkillNode> => {

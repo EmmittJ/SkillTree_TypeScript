@@ -691,12 +691,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         if (this.tooltip !== undefined && this.tooltip.children.length > 0) {
             this.tooltip.removeChildren();
-            this.tooltip = undefined;
         }
+        this.tooltip = undefined;
+
         if (this.tooltip_compare !== undefined && this.tooltip_compare.children.length > 0) {
             this.tooltip_compare.removeChildren();
-            this.tooltip_compare = undefined;
         }
+        this.tooltip_compare = undefined;
+
         if (this.pathing_connections.children.length > 0) {
             this.pathing_connections.removeChildren();
         }
@@ -753,6 +755,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 this.tooltip.position.set(mouse.x + 10, mouse.y - 5);
 
                 if (this.skillTreeData_compare !== undefined) {
+                    this.skillTreeData_compare.clearState(SkillNodeStates.Hovered);
+
                     for (let idc in this.skillTreeData_compare.nodes) {
                         let n = this.skillTreeData_compare.nodes[idc];
                         if (!n.is(SkillNodeStates.Compared)) {

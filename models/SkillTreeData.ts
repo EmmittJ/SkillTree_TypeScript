@@ -258,4 +258,14 @@ export class SkillTreeData implements ISkillTreeData {
             this.nodes[id].faction = 0;
         }
     }
+
+    public clearState = (state: SkillNodeStates) => {
+        for (let id in this.getNodes(state)) {
+            this.nodes[id].remove(state);
+
+            if (state === SkillNodeStates.Hovered) {
+                this.nodes[id].hoverText = null;
+            }
+        }
+    }
 }
