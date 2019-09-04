@@ -466,7 +466,7 @@ namespace App {
 window.onload = () => {
     var query = App.decodeURLParams(window.location.search);
     if (!query['v']) {
-        query['v'] = '3.7.0';
+        query['v'] = '3.8.0';
     }
     if (!query['c']) {
         query['c'] = '';
