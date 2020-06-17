@@ -8,9 +8,9 @@ import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
 import { SkillTreeAlternate } from "./SkillTreeAlternate";
 
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
-    Initialized: boolean = false;
+    Initialized = false;
     SkillNodeRenderer!: PIXISkillNodeRenderer;
-    private updateHover: boolean = false;
+    private updateHover = false;
     private pixi: PIXI.Application;
     private viewport!: Viewport;
     private skillTreeData!: SkillTreeData;
@@ -70,7 +70,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         };
 
-        var promise = this.LoadAssets([skillTreeData, skillTreeData_compare]);
+        const promise = this.LoadAssets([skillTreeData, skillTreeData_compare]);
         promise.then(_ => this.Initialized = true);
         //promise.catch(_ => this.Initialized = false);
         return promise;
@@ -86,24 +86,24 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
     private jewelSocketHighlights: PIXI.Container = new PIXI.Container();
     private HandleShiftClick = (click: PIXI.interaction.InteractionEvent) => {
-        if (!click.data.originalEvent.shiftKey || this.skillTreeData.skillTreeOptions.circles === undefined) {
+        if (!click.data.originalEvent.shiftKey) {
             return;
         }
 
-        let interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.skillIcons);
+        const interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.skillIcons);
         if (interactiveObject === null || interactiveObject.name === undefined || interactiveObject.name === null || interactiveObject.name === "") {
             return;
         }
 
-        let node = this.skillTreeData.nodes[+interactiveObject.name];
-        if (node.ks) {
+        const node = this.skillTreeData.nodes[+interactiveObject.name];
+        if (node.isKeystone) {
             return;
         }
 
         if (node.isJewelSocket) {
             let settings = this.skillTreeData.Build.JewelSettings[node.id];
             if (settings === undefined) {
-                settings = <ISkillTreeAlternateJewelSettings>{ node_id: node.id };
+                settings = { node_id: node.id } as ISkillTreeAlternateJewelSettings;
             }
             SkillTreeEvents.fire("skilltree", "jewel-click-start", settings);
         } else if (node.faction !== 0) {
@@ -112,22 +112,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private UpdateFactionNode = (event: { node_id: number, alterante_ids: ISkillNodeAlternateState[] }) => {
-        let node = this.skillTreeData.nodes[event.node_id];
+        const node = this.skillTreeData.nodes[event.node_id];
         node.alternate_ids = event.alterante_ids.length > 0 ? event.alterante_ids : undefined;
 
         this.CreateJewelSocketHightlights();
     }
 
-    private CreateJewelSocketHightlights = (new_settings: ISkillTreeAlternateJewelSettings | undefined = undefined) => {
-        if (this.skillTreeData.skillTreeOptions.circles === undefined) {
-            return;
+    private CreateJewelSocketHightlights = (newSettings: ISkillTreeAlternateJewelSettings | undefined = undefined) => {
+        if (newSettings !== undefined && this.skillTreeData.Build.JewelSettings[newSettings.node_id] === undefined) {
+            this.skillTreeData.Build.JewelSettings[newSettings.node_id] = JSON.parse(JSON.stringify(newSettings));
         }
 
-        if (new_settings !== undefined && this.skillTreeData.Build.JewelSettings[new_settings.node_id] === undefined) {
-            this.skillTreeData.Build.JewelSettings[new_settings.node_id] = JSON.parse(JSON.stringify(new_settings));
-        }
-
-        let used_nodes: string[] = [];
+        const usedNodes: string[] = [];
         for (let i in this.skillTreeData.Build.JewelSettings) {
             let settings = this.skillTreeData.Build.JewelSettings[i];
             if (settings === undefined) {
@@ -141,60 +137,60 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 settings.extra_data = undefined;
             }
 
-            if (new_settings !== undefined && settings.node_id === new_settings.node_id) {
-                this.skillTreeData.Build.JewelSettings[new_settings.node_id] = <ISkillTreeAlternateJewelSettings>JSON.parse(JSON.stringify(new_settings));
-                settings = this.skillTreeData.Build.JewelSettings[new_settings.node_id];
+            if (newSettings !== undefined && settings.node_id === newSettings.node_id) {
+                this.skillTreeData.Build.JewelSettings[newSettings.node_id] = JSON.parse(JSON.stringify(newSettings)) as ISkillTreeAlternateJewelSettings;
+                settings = this.skillTreeData.Build.JewelSettings[newSettings.node_id];
                 if (settings === undefined) {
                     continue;
                 }
             }
 
             if (settings.size !== "None" && settings.extra_data === undefined) {
-                let node = this.skillTreeData.nodes[settings.node_id];
+                const node = this.skillTreeData.nodes[settings.node_id];
                 if (node === undefined) {
                     continue;
                 }
-                let jewelWidth = this.skillTreeData.skillTreeOptions.circles[settings.size][this.skillTreeData.imageZoomLevels.length - 1].width;
-                let factionCircleName = this.skillTreeAlternate.getJewelCircleNameFromFaction(settings.factionId);
-                let sprite1 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle1`);
-                let sprite2 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
+                const jewelWidth = this.skillTreeData.circles[settings.size][this.skillTreeData.imageZoomLevels.length - 1].width;
+                const factionCircleName = this.skillTreeAlternate.getJewelCircleNameFromFaction(settings.factionId);
+                const sprite1 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle1`);
+                const sprite2 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
                 sprite1.width = sprite1.height = sprite2.width = sprite2.height = jewelWidth;
                 sprite1.x = sprite2.x = node.x;
                 sprite1.y = sprite2.y = node.y;
                 sprite1.anchor.set(.5);
                 sprite2.anchor.set(.5);
 
-                let container = new PIXI.Container();
+                const container = new PIXI.Container();
                 container.addChild(sprite2);
                 container.addChild(sprite1);
 
                 this.jewelSocketHighlights.addChild(container);
                 settings.extra_data = container;
 
-                let singleNodes: { [id: number]: ISkillNodeAlternateState[] | undefined } = {};
+                const singleNodes: { [id: number]: ISkillNodeAlternateState[] | undefined } = {};
                 if (settings.factionId in this.skillTreeAlternate.alternate_tree_keystones) {
-                    let keystone_id = this.skillTreeAlternate.alternate_tree_keystones[settings.factionId][settings.name];
-                    singleNodes[4] = [<ISkillNodeAlternateState>{ id: keystone_id, values: [] }];
+                    const keystoneId = this.skillTreeAlternate.alternate_tree_keystones[settings.factionId][settings.name];
+                    singleNodes[4] = [{ id: keystoneId, values: [] } as ISkillNodeAlternateState];
                 }
 
-                for (var passiveType in this.skillTreeAlternate.passiveTypes) {
+                for (const passiveType in this.skillTreeAlternate.passiveTypes) {
                     if (this.skillTreeAlternate.nodesByPassiveType[+passiveType] === undefined) {
                         continue;
                     }
-                    let ns = this.skillTreeAlternate.nodesByPassiveType[+passiveType].filter(x => x.faction === (<ISkillTreeAlternateJewelSettings>settings).factionId);
+                    const ns = this.skillTreeAlternate.nodesByPassiveType[+passiveType].filter(x => x.faction === (settings as ISkillTreeAlternateJewelSettings).factionId);
                     if (ns.length === 1) {
-                        singleNodes[+passiveType] = [<ISkillNodeAlternateState>{ id: ns[0].id, values: ns[0].stats.map(x => x.min === x.max ? x.min : `${x.min}-${x.max}`) }];
+                        singleNodes[+passiveType] = [{ id: ns[0].id, values: ns[0].stats.map(x => x.min === x.max ? x.min : `${x.min}-${x.max}`) } as ISkillNodeAlternateState];
                     }
                 }
 
-                for (let o of this.skillTreeData.getNodesInRange(node.x, node.y, jewelWidth / 2)) {
+                for (const o of this.skillTreeData.getNodesInRange(node.x, node.y, jewelWidth / 2)) {
                     if (o.isJewelSocket) {
                         continue;
                     }
-                    used_nodes.push(o.id.toString());
+                    usedNodes.push(o.id.toString());
                     o.faction = settings.factionId;
 
-                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction !== (<ISkillTreeAlternateJewelSettings>settings).factionId).length > 0) {
+                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction !== (settings as ISkillTreeAlternateJewelSettings).factionId).length > 0) {
                         o.alternate_ids = undefined;
                     }
 
@@ -209,7 +205,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
-        this.skillTreeData.clearAlternates(used_nodes);
+        this.skillTreeData.clearAlternates(usedNodes);
         this.UpdateJewelSocketHighlightPosition();
         this.RenderActive();
         SkillTreeEvents.fire("skilltree", "encode-url");
@@ -218,7 +214,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     private RotateJewelHighlights(delta: number) {
         if (this instanceof PIXI.Container) {
             let rotation = 0.0005;
-            for (var sprite of this.children) {
+            for (const sprite of this.children) {
                 sprite.rotation += rotation * delta;
                 rotation *= -1;
             }
@@ -239,72 +235,78 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private LoadAssets = (data: (SkillTreeData | undefined)[]): Promise<boolean> => {
-        var filteredData = data.filter(utils.NotUndefined);
+        const filteredData = data.filter(utils.NotUndefined);
         if (filteredData.length <= 0) {
             throw new Error("SkillTreeData has not been defined. Could not load assets.");
         }
 
-        var promise = new Promise<boolean>((resolve, reject) => {
+        const promise = new Promise<boolean>((resolve) => {
             PIXI.Loader.shared.onComplete.add(() => resolve(true));
             //PIXI.Loader.shared.onError.add(() => reject(false));
         });
 
         // #region Load Assets
-        let added_assets = new Array<string>();
-        for (let i of filteredData) {
-            for (let id in i.assets) {
-                let asset = i.assets[id];
-                if ((asset[i.scale] || asset["1"]) && added_assets.indexOf(id) < 0) {
-                    added_assets.push(id);
-                    PIXI.Loader.shared.add(id, `data/${i.skillTreeOptions.version}/assets/${id}.png`);
+        const addedAssets = new Array<string>();
+        for (const i of filteredData) {
+            for (const id in i.assets) {
+                const asset = i.assets[id];
+                if ((asset[i.scale] || asset["1"]) && addedAssets.indexOf(id) < 0) {
+                    addedAssets.push(id);
+                    PIXI.Loader.shared.add(id, `data/${i.patch}/assets/${id}.png`);
                 }
             }
 
-            for (let id in i.skillSprites) {
-                let sprites = i.skillSprites[id];
-                let sprite = sprites[sprites.length - 1];
-                if (sprite && added_assets.indexOf(sprite.filename) < 0) {
-                    added_assets.push(sprite.filename);
-                    PIXI.Loader.shared.add(sprite.filename, `data/${i.skillTreeOptions.version}/assets/${sprite.filename}`);
+            for (const id in i.skillSprites) {
+                const sprites = i.skillSprites[id];
+                const sprite = sprites[sprites.length - 1];
+                if (sprite && addedAssets.indexOf(sprite.filename) < 0) {
+                    addedAssets.push(sprite.filename);
+                    PIXI.Loader.shared.add(sprite.filename, `data/${i.patch}/assets/${sprite.filename}`);
+                    if (sprite.filename.includes("PassiveSkillScreen")) {
+                        PIXI.Loader.shared.add(sprite.filename.replace("PassiveSkillScreen", ""), `data/${i.patch}/assets/${sprite.filename.replace("PassiveSkillScreen", "")}`);
+                    }
                 }
             }
         }
 
         if (this.skillTreeAlternate.version !== "") {
-            for (let id in this.skillTreeAlternate.skillSprites) {
-                let sprites = this.skillTreeAlternate.skillSprites[id];
-                let sprite = sprites[sprites.length - 1];
-                if (sprite && added_assets.indexOf(sprite.filename) < 0) {
-                    added_assets.push(sprite.filename);
+            for (const id in this.skillTreeAlternate.skillSprites) {
+                const sprites = this.skillTreeAlternate.skillSprites[id];
+                const sprite = sprites[sprites.length - 1];
+                if (sprite && addedAssets.indexOf(sprite.filename) < 0) {
+                    addedAssets.push(sprite.filename);
                     PIXI.Loader.shared.add(sprite.filename, `data/${this.skillTreeAlternate.version}/assets/${sprite.filename}`);
+                    if (sprite.filename.includes("PassiveSkillScreen")) {
+                        PIXI.Loader.shared.add(sprite.filename.replace("PassiveSkillScreen", ""), `data/${this.skillTreeAlternate.version}/assets/${sprite.filename.replace("PassiveSkillScreen", "")}`);
+                    }
                 }
             }
         }
         // #endregion
 
         // #region Display Loading Bar
-        var skillTreeData = filteredData[0];
+        const skillTreeData = filteredData[0];
         PIXI.Loader.shared.load();
-        let loaded_assets: number = 0;
-        let load_bar_width = skillTreeData.width / 2;
-        let progress_text = "";
+        let loadedAssets = 0;
+        const loadbarWidth = skillTreeData.width / 2;
+        let progressText = "";
         PIXI.Loader.shared.onProgress.add(() => {
-            loaded_assets++;
-            let new_text = `${Math.ceil(loaded_assets / added_assets.length * 1000) / 10}%`;
-            if (new_text !== progress_text) {
+            loadedAssets++;
+            const newText = `${Math.ceil(loadedAssets / addedAssets.length * 1000) / 10}%`;
+            if (newText !== progressText) {
                 this.viewport.removeChildren();
-                progress_text = new_text;
+                progressText = newText;
 
-                let load_bar = new PIXI.Graphics();
-                load_bar.moveTo(0, 0);
-                load_bar.beginFill(0xFFFFFF, .75);
-                load_bar.lineStyle(2, 0xCBB59C)
-                load_bar.drawRect(0, 0, (loaded_assets / added_assets.length) * load_bar_width, 50);
-                load_bar.endFill();
-                load_bar.position.set(-load_bar_width / 2, screen.height / 2);
-                this.viewport.addChild(load_bar);
+                const loadbar = new PIXI.Graphics();
+                loadbar.moveTo(0, 0);
+                loadbar.beginFill(0xFFFFFF, .75);
+                loadbar.lineStyle(2, 0xCBB59C)
+                loadbar.drawRect(0, 0, (loadedAssets / addedAssets.length) * loadbarWidth, 50);
+                loadbar.endFill();
+                loadbar.position.set(-loadbarWidth / 2, screen.height / 2);
+                this.viewport.addChild(loadbar);
 
-                let text = new PIXI.Text(progress_text, { fontSize: 250, fill: 0xFFFFFF });
+                const text = new PIXI.Text(progressText, { fontSize: 250, fill: 0xFFFFFF });
                 text.position.set(0, -50);
                 this.viewport.addChild(text);
             }
@@ -326,45 +328,42 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.viewport.removeChildren();
-        let backgroundContainer: PIXI.Container = new PIXI.Container();
+        const backgroundContainer: PIXI.Container = new PIXI.Container();
 
-        let backgroundSprite = PIXI.TilingSprite.from("Background1", this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
+        const backgroundSprite = PIXI.TilingSprite.from("Background1", this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
         backgroundSprite.anchor.set(.5);
         this.viewport.addChild(backgroundSprite);
 
-        for (let id in this.skillTreeData.groups) {
-            let group = this.skillTreeData.groups[id];
-            if (group.n.find(id => this.skillTreeData.nodes[id].ascendancyName !== "") !== undefined || group.oo.length === 0) {
+        for (const id in this.skillTreeData.groups) {
+            const group = this.skillTreeData.groups[id];
+            const nodes = (group.n || group.nodes || []);
+            if (nodes.length === 0 || nodes.find(id => this.skillTreeData.nodes[id].ascendancyName !== "") !== undefined) {
                 continue;
             }
 
-            if (Array.isArray(group.oo)) {
-                if (group.oo.length === 1) {
+            let orbits = group.orbits || [];
+            if (group.oo) {
+                if (Array.isArray(group.oo)) {
                     group.oo = { "0": group.oo[0] };
                 }
-                else {
-                    console.log(group);
-                    throw new Error(`Group ${id} could not be formatted correctly`);
+
+                for (const id in group.oo) {
+                    orbits.push(+id);
                 }
-            }
-            let max = 0;
-            for (let id in group.oo) {
-                if (+id > max && +id < 4) {
-                    max = +id;
-                }
-            }
-            if (max === 0) {
-                continue;
             }
 
-            let sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
+            orbits = orbits.filter(x => x <= 3);
+            const max = Math.max(...orbits);
+            if (max <= 0) continue;
+
+            const sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
             backgroundContainer.addChild(sprite);
 
             if (max === 3) {
                 sprite.anchor.set(.5, 1);
-                let sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
+                const sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
                 sprite2.rotation = Math.PI;
                 sprite2.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
                 sprite2.anchor.set(.5, 1);
@@ -372,31 +371,49 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
-        for (let id in this.skillTreeData.groups) {
-            let group = this.skillTreeData.groups[id];
-            if (group.n.filter(id => this.skillTreeData.nodes[id].isAscendancyStart).length <= 0) {
+        for (const id in this.skillTreeData.groups) {
+            const group = this.skillTreeData.groups[id];
+            const nodes = (group.n || group.nodes || []);
+            if (nodes.filter(id => this.skillTreeData.nodes[id].isAscendancyStart).length <= 0) {
                 continue;
             }
-            let ascendancyName = group.n.map(id => this.skillTreeData.nodes[id].ascendancyName)[0];
-            let sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
+            const ascendancyName = nodes.map(id => this.skillTreeData.nodes[id].ascendancyName)[0];
+            const sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
             backgroundContainer.addChild(sprite);
 
-            for (let id in this.skillTreeData.skillTreeOptions.ascClasses) {
-                let ascClasses = this.skillTreeData.skillTreeOptions.ascClasses[id];
-                for (let classid in ascClasses.classes) {
-                    let ascClass = ascClasses.classes[classid];
-                    if (ascClass.name === ascendancyName) {
-                        let rect = ascClass.flavourTextRect.split(",");
-                        let x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
-                        let y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
-                        let c = ascClass.flavourTextColour.split(",");
-                        let r = +c[0];
-                        let g = +c[1];
-                        let b = +c[2];
-                        let colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                        let text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
+            if (this.skillTreeData.classes === undefined) {
+                continue;
+            }
+            for (const id in this.skillTreeData.classes) {
+                const ascClasses = this.skillTreeData.classes[id];
+                for (const classid in ascClasses.ascendancies) {
+                    const ascClass = ascClasses.ascendancies[classid];
+                    if (ascClass.name === ascendancyName && ascClass.flavourTextRect !== undefined) {
+                        const rect = typeof ascClass.flavourTextRect === "string" ? ascClass.flavourTextRect.split(",") : [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
+                        const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
+                        const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
+
+                        let r = 0;
+                        let g = 0;
+                        let b = 0;
+                        if (ascClass.flavourTextColour.indexOf(',') > 0) {
+                            const c = ascClass.flavourTextColour.split(",");
+                            r = +c[0];
+                            g = +c[1];
+                            b = +c[2];
+                        } else {
+                            const c = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec("#" + ascClass.flavourTextColour);
+                            if (c && c.length === 4) {
+                                r = parseInt(c[1], 16);
+                                g = parseInt(c[2], 16);
+                                b = parseInt(c[3], 16);
+                            }
+                        }
+
+                        const colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                        const text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
                         text.position.set(x, y);
                         text.scale.set(this.skillTreeData.scale);
                         backgroundContainer.addChild(text);
@@ -405,15 +422,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
-        for (let id of this.skillTreeData.root.out) {
-            let node = this.skillTreeData.nodes[id];
-            if (node.spc.length !== 1) {
-                // Root node with no/multiple classes?
+        for (const id of this.skillTreeData.root.out) {
+            const node = this.skillTreeData.nodes[id];
+            if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
                 continue;
             }
 
-            let graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
-            graphic.position.set(node.group.x * this.skillTreeData.scale, node.group.y * this.skillTreeData.scale);
+            const graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
+            graphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
             graphic.anchor.set(.5);
             this.characterStarts.addChild(graphic);
         }
@@ -448,51 +464,54 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.connections.removeChildren();
         }
 
-        let connectionsContainer: PIXI.Container = new PIXI.Container();
-        let drawn_connections: { [id: number]: Array<number> } = {};
-        for (let id in this.skillTreeData.nodes) {
-            var node = this.skillTreeData.nodes[id];
-            let nodes = node.in
+        const connectionsContainer: PIXI.Container = new PIXI.Container();
+        const drawnConnections: { [id: number]: Array<number> } = {};
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            if (node.nodeGroup === undefined) {
+                continue;
+            }
+            const nodes = node.in
                 .filter((outID) => {
-                    if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
+                    if (drawnConnections[outID] === undefined || drawnConnections[+id] === undefined) {
                         return true;
                     } else {
-                        return drawn_connections[outID].indexOf(+id) < 0 && drawn_connections[+id].indexOf(outID) < 0;
+                        return drawnConnections[outID].indexOf(+id) < 0 && drawnConnections[+id].indexOf(outID) < 0;
                     }
                 })
                 .map((outID) => {
-                    if (drawn_connections[outID] === undefined) {
-                        drawn_connections[outID] = new Array<number>();
+                    if (drawnConnections[outID] === undefined) {
+                        drawnConnections[outID] = new Array<number>();
                     }
-                    if (drawn_connections[+id] === undefined) {
-                        drawn_connections[+id] = new Array<number>();
+                    if (drawnConnections[+id] === undefined) {
+                        drawnConnections[+id] = new Array<number>();
                     }
-                    drawn_connections[outID].push(+id);
-                    drawn_connections[+id].push(outID);
+                    drawnConnections[outID].push(+id);
+                    drawnConnections[+id].push(outID);
 
                     return this.skillTreeData.nodes[outID]
                 });
             connectionsContainer.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
 
             this.skillIcons.addChild(this.SkillNodeRenderer.CreateIcon(node));
-            let frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
+            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
                 this.skillIcons.addChild(frame);
             }
 
             if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] === undefined) {
-                let highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0x00FF00);
+                const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0x00FF00);
                 if (highlighter !== null) {
                     this.skillIcons.addChild(highlighter);
                 }
             }
             if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] !== undefined) {
-                let node2 = this.skillTreeData_compare.nodes[node.id];
+                const node2 = this.skillTreeData_compare.nodes[node.id];
                 let sDiff = false;
 
-                for (let s of node.sd) {
+                for (const s of node.stats) {
                     let found = false;
-                    for (let s2 of node2.sd) {
+                    for (const s2 of node2.stats) {
                         if (s.toUpperCase() === s2.toUpperCase()) {
                             found = true;
                         }
@@ -506,7 +525,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
                 if (sDiff) {
                     node2.add(SkillNodeStates.Compared);
-                    let highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
+                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
                     if (highlighter !== null) {
                         this.skillIcons.addChild(highlighter);
                     }
@@ -515,16 +534,16 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         if (this.skillTreeData_compare !== undefined) {
-            for (let id in this.skillTreeData_compare.nodes) {
-                var node = this.skillTreeData_compare.nodes[id];
+            for (const id in this.skillTreeData_compare.nodes) {
+                const node = this.skillTreeData_compare.nodes[id];
                 if (this.skillTreeData.nodes[node.id] === undefined) {
                     node.add(SkillNodeStates.Compared);
                     this.skillIcons_compare.addChild(this.SkillNodeRenderer.CreateIcon(node, "Compare"));
-                    let frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (<SkillTreeData>this.skillTreeData_compare).nodes[x]));
+                    const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (this.skillTreeData_compare as SkillTreeData).nodes[x]));
                     if (frame !== null) {
                         this.skillIcons_compare.addChild(frame);
                     }
-                    let highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF0000, "Compare")
+                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF0000, "Compare")
                     if (highlighter !== null) {
                         this.skillIcons_compare.addChild(highlighter);
                     }
@@ -560,44 +579,44 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.skillIconsActive.removeChildren();
         }
 
-        let drawn_connections: { [id: number]: Array<number> } = {};
-        for (let id in this.skillTreeData.nodes) {
-            var node = this.skillTreeData.nodes[id];
-            if ((!node.is(SkillNodeStates.Active) && node.alternate_ids === undefined) || node.spc.length > 0) {
+        const drawnConnections: { [id: number]: Array<number> } = {};
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            if ((!node.is(SkillNodeStates.Active) && node.alternate_ids === undefined) || node.classStartIndex !== undefined) {
                 continue;
             }
 
-            let nodes = node.in
+            const nodes = node.in
                 .filter((outID) => {
-                    if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
+                    if (drawnConnections[outID] === undefined || drawnConnections[+id] === undefined) {
                         return true;
                     } else {
-                        return drawn_connections[outID].indexOf(+id) < 0 && drawn_connections[+id].indexOf(outID) < 0;
+                        return drawnConnections[outID].indexOf(+id) < 0 && drawnConnections[+id].indexOf(outID) < 0;
                     }
                 })
                 .map((outID) => {
-                    if (drawn_connections[outID] === undefined) {
-                        drawn_connections[outID] = new Array<number>();
+                    if (drawnConnections[outID] === undefined) {
+                        drawnConnections[outID] = new Array<number>();
                     }
-                    if (drawn_connections[+id] === undefined) {
-                        drawn_connections[+id] = new Array<number>();
+                    if (drawnConnections[+id] === undefined) {
+                        drawnConnections[+id] = new Array<number>();
                     }
-                    drawn_connections[outID].push(+id);
-                    drawn_connections[+id].push(outID);
+                    drawnConnections[outID].push(+id);
+                    drawnConnections[+id].push(outID);
 
                     return this.skillTreeData.nodes[outID]
                 });
 
             this.connectionsActive.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
-            for (let out of nodes) {
-                let frame = this.SkillNodeRenderer.CreateFrame(out, node.out.map(x => this.skillTreeData.nodes[x]));
+            for (const out of nodes) {
+                const frame = this.SkillNodeRenderer.CreateFrame(out, node.out.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
                     this.skillIconsActive.addChild(frame);
                 }
             }
 
             this.skillIconsActive.addChild(this.SkillNodeRenderer.CreateIcon(node));
-            let frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
+            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
                 this.skillIconsActive.addChild(frame);
             }
@@ -632,26 +651,27 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.characterStartsActive.removeChildren();
         }
 
-        for (let id of this.skillTreeData.root.out) {
-            let node = this.skillTreeData.nodes[id];
-            if (node.spc.length !== 1 || !node.is(SkillNodeStates.Active)) {
+        for (const id of this.skillTreeData.root.out) {
+            const node = this.skillTreeData.nodes[id];
+            const classId = node.classStartIndex;
+            if (classId === undefined || !node.is(SkillNodeStates.Active) || node.nodeGroup === undefined) {
                 continue;
             }
-            let class_name = utils.getKeyByValue(this.skillTreeData.constants.classes, node.spc[0]);
-            if (class_name === undefined) {
-                throw new Error(`Couldn't find class name from constants: ${node.spc[0]}`);
+            const className = utils.getKeyByValue(this.skillTreeData.constants.classes, classId);
+            if (className === undefined) {
+                throw new Error(`Couldn't find class name from constants: ${classId}`);
             }
 
-            let class_node_graphic = PIXI.Sprite.from(`Background${class_name.replace("Class", "")}`);
-            class_node_graphic.anchor.set(.5)
-            class_node_graphic.position.set(node.group.x * this.skillTreeData.scale, node.group.y * this.skillTreeData.scale);
-            this.backgroundActive.addChild(class_node_graphic);
+            const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
+            classNodeGraphic.anchor.set(.5)
+            classNodeGraphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
+            this.backgroundActive.addChild(classNodeGraphic);
 
-            let common_name = this.skillTreeData.constants.classesToName[class_name];
-            let node_graphic = PIXI.Sprite.from(`center${common_name.toLocaleLowerCase()}`);
-            node_graphic.anchor.set(.5)
-            node_graphic.position.set(node.x, node.y);
-            this.characterStartsActive.addChild(node_graphic);
+            const commonName = this.skillTreeData.constants.classesToName[className];
+            const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
+            nodeGraphic.anchor.set(.5)
+            nodeGraphic.position.set(node.x, node.y);
+            this.characterStartsActive.addChild(nodeGraphic);
         }
 
         this.viewport.addChildAt(this.backgroundActive, this.viewport.children.indexOf(this.background));
@@ -706,40 +726,40 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.pathing_skillIcons.removeChildren();
         }
 
-        let drawn_connections: { [id: number]: Array<number> } = {};
-        for (let id in this.skillTreeData.nodes) {
-            let node = this.skillTreeData.nodes[id];
+        const drawnConnections: { [id: number]: Array<number> } = {};
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
             if (node.is(SkillNodeStates.Pathing)) {
-                let nodes = node.in
+                const nodes = node.in
                     .filter((outID) => {
-                        if (drawn_connections[outID] === undefined || drawn_connections[+id] === undefined) {
+                        if (drawnConnections[outID] === undefined || drawnConnections[+id] === undefined) {
                             return true;
                         } else {
-                            return drawn_connections[outID].indexOf(+id) < 0 && drawn_connections[+id].indexOf(outID) < 0;
+                            return drawnConnections[outID].indexOf(+id) < 0 && drawnConnections[+id].indexOf(outID) < 0;
                         }
                     })
                     .map((outID) => {
-                        if (drawn_connections[outID] === undefined) {
-                            drawn_connections[outID] = new Array<number>();
+                        if (drawnConnections[outID] === undefined) {
+                            drawnConnections[outID] = new Array<number>();
                         }
-                        if (drawn_connections[+id] === undefined) {
-                            drawn_connections[+id] = new Array<number>();
+                        if (drawnConnections[+id] === undefined) {
+                            drawnConnections[+id] = new Array<number>();
                         }
-                        drawn_connections[outID].push(+id);
-                        drawn_connections[+id].push(outID);
+                        drawnConnections[outID].push(+id);
+                        drawnConnections[+id].push(outID);
 
                         return this.skillTreeData.nodes[outID]
                     });
 
                 this.pathing_connections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
-                let frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
+                const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
                     this.pathing_skillIcons.addChild(frame);
                 }
             }
             if (node.is(SkillNodeStates.Hovered)) {
-                let padding = 10;
-                let text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
+                const padding = 10;
+                const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
                 text.position.set(padding / 2, padding / 2);
 
                 this.tooltip = new PIXI.Graphics();
@@ -749,7 +769,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 this.tooltip.endFill();
 
                 this.tooltip.addChild(text);
-                let mouse = PIXI.utils.isMobile.phone
+                const mouse = PIXI.utils.isMobile.phone
                     ? new PIXI.Point(node.x + 50, node.y - 15) :
                     this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
                 this.tooltip.position.set(mouse.x + 10, mouse.y - 5);
@@ -757,8 +777,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 if (this.skillTreeData_compare !== undefined) {
                     this.skillTreeData_compare.clearState(SkillNodeStates.Hovered);
 
-                    for (let idc in this.skillTreeData_compare.nodes) {
-                        let n = this.skillTreeData_compare.nodes[idc];
+                    for (const idc in this.skillTreeData_compare.nodes) {
+                        const n = this.skillTreeData_compare.nodes[idc];
                         if (!n.is(SkillNodeStates.Compared)) {
                             continue;
                         }
@@ -772,11 +792,11 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         if (this.skillTreeData_compare !== undefined) {
-            for (let id in this.skillTreeData_compare.nodes) {
-                let node = this.skillTreeData_compare.nodes[id];
-                if (node.is(SkillNodeStates.Hovered)) {
-                    let padding = 10;
-                    let text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
+            for (const id in this.skillTreeData_compare.nodes) {
+                const node = this.skillTreeData_compare.nodes[id];
+                if (node.is(SkillNodeStates.Hovered) && node.nodeGroup !== undefined) {
+                    const padding = 10;
+                    const text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
                     text.position.set(padding / 2, padding / 2);
 
                     this.tooltip_compare = new PIXI.Graphics();
@@ -786,7 +806,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     this.tooltip_compare.endFill();
 
                     this.tooltip_compare.addChild(text);
-                    let mouse = PIXI.utils.isMobile.phone
+                    const mouse = PIXI.utils.isMobile.phone
                         ? new PIXI.Point(node.x + 50, node.y - 15) :
                         this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
                     this.tooltip_compare.position.set(mouse.x + 10, mouse.y - 5);
@@ -806,7 +826,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             if (this.tooltip !== undefined) {
-                let bounds = this.tooltip.getBounds();
+                const bounds = this.tooltip.getBounds();
                 if (this.tooltip.worldTransform.tx + bounds.width > screen.width) {
                     this.tooltip.x -= this.tooltip.width / (PIXI.utils.isMobile.phone ? 2 : 1);
                 }
@@ -819,7 +839,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             if (this.tooltip_compare !== undefined) {
-                let bounds_compare = this.tooltip_compare.getBounds();
+                const bounds_compare = this.tooltip_compare.getBounds();
                 if (this.tooltip !== undefined) {
                     this.tooltip_compare.y = this.tooltip.y;
                     this.tooltip_compare.x = this.tooltip.x + this.tooltip.width;
@@ -856,10 +876,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.highlights.removeChildren();
         }
 
-        let highlightsContainer: PIXI.Container = new PIXI.Container();
-        for (let id in this.skillTreeData.nodes) {
-            let node = this.skillTreeData.nodes[id];
-            let highlight = this.SkillNodeRenderer.CreateHighlight(node);
+        const highlightsContainer: PIXI.Container = new PIXI.Container();
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            const highlight = this.SkillNodeRenderer.CreateHighlight(node);
             if (highlight !== null) {
                 highlightsContainer.addChild(highlight)
             }
@@ -876,29 +896,29 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         return this.pixi.renderer.plugins.extract.base64(this.viewport, mimeType, 1);
     }
 
-    private MAX_COL_WIDTH: number = 2048;
-    private MAX_ROW_HEIGHT: number = 2048;
+    private MAX_COL_WIDTH = 2048;
+    private MAX_ROW_HEIGHT = 2048;
     private createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.Rectangle | null = null): PIXI.Container => {
         const DEFAULT_OFFSET: PIXI.Rectangle = new PIXI.Rectangle(Math.abs(this.skillTreeData.min_x * this.skillTreeData.scale) * 1.25, Math.abs(this.skillTreeData.min_y * this.skillTreeData.scale) * 1.35, this.skillTreeData.width * this.skillTreeData.scale, this.skillTreeData.height * this.skillTreeData.scale);
         if (offset === null) {
             offset = DEFAULT_OFFSET;
         }
 
-        let returnContainer = new PIXI.Container();
+        const returnContainer = new PIXI.Container();
         obj.position.set(offset.x, offset.y);
 
-        let cols = Math.ceil((offset.width * 1.15) / this.MAX_COL_WIDTH);
-        let rows = Math.ceil((offset.height * 1.15) / this.MAX_ROW_HEIGHT);
+        const cols = Math.ceil((offset.width * 1.15) / this.MAX_COL_WIDTH);
+        const rows = Math.ceil((offset.height * 1.15) / this.MAX_ROW_HEIGHT);
 
         for (let i = 0; i < cols; i++) {
-            var x = i * this.MAX_COL_WIDTH;
+            const x = i * this.MAX_COL_WIDTH;
             obj.position.x = offset.x - x;
 
             for (let j = 0; j < rows; j++) {
-                var y = j * this.MAX_ROW_HEIGHT;
+                const y = j * this.MAX_ROW_HEIGHT;
                 obj.position.y = offset.y - y;
 
-                let sprite = new PIXI.Sprite(this.createRenderTexture(obj, this.MAX_ROW_HEIGHT, this.MAX_COL_WIDTH));
+                const sprite = new PIXI.Sprite(this.createRenderTexture(obj, this.MAX_ROW_HEIGHT, this.MAX_COL_WIDTH));
                 sprite.position.set(-obj.position.x, -obj.position.y);
                 returnContainer.addChild(sprite);
             }
@@ -908,7 +928,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private createRenderTexture = (obj: PIXI.Container, width: number, height: number): PIXI.RenderTexture => {
-        let renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: 1 });
+        const renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: 1 });
         this.pixi.renderer.render(obj, renderTexture);
         return renderTexture;
     }

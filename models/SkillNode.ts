@@ -1,33 +1,46 @@
 ﻿import { utils } from "../app/utils";
 
 export class SkillNode implements ISkillNode {
+    skill: number;
     id: number;
-    dn: string;
+    dn: string | undefined;
+    name: string;
     icon: string;
-    ks: boolean;
-    not: boolean;
-    m: boolean;
+    ks: boolean | undefined;
+    isKeystone: boolean;
+    not: boolean | undefined;
+    isNotable: boolean;
+    m: boolean | undefined;
+    isMastery: boolean;
     isJewelSocket: boolean;
     isMultipleChoice: boolean;
     isMultipleChoiceOption: boolean;
     passivePointsGranted: number;
     ascendancyName: string;
     isAscendancyStart: boolean;
-    spc: number[];
-    sd: string[];
+    spc: number[] | undefined;
+    classStartIndex: number | undefined;
+    sd: string[] | undefined;
+    stats: string[];
     reminderText: string[];
     flavourText: string[];
-    g: number;
-    o: number;
-    oidx: number;
-    da: number;
-    ia: number;
-    sa: number;
+    g: number | undefined;
+    group: number | undefined;
+    o: number | undefined;
+    orbit: number;
+    oidx: number | undefined;
+    orbitIndex: number;
+    da: number | undefined;
+    grantedDexterity: number;
+    ia: number | undefined;
+    grantedIntelligence: number;
+    sa: number | undefined;
+    grantedStrength: number;
     out: number[];
     in: number[];
     state: SkillNodeStates;
 
-    group: IGroup;
+    nodeGroup: IGroup | undefined;
     orbitRadii: Array<number>;
     skillsPerOrbit: Array<number>;
     scale: number;
@@ -37,54 +50,67 @@ export class SkillNode implements ISkillNode {
     isRegular2: boolean;
     isRegular1: boolean;
     alternate_ids: ISkillNodeAlternateState[] | undefined = undefined;
-    faction: number = 0;
+    faction = 0;
     hoverText: string | null = null;
 
-    constructor(node: ISkillNode, group: IGroup, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
-        this.id = node.id || -1;
-        this.dn = node.dn || "";
+    constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
+        this.skill = node.skill || -1;
+        this.id = node.id || node.skill;
+        this.dn = node.dn;
+        this.name = node.name || node.dn || "";
         this.icon = node.icon || "";
-        this.ks = node.ks || false;
-        this.not = node.not || false;
-        this.m = node.m || false;
+        this.ks = node.ks;
+        this.isKeystone = node.isKeystone || node.ks || false;
+        this.not = node.not;
+        this.isNotable = node.isNotable || node.not || false;
+        this.m = node.m;
+        this.isMastery = node.isMastery || node.m || false;
         this.isJewelSocket = node.isJewelSocket || false;
         this.isMultipleChoice = node.isMultipleChoice || false;
         this.isMultipleChoiceOption = node.isMultipleChoiceOption || false;
         this.passivePointsGranted = node.passivePointsGranted || 0;
         this.ascendancyName = node.ascendancyName || "";
         this.isAscendancyStart = node.isAscendancyStart || false;
-        this.spc = node.spc || [];
-        this.sd = node.sd || [];
+        this.spc = node.spc;
+        this.classStartIndex = node.classStartIndex !== undefined ? node.classStartIndex : (this.spc && this.spc.length > 0 ? this.spc[0] : undefined);
+        this.sd = node.sd;
+        this.stats = node.stats || node.sd || [];
         this.reminderText = node.reminderText || [];
         this.flavourText = node.flavourText || [];
-        this.g = node.g || 0;
-        this.o = node.o || 0;
-        this.oidx = node.oidx || 0;
-        this.da = node.da || 0;
-        this.ia = node.ia || 0;
-        this.sa = node.sa || 0;
+        this.g = node.g;
+        this.group = node.group;
+        this.o = node.o;
+        this.orbit = node.orbit || node.o || 0;
+        this.oidx = node.oidx;
+        this.orbitIndex = node.orbitIndex || node.oidx || 0;
+        this.da = node.da;
+        this.grantedDexterity = node.grantedDexterity || node.da || 0;
+        this.ia = node.ia;
+        this.grantedIntelligence = node.grantedIntelligence || node.ia || 0;
+        this.sa = node.sa;
+        this.grantedStrength = node.grantedStrength || node.sa || 0;
         this.out = node.out || [];
         this.in = node.in || [];
         this.state = SkillNodeStates.None;
 
-        this.group = group;
+        this.nodeGroup = group;
         this.orbitRadii = orbitRadii;
         this.skillsPerOrbit = skillsPerOrbit;
         this.scale = scale;
-        this.arc = this.getArc(this.oidx);
+        this.arc = this.getArc(this.orbitIndex);
         this.x = this.getX(this.arc);
         this.y = this.getY(this.arc);
-        this.isRegular2 = !this.ks && !this.not && !this.isJewelSocket && !this.m;
-        this.isRegular1 = this.isRegular2 && (this.sa > 0 || this.da > 0 || this.ia > 0) && this.sd.filter(utils.NotNullOrWhiteSpace).length === 1;
+        this.isRegular2 = !this.isKeystone && !this.isNotable && !this.isJewelSocket && !this.isMastery;
+        this.isRegular1 = this.isRegular2 && (this.grantedStrength > 0 || this.grantedDexterity > 0 || this.grantedIntelligence > 0) && this.stats.filter(utils.NotNullOrWhiteSpace).length === 1;
 
         if (this.passivePointsGranted > 0) {
-            this.sd.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
+            this.stats.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
         }
     }
 
-    private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.o ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.o] : 0;
-    private getX = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.x * this.scale) - (this.orbitRadii[this.o] * this.scale) * Math.sin(-arc) : 0;
-    private getY = (arc: number): number => this.orbitRadii.length > this.o ? (this.group.y * this.scale) - (this.orbitRadii[this.o] * this.scale) * Math.cos(-arc) : 0;
+    private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.orbit ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.orbit] : 0;
+    private getX = (arc: number): number => this.orbitRadii.length > this.orbit && this.nodeGroup !== undefined ? (this.nodeGroup.x * this.scale) - (this.orbitRadii[this.orbit] * this.scale) * Math.sin(-arc) : 0;
+    private getY = (arc: number): number => this.orbitRadii.length > this.orbit && this.nodeGroup !== undefined ? (this.nodeGroup.y * this.scale) - (this.orbitRadii[this.orbit] * this.scale) * Math.cos(-arc) : 0;
 
     public is = (test: SkillNodeStates) => {
         return (this.state & test) === test;
@@ -103,7 +129,7 @@ export class SkillNode implements ISkillNode {
 
         if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
             drawType = "Allocated";
-        } else if (others.filter(x => x.is(SkillNodeStates.Active)).length > 0) {
+        } else if (others.filter(x => x && x.is(SkillNodeStates.Active)).length > 0) {
             drawType = "CanAllocate";
         } else if (this.ascendancyName !== "") {
             drawType = "Normal";
@@ -115,20 +141,20 @@ export class SkillNode implements ISkillNode {
     }
 
     public GetFrameAssetKey = (others: SkillNode[]): string => {
-        let drawType = this.GetDrawType(others);
+        const drawType = this.GetDrawType(others);
 
         let assetKey = "";
         if (this.isAscendancyStart) {
             assetKey = "PassiveSkillScreenAscendancyMiddle";
         } else if (this.isJewelSocket) {
             assetKey = `JewelFrame${drawType}`;
-        } else if (this.ks) {
+        } else if (this.isKeystone) {
             assetKey = `KeystoneFrame${drawType}`;
-        } else if (this.not && this.ascendancyName === "") {
+        } else if (this.isNotable && this.ascendancyName === "") {
             assetKey = `NotableFrame${drawType}`;
-        } else if (this.not && this.ascendancyName !== "") {
+        } else if (this.isNotable && this.ascendancyName !== "") {
             assetKey = `PassiveSkillScreenAscendancyFrameLarge${drawType}`;
-        } else if (this.m) {
+        } else if (this.isMastery) {
             assetKey = "";
         } else if (this.ascendancyName !== "") {
             assetKey = `PassiveSkillScreenAscendancyFrameSmall${drawType}`;
@@ -162,11 +188,11 @@ export class SkillNode implements ISkillNode {
             return 2;
         }
 
-        if (this.not) {
+        if (this.isNotable) {
             return 3;
         }
 
-        if (this.ks) {
+        if (this.isKeystone) {
             return 4;
         }
 

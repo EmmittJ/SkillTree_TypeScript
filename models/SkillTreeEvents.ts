@@ -2,7 +2,7 @@
 
 export class SkillTreeEvents {
     public static events: { [type: string]: { [event: string]: Array<Function> } } = {};
-    public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify: boolean = true) => {
+    public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify = true) => {
         if (SkillTreeEvents.events[type] === undefined) {
             SkillTreeEvents.events[type] = {};
         }
@@ -14,7 +14,7 @@ export class SkillTreeEvents {
         if (notify) SkillTreeEvents.notify(type);
     }
 
-    public static off = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify: boolean = true) => {
+    public static off = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function, notify = true) => {
         if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined || SkillTreeEvents.events[type][event].indexOf(fn) === -1) {
             return;
         }
@@ -27,7 +27,7 @@ export class SkillTreeEvents {
         if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined) {
             return;
         }
-        for (let fn of SkillTreeEvents.events[type][event]) {
+        for (const fn of SkillTreeEvents.events[type][event]) {
             setTimeout(() => fn(context), 0);
         }
     }
@@ -53,7 +53,7 @@ export class SkillTreeEvents {
         if (SkillTreeEvents._subscribers[type] === undefined) {
             return;
         }
-        for (let fn of SkillTreeEvents._subscribers[type]) {
+        for (const fn of SkillTreeEvents._subscribers[type]) {
             setTimeout(() => fn(context), 0);
         }
     }

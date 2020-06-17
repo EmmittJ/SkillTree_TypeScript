@@ -23,8 +23,8 @@ namespace App {
                 continue;
             }
 
-            let options: ISkillTreeOptions = await fetch(`data/${i}/Opts.json`).then(response => response.json());
-            let data = new SkillTreeData(await fetch(`data/${i}/SkillTree.json`).then(response => response.json()), options);
+            let options: ISkillTreeOptions | undefined = await fetch(`data/${i}/Opts.json`).then(response => response.status === 200 ? response.json() : undefined);
+            let data = new SkillTreeData(await fetch(`data/${i}/SkillTree.json`).then(response => response.json()), i, options);
 
             if (i === version) {
                 skillTreeData = data;
@@ -351,13 +351,15 @@ namespace App {
 
         let options = new Array<HTMLOptionElement>();
         for (let id in skillTreeData.classStartNodes) {
-            let node = skillTreeData.nodes[id];
-
+            let classId = skillTreeData.nodes[id].classStartIndex;
+            if (classId === undefined) {
+                continue;
+            }
             let e = document.createElement("option");
-            e.text = skillTreeData.constants.classIdToName[node.spc[0]];
-            e.value = node.spc[0].toString();
+            e.text = skillTreeData.constants.classIdToName[classId];
+            e.value = classId.toString();
 
-            if (node.spc[0] === skillTreeData.getStartClass()) {
+            if (classId === skillTreeData.getStartClass()) {
                 e.setAttribute("selected", "selected");
             }
             options.push(e);
@@ -395,7 +397,7 @@ namespace App {
             ascControl.removeChild(ascControl.firstChild);
         }
 
-        if (!skillTreeData.skillTreeOptions.ascClasses) {
+        if (skillTreeData.classes.length === 0) {
             ascControl.style.display = "none";
             let e = (<HTMLDivElement>document.getElementById("skillTreeAscendancy"));
             if (e !== null) e.style.display = "none";
@@ -412,17 +414,20 @@ namespace App {
         ascControl.append(none);
 
         let startClass = start !== undefined ? start : skillTreeData.getStartClass();
-        for (let ascid in skillTreeData.skillTreeOptions.ascClasses[startClass].classes) {
-            let asc = skillTreeData.skillTreeOptions.ascClasses[startClass].classes[ascid];
+        if (skillTreeData.classes.length > 0) {
+            var ascendancies = skillTreeData.classes[startClass].ascendancies;
+            for (let ascid in ascendancies) {
+                let asc = ascendancies[ascid];
 
-            let e = document.createElement("option");
-            e.text = asc.displayName;
-            e.value = ascid;
+                let e = document.createElement("option");
+                e.text = asc.name;
+                e.value = ascid;
 
-            if (+ascid === ascStart) {
-                e.setAttribute("selected", "selected");
+                if (+ascid === ascStart) {
+                    e.setAttribute("selected", "selected");
+                }
+                ascControl.append(e);
             }
-            ascControl.append(e);
         }
 
         ascControl.onchange = () => {
@@ -466,7 +471,7 @@ namespace App {
 window.onload = () => {
     var query = App.decodeURLParams(window.location.search);
     if (!query['v']) {
-        query['v'] = '3.8.0';
+        query['v'] = '3.11.0-pre';
     }
     if (!query['c']) {
         query['c'] = '';

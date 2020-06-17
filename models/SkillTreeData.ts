@@ -2,9 +2,11 @@
 import { Constants } from "./Constants";
 
 export class SkillTreeData implements ISkillTreeData {
+    patch: string;
     version: number;
     fullscreen: number;
     characterData: { [id: string]: ICharacter };
+    classes: IAscendancyClasses[];
     groups: { [id: string]: IGroup };
     root: IRootNode;
     nodes: { [id: string]: SkillNode };
@@ -18,8 +20,8 @@ export class SkillTreeData implements ISkillTreeData {
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };
     constants: Constants;
+    circles: { [id: string]: ICircleOption[] };
 
-    skillTreeOptions: ISkillTreeOptions;
     width: number;
     height: number;
     scale: number;
@@ -27,13 +29,14 @@ export class SkillTreeData implements ISkillTreeData {
     ascedancyNodes: { [id: string]: SkillNode };
     Build: ISkillTreeBuild;
 
-    constructor(skillTree: ISkillTreeData, options: ISkillTreeOptions) {
-        this.version = skillTree.version = 4;
+    constructor(skillTree: ISkillTreeData, patch: string, options: ISkillTreeOptions | undefined) {
+        this.patch = patch || (options && options.version) || "test"
+        this.version = 4; skillTree.version = this.version;
         this.fullscreen = skillTree.fullscreen = 0;
-        this.skillTreeOptions = options;
+        //this.skillTreeOptions = options;
         this.characterData = skillTree.characterData;
         this.groups = skillTree.groups;
-        this.root = skillTree.root;
+        this.root = skillTree.root || skillTree.nodes["root"];
         this.extraImages = skillTree.extraImages;
         this.min_x = skillTree.min_x;
         this.max_x = skillTree.max_x;
@@ -44,29 +47,36 @@ export class SkillTreeData implements ISkillTreeData {
         this.imageZoomLevels = skillTree.imageZoomLevels;
         this.skillSprites = skillTree.skillSprites;
         this.constants = new Constants(skillTree.constants);
+        this.circles = (options && options.circles) || { "Small": [{ "level": 0.1246, "width": 199 }, { "level": 0.2109, "width": 337 }, { "level": 0.2972, "width": 476 }, { "level": 0.3835, "width": 614 }], "Medium": [{ "level": 0.1246, "width": 299 }, { "level": 0.2109, "width": 506 }, { "level": 0.2972, "width": 713 }, { "level": 0.3835, "width": 920 }], "Large": [{ "level": 0.1246, "width": 374 }, { "level": 0.2109, "width": 633 }, { "level": 0.2972, "width": 892 }, { "level": 0.3835, "width": 1151 }] };
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
-        this.Build = <ISkillTreeBuild>{ JewelSettings: {}, TreeHash: '' };
+        this.Build = { JewelSettings: {}, TreeHash: '' } as ISkillTreeBuild;
 
-        // #region Fix for old school array style nodes
-        let temp: { [id: string]: ISkillNode } = {};
-        for (let i in skillTree.nodes) {
-            let node = skillTree.nodes[i];
-            temp[node.id] = node;
+        // #region Fix for old school style nodes
+        const temp: { [id: string]: ISkillNode } = {};
+        for (const i in skillTree.nodes) {
+            if (i === "root") continue;
+            const node = skillTree.nodes[i];
+            if (node.out === undefined) node.out = [];
+            if (node.in === undefined) node.in = [];
+            if (node.classStartIndex === undefined) node.classStartIndex = (node.spc && node.spc.length > 0) ? node.spc[0] : undefined;
+
+            temp[node.id || node.skill] = node;
         }
         skillTree.nodes = temp;
         // #endregion
         // #region Setup in/out properties correctly
         {
-            for (let id in skillTree.nodes) {
+            for (const id in skillTree.nodes) {
                 skillTree.nodes[id].in = [];
             }
-            for (let id in skillTree.nodes) {
-                if (skillTree.nodes[id].m) {
+            for (const id in skillTree.nodes) {
+                if (skillTree.nodes[id].isMastery) {
                     continue;
                 }
-                for (let outId of skillTree.nodes[id].out) {
+
+                for (const outId of skillTree.nodes[id].out) {
                     if (skillTree.nodes[id].in.indexOf(outId) < 0) {
                         skillTree.nodes[id].in.push(outId);
                     }
@@ -74,7 +84,8 @@ export class SkillTreeData implements ISkillTreeData {
                         skillTree.nodes[outId].out.push(+id);
                     }
                 }
-                for (let inId of skillTree.nodes[id].in) {
+
+                for (const inId of skillTree.nodes[id].in) {
                     if (skillTree.nodes[id].out.indexOf(inId) < 0) {
                         skillTree.nodes[id].out.push(inId);
                     }
@@ -86,19 +97,34 @@ export class SkillTreeData implements ISkillTreeData {
         }
         // #endregion
         // #region Fix ascendancy groups
-        let groupsCompleted: { [id: string]: boolean | undefined } = {};
-        for (let id in skillTree.nodes) {
-            let node = skillTree.nodes[id];
-            if (node.isAscendancyStart && groupsCompleted[node.g] === undefined) {
+        if (skillTree.classes !== undefined) {
+            this.classes = skillTree.classes;
+        } else {
+            this.classes = [];
+            if (options && options.ascClasses) {
+                for (const id in options.ascClasses) {
+                    const character = options.ascClasses[id];
+                    character.name = this.constants.classIdToName[+id];
+                    if (character.ascendancies === undefined) character.ascendancies = character.classes;
+                    this.classes[+id] = character;
+                }
+            }
+        }
+
+        const groupsCompleted: { [id: string]: boolean | undefined } = {};
+        for (const id in skillTree.nodes) {
+            const node = skillTree.nodes[id];
+            const nodeGroupId = node.g || node.group || 0;
+            if (node.isAscendancyStart && groupsCompleted[nodeGroupId] === undefined) {
                 let startNode: ISkillNode | undefined = undefined;
-                for (let o of node.out) {
-                    if (skillTree.nodes[o].spc.length > 0) {
+                for (const o of node.out) {
+                    if (skillTree.nodes[o].classStartIndex !== undefined) {
                         startNode = skillTree.nodes[o];
                     }
                 }
 
-                for (let o of node.in) {
-                    if (skillTree.nodes[o].spc.length > 0) {
+                for (const o of node.in) {
+                    if (skillTree.nodes[o].classStartIndex !== undefined) {
                         startNode = skillTree.nodes[o];
                     }
                 }
@@ -108,45 +134,51 @@ export class SkillTreeData implements ISkillTreeData {
                 }
 
                 let offset = 0;
-                let classes = this.skillTreeOptions.ascClasses[startNode.spc[0]].classes;
-                for (let i in classes) {
-                    if (classes[i].name.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
-                        offset = +i - 1;
-                        break;
+                if (startNode.classStartIndex !== undefined) {
+                    const classes = this.classes[startNode.classStartIndex].ascendancies;
+                    for (const i in classes) {
+                        if (classes[i].name.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
+                            offset = +i - 1;
+                            break;
+                        }
                     }
                 }
 
-                let center_threshold = 100;
-                let offset_distance = 1450;
-                let base_x = 0;
-                let base_y = 0;
-                let start_group = this.groups[startNode.g];
+                const centerThreshold = 100;
+                const offsetDistance = 1450;
+                let baseX = 0;
+                let baseY = 0;
+                const startGroup = this.groups[startNode.g || startNode.group || 0];
 
-                if ((start_group.x > -center_threshold && start_group.x < center_threshold) && (start_group.y > -center_threshold && start_group.y < center_threshold)) {
-                    base_x = this.min_x * .55;
-                    base_y = this.max_y * .80;
-                } else if (start_group.x > -center_threshold && start_group.x < center_threshold) {
-                    base_x = start_group.x + (Math.sign(start_group.x) * (offset - 1) * offset_distance);
-                    base_y = Math.sign(start_group.y) > 0 ? this.max_y * .95 : this.min_y;
+                if ((startGroup.x > -centerThreshold && startGroup.x < centerThreshold) && (startGroup.y > -centerThreshold && startGroup.y < centerThreshold)) {
+                    // Scion
+                    baseX = this.min_x * .65;
+                    baseY = this.max_y * .95;
+                } else if (startGroup.x > -centerThreshold && startGroup.x < centerThreshold) {
+                    // Witch, Duelist
+                    baseX = startGroup.x + (Math.sign(startGroup.x) * offset * offsetDistance);
+                    baseY = Math.sign(startGroup.y) > 0 ? this.max_y * 1.05 : this.min_y;
                 } else {
-                    base_x = start_group.x < 0 ? this.min_x * .80 : this.max_x * .95;
-                    base_y = start_group.y + (Math.sign(start_group.y) * offset * offset_distance);
+                    // Templar, Marauder, Ranger, Shadow 
+                    baseX = startGroup.x < 0 ? this.min_x * .80 : this.max_x;
+                    baseY = startGroup.y + (Math.sign(startGroup.y) * (offset + 1) * offsetDistance);
                 }
 
-                groupsCompleted[node.g] = true;
-                for (let oid in skillTree.nodes) {
-                    let other = skillTree.nodes[oid];
-                    if (groupsCompleted[other.g] === undefined && other.ascendancyName === node.ascendancyName) {
-                        let diff_x = this.groups[node.g].x - this.groups[other.g].x;
-                        let diff_y = this.groups[node.g].y - this.groups[other.g].y;
-                        this.groups[other.g].x = base_x - diff_x;
-                        this.groups[other.g].y = base_y - diff_y;
-                        groupsCompleted[other.g] = true;
+                groupsCompleted[nodeGroupId] = true;
+                for (const oid in skillTree.nodes) {
+                    const other = skillTree.nodes[oid];
+                    const otherGroupId = other.g || other.group || 0;
+                    if (groupsCompleted[otherGroupId] === undefined && other.ascendancyName === node.ascendancyName) {
+                        const diffX = this.groups[nodeGroupId].x - this.groups[otherGroupId].x;
+                        const diffY = this.groups[nodeGroupId].y - this.groups[otherGroupId].y;
+                        this.groups[otherGroupId].x = baseX - diffX;
+                        this.groups[otherGroupId].y = baseY - diffY;
+                        groupsCompleted[otherGroupId] = true;
                     }
                 }
 
-                this.groups[node.g].x = base_x;
-                this.groups[node.g].y = base_y;
+                this.groups[nodeGroupId].x = baseX;
+                this.groups[nodeGroupId].y = baseY;
             }
         }
         // #endregion
@@ -154,9 +186,10 @@ export class SkillTreeData implements ISkillTreeData {
         this.nodes = {};
         this.classStartNodes = {};
         this.ascedancyNodes = {};
-        for (let id in skillTree.nodes) {
-            let node = new SkillNode(skillTree.nodes[id], skillTree.groups[skillTree.nodes[id].g], skillTree.constants.orbitRadii, skillTree.constants.skillsPerOrbit, this.scale);
-            if (node.spc.length > 0 && node.spc.indexOf(options.startClass) >= 0) {
+        for (const id in skillTree.nodes) {
+            const groupId = skillTree.nodes[id].g || skillTree.nodes[id].group || 0;
+            const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, skillTree.constants.skillsPerOrbit, this.scale);
+            if (node.classStartIndex === 3) {
                 node.add(SkillNodeStates.Active);
             }
 
@@ -164,28 +197,37 @@ export class SkillTreeData implements ISkillTreeData {
             if (node.ascendancyName !== "") {
                 this.ascedancyNodes[id] = node;
             }
-            if (node.spc.length > 0) {
+            if (node.classStartIndex !== undefined) {
                 this.classStartNodes[id] = node;
             }
         }
     }
 
     public getStartClass = (): number => {
-        for (let id in this.classStartNodes) {
+        for (const id in this.classStartNodes) {
             if (this.nodes[id].is(SkillNodeStates.Active)) {
-                return this.nodes[id].spc[0];
+                return this.nodes[id].classStartIndex || 0;
             }
         }
         return 0;
     }
 
     public getAscendancyClass = (): number => {
-        for (let id in this.ascedancyNodes) {
+        for (const id in this.ascedancyNodes) {
             if (this.nodes[id].isAscendancyStart && this.nodes[id].is(SkillNodeStates.Active)) {
-                for (let classid in this.skillTreeOptions.ascClasses) {
-                    for (let ascid in this.skillTreeOptions.ascClasses[classid].classes) {
-                        let asc = this.skillTreeOptions.ascClasses[classid].classes[ascid];
-                        if (asc.name === this.nodes[id].dn) {
+                if (this.classes === undefined) {
+                    continue;
+                }
+
+                for (const classid in this.classes) {
+                    const ascendancies = this.classes[classid].ascendancies;
+                    if (ascendancies === undefined) {
+                        continue;
+                    }
+
+                    for (const ascid in ascendancies) {
+                        const asc = ascendancies[ascid];
+                        if (asc.name === this.nodes[id].name) {
                             return +ascid;
                         }
                     }
@@ -197,9 +239,9 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getSkilledNodes = (): { [id: string]: SkillNode } => {
-        let skilled: { [id: string]: SkillNode } = {};
-        for (let id in this.nodes) {
-            let node = this.nodes[id];
+        const skilled: { [id: string]: SkillNode } = {};
+        for (const id in this.nodes) {
+            const node = this.nodes[id];
             if (node.is(SkillNodeStates.Active)) {
                 skilled[id] = node;
             }
@@ -208,9 +250,9 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getHoveredNodes = (): { [id: string]: SkillNode } => {
-        let hovered: { [id: string]: SkillNode } = {};
-        for (let id in this.nodes) {
-            let node = this.nodes[id];
+        const hovered: { [id: string]: SkillNode } = {};
+        for (const id in this.nodes) {
+            const node = this.nodes[id];
             if (node.is(SkillNodeStates.Hovered) || node.is(SkillNodeStates.Pathing)) {
                 hovered[id] = node;
             }
@@ -219,9 +261,9 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getNodes = (state: SkillNodeStates): { [id: string]: SkillNode } => {
-        let n: { [id: string]: SkillNode } = {};
-        for (let id in this.nodes) {
-            let node = this.nodes[id];
+        const n: { [id: string]: SkillNode } = {};
+        for (const id in this.nodes) {
+            const node = this.nodes[id];
             if (node.is(state)) {
                 n[id] = node;
             }
@@ -231,15 +273,15 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getNodesInRange = (x: number, y: number, range: number) => {
-        let _nodes: SkillNode[] = [];
-        for (var id in this.nodes) {
-            let n = this.nodes[id];
-            if (n.m) {
+        const _nodes: SkillNode[] = [];
+        for (const id in this.nodes) {
+            const n = this.nodes[id];
+            if (n.isMastery) {
                 continue;
             }
 
-            let dx = Math.abs(n.x - x);
-            let dy = Math.abs(n.y - y)
+            const dx = Math.abs(n.x - x);
+            const dy = Math.abs(n.y - y)
             if (dx * dx + dy * dy < range * range && Math.abs(n.y - y) < range) {
                 _nodes.push(n);
             }
@@ -248,9 +290,9 @@ export class SkillTreeData implements ISkillTreeData {
         return _nodes;
     }
 
-    public clearAlternates = (used_nodes: string[]) => {
-        for (let id in this.nodes) {
-            if (used_nodes.indexOf(id) > -1) {
+    public clearAlternates = (usedNodes: string[]) => {
+        for (const id in this.nodes) {
+            if (usedNodes.indexOf(id) > -1) {
                 continue;
             }
 
@@ -260,7 +302,7 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public clearState = (state: SkillNodeStates) => {
-        for (let id in this.getNodes(state)) {
+        for (const id in this.getNodes(state)) {
             this.nodes[id].remove(state);
 
             if (state === SkillNodeStates.Hovered) {

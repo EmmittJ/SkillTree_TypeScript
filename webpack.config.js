@@ -1,10 +1,11 @@
-﻿const path = require('path');
+﻿/// <binding />
+const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
-    mode: 'production',
+    mode: 'development',
     entry: path.resolve(__dirname, 'app/app.ts'),
     devtool: "none",
     module: {

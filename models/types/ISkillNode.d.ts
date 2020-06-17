@@ -1,21 +1,36 @@
 ﻿interface ISkillNode extends IRootNode {
     /** Id of the SkillNode */
-    id: number;
+    skill: number;
+
+    /** @deprecated Id of the SkillNode */
+    id: number | undefined;
+
+    /** @deprecated Name of the SkillNode */
+    dn: string | undefined;
 
     /** Name of the SkillNode */
-    dn: string;
+    name: string | undefined;
 
     /** Icon of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
     icon: string;
 
+    /** @deprecated Determines if the SkillNode is a Keystone */
+    ks: boolean | undefined;
+
     /** Determines if the SkillNode is a Keystone */
-    ks: boolean;
+    isKeystone: boolean | undefined;
+
+    /** @deprecated Determines if the SkillNode is a Notable */
+    not: boolean | undefined;
 
     /** Determines if the SkillNode is a Notable */
-    not: boolean;
+    isNotable: boolean | undefined;
+
+    /** @deprecated Determines if the SkillNode is a Mastery */
+    m: boolean | undefined;
 
     /** Determines if the SkillNode is a Mastery */
-    m: boolean,
+    isMastery: boolean | undefined;
 
     /** Determines if the Skillnode is a Jewel Socket */
     isJewelSocket: boolean;
@@ -35,11 +50,17 @@
     /** Determines if the SkillNode is the root of an Ascendancy Class */
     isAscendancyStart: boolean,
 
+    /** @deprecated Detemines the root classes of the SkillNode */
+    spc: Array<number> | undefined;
+
     /** Detemines the root classes of the SkillNode */
-    spc: Array<number>;
+    classStartIndex: number | undefined;
+
+    /** @deprecated The stat descriptions of the SkillNode */
+    sd: Array<string> | undefined;
 
     /** The stat descriptions of the SkillNode */
-    sd: Array<string>;
+    stats: Array<string> | undefined;
 
     /** Node flavour text (similar to the flavour text on unqiues, appears in the unique border color in game) */
     flavourText: Array<string>;
@@ -49,27 +70,51 @@
 }
 
 interface IRootNode {
-    /** The group in of the SkillNode */
-    g: number;
+    /** @deprecated The group id of the SkillNode */
+    g: number | undefined;
+
+    /** The group id of the SkillNode */
+    group: number | undefined;
+
+    /** @deprecated
+     *  The Orbit Radii of the SkillNode
+     * @see Constants.orbitRadii
+     */
+    o: number | undefined;
 
     /** The Orbit Radii of the SkillNode
      * @see Constants.orbitRadii
      */
-    o: number;
+    orbit: number | undefined;
+
+    /** @deprecated
+     *  The index on the Orbit
+     * @see Constants.skillsPerOrbit
+     */
+    oidx: number | undefined;
 
     /** The index on the Orbit
      * @see Constants.skillsPerOrbit
      */
-    oidx: number;
+    orbitIndex: number | undefined;
+
+    /** @deprecated The amount of Dex the SkillNode gives */
+    da: number | undefined;
 
     /** The amount of Dex the SkillNode gives */
-    da: number;
+    grantedDexterity: number | undefined;
+
+    /** @deprecated The amount of Int the SkillNode gives */
+    ia: number | undefined;
 
     /** The amount of Int the SkillNode gives */
-    ia: number;
+    grantedIntelligence: number | undefined;
+
+    /** @deprecated The amount of Strength the SkillNode gives */
+    sa: number | undefined;
 
     /** The amount of Strength the SkillNode gives */
-    sa: number;
+    grantedStrength: number | undefined;
 
     /** The conections from this SkillNode*/
     out: Array<number>;

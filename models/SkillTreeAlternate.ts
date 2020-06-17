@@ -4,7 +4,7 @@
     nodes: { [id: string]: ISkillNodeAlternate } = {};
     passiveTypes: string[] = [];
     skillSprites: { [id: string]: ISpriteSheet[] } = {};
-    version: string = "";
+    version = "";
 
     nodesByPassiveType: ISkillNodeAlternate[][] = [];
 
@@ -20,9 +20,9 @@
         this.skillSprites = alternate.skillSprites;
         this.version = alternate.version
 
-        for (let id in this.nodes) {
-            let n = this.nodes[id];
-            for (let i in this.passiveTypes) {
+        for (const id in this.nodes) {
+            const n = this.nodes[id];
+            for (const i in this.passiveTypes) {
                 if (n.passiveType.indexOf(+i) >= 0) {
                     if (this.nodesByPassiveType[i] === undefined) {
                         this.nodesByPassiveType[i] = [];

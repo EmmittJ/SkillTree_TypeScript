@@ -1,7 +1,9 @@
 ﻿interface ISkillTreeData {
+    patch: string;
     version: number;
     fullscreen: number;
     characterData: { [id: string]: ICharacter };
+    classes: IAscendancyClasses[] | undefined;
     groups: { [id: string]: IGroup };
     root: IRootNode;
     nodes: { [id: string]: ISkillNode };
