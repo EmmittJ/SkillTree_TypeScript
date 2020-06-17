@@ -508,7 +508,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] !== undefined) {
                 const node2 = this.skillTreeData_compare.nodes[node.id];
                 let sDiff = node.stats.length !== node2.stats.length;
-
+                const moved = (Math.abs(node.x - node2.x) > 25 || Math.abs(node.y - node2.y) > 25);
+                
                 for (const s of node.stats) {
                     let found = false;
                     for (const s2 of node2.stats) {
@@ -523,8 +524,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     }
                 }
 
-                if (sDiff) {
+                if (sDiff || moved) {
                     node2.add(SkillNodeStates.Compared);
+                    if (moved) node2.add(SkillNodeStates.Moved);
                     const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
                     if (highlighter !== null) {
                         this.skillIcons.addChild(highlighter);
@@ -693,21 +695,31 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
     private tooltip: PIXI.Graphics | undefined = undefined;
     private tooltip_compare: PIXI.Graphics | undefined = undefined;
+    private node_move_compare: PIXI.Graphics | undefined = undefined;
     private pathing_connections: PIXI.Container = new PIXI.Container();
     private pathing_skillIcons: PIXI.Container = new PIXI.Container();
     private RenderHover = (): void => {
         if (this.viewport.children.indexOf(this.pathing_connections) > 0) {
             this.viewport.removeChild(this.pathing_connections);
         }
+
         if (this.viewport.children.indexOf(this.pathing_skillIcons) > 0) {
             this.viewport.removeChild(this.pathing_skillIcons);
         }
+
         if (this.tooltip !== undefined && this.viewport.children.indexOf(this.tooltip) > 0) {
             this.viewport.removeChild(this.tooltip);
         }
+
         if (this.tooltip_compare !== undefined && this.viewport.children.indexOf(this.tooltip_compare) > 0) {
             this.viewport.removeChild(this.tooltip_compare);
         }
+
+        if (this.node_move_compare !== undefined && this.viewport.children.indexOf(this.node_move_compare) > 0) {
+            this.viewport.removeChild(this.node_move_compare);
+
+        }
+        this.node_move_compare = undefined;
 
         if (this.tooltip !== undefined && this.tooltip.children.length > 0) {
             this.tooltip.removeChildren();
@@ -757,6 +769,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     this.pathing_skillIcons.addChild(frame);
                 }
             }
+
             if (node.is(SkillNodeStates.Hovered)) {
                 const padding = 10;
                 const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
@@ -777,15 +790,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 if (this.skillTreeData_compare !== undefined) {
                     this.skillTreeData_compare.clearState(SkillNodeStates.Hovered);
 
-                    for (const idc in this.skillTreeData_compare.nodes) {
-                        const n = this.skillTreeData_compare.nodes[idc];
-                        if (!n.is(SkillNodeStates.Compared)) {
-                            continue;
+                    let other = this.skillTreeData_compare.nodes[node.id];
+                    if (other === undefined) {
+                        for (const idc in this.skillTreeData_compare.nodes) {
+                            const n = this.skillTreeData_compare.nodes[idc];
+                            if ((Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
+                                other = n;
+                            }
                         }
+                    }
 
-                        if (n.id === node.id || (Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
-                            n.add(SkillNodeStates.Hovered);
-                        }
+                    if (other && other.is(SkillNodeStates.Compared)) {
+                        other.add(SkillNodeStates.Hovered);
                     }
                 }
             }
@@ -810,6 +826,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                         ? new PIXI.Point(node.x + 50, node.y - 15) :
                         this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
                     this.tooltip_compare.position.set(mouse.x + 10, mouse.y - 5);
+
+                    if (node.is(SkillNodeStates.Moved)) {
+                        const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF1493)
+                        if (highlighter !== null) {
+                            this.node_move_compare = highlighter;
+                        }
+                    }
                 }
             }
         }
@@ -817,6 +840,11 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         if (this.updateHover) {
             this.viewport.addChildAt(this.pathing_connections, Math.max(this.viewport.children.indexOf(this.connections), this.viewport.children.indexOf(this.connectionsActive)) + 1);
             this.viewport.addChildAt(this.pathing_skillIcons, Math.max(this.viewport.children.indexOf(this.skillIcons), this.viewport.children.indexOf(this.skillIconsActive)) + 1);
+
+            if (this.node_move_compare !== undefined) {
+                this.viewport.addChild(this.node_move_compare);
+            }
+
             if (this.tooltip !== undefined) {
                 this.viewport.addChild(this.tooltip);
             }

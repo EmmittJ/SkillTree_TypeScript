@@ -206,5 +206,6 @@ export enum SkillNodeStates {
     Hovered = 1 << 1,
     Pathing = 1 << 2,
     Highlighted = 1 << 3,
-    Compared = 1 << 4
+    Compared = 1 << 4,
+    Moved = 1 << 5,
 }
