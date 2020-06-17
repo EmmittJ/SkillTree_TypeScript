@@ -51,7 +51,13 @@ export class SkillTreeUtilities {
         this.lastHash = window.location.hash;
 
         try {
-            this.skillTreeData.Build = JSON.parse(lzstring.decompressFromEncodedURIComponent(window.location.hash.replace("#", "")));
+            const data = lzstring.decompressFromEncodedURIComponent(window.location.hash.replace("#", ""));
+            if (data === null) {
+                window.location.hash = "";
+                return;
+            }
+
+            this.skillTreeData.Build = JSON.parse(data);
             for (const id in this.skillTreeData.Build.NodeAlternateIdMap) {
                 this.skillTreeData.nodes[id].alternate_ids = this.skillTreeData.Build.NodeAlternateIdMap[id];
             }

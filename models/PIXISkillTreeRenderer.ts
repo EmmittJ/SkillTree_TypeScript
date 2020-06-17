@@ -507,7 +507,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
             if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] !== undefined) {
                 const node2 = this.skillTreeData_compare.nodes[node.id];
-                let sDiff = false;
+                let sDiff = node.stats.length !== node2.stats.length;
 
                 for (const s of node.stats) {
                     let found = false;
