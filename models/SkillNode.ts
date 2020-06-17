@@ -78,7 +78,7 @@ export class SkillNode implements ISkillNode {
         this.reminderText = node.reminderText || [];
         this.flavourText = node.flavourText || [];
         this.g = node.g;
-        this.group = node.group;
+        this.group = node.group || node.g;
         this.o = node.o;
         this.orbit = node.orbit || node.o || 0;
         this.oidx = node.oidx;
