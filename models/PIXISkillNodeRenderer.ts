@@ -38,6 +38,15 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return `${node.icon}_${node.alternate_ids}_${node.isNotable}_${node.isMastery}_${node.isKeystone}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
+    public GetNodeSize = (node: SkillNode, source: "Base" | "Compare" = "Base"): { width: number, height: number } | null => {
+        const sprite = this.NodeSprites[this.GetNodeKey(node, source)];
+        if (sprite === undefined) {
+            return null;
+        }
+
+        return { width: sprite.texture.width, height: sprite.texture.height };
+    }
+
     public CreateFrame = (node: SkillNode, others: SkillNode[]): PIXI.Sprite | null => {
         const asset = node.GetFrameAssetKey(others);
         if (asset === "") {
@@ -156,8 +165,8 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         if ((!node.is(SkillNodeStates.Highlighted)) && color === undefined) {
             return null;
         }
-        const sprite = this.NodeSprites[this.GetNodeKey(node, source)];
-        if (sprite === undefined) {
+        const size = this.GetNodeSize(node, source);
+        if (size === null) {
             return null;
         }
 
@@ -168,7 +177,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         const graphic = new PIXI.Graphics();
         graphic.beginFill(0x000000, 0);
         graphic.lineStyle(5, color);
-        graphic.drawCircle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) * .75 * (node.isMastery ? .5 : 1));
+        graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .75 * (node.isMastery ? .5 : 1));
         graphic.endFill();
         graphic.position.set(node.x, node.y);
         return graphic;

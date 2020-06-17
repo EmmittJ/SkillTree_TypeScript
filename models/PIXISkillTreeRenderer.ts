@@ -505,10 +505,11 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     this.skillIcons.addChild(highlighter);
                 }
             }
+            const nodeSize = this.SkillNodeRenderer.GetNodeSize(node);
             if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] !== undefined) {
                 const node2 = this.skillTreeData_compare.nodes[node.id];
                 let sDiff = node.stats.length !== node2.stats.length;
-                const moved = (Math.abs(node.x - node2.x) > 25 || Math.abs(node.y - node2.y) > 25);
+                const moved = nodeSize && (Math.abs(node.x - node2.x) > nodeSize.width || Math.abs(node.y - node2.y) > nodeSize.height);
                 
                 for (const s of node.stats) {
                     let found = false;
