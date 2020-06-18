@@ -510,7 +510,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const node2 = this.skillTreeDataCompare.nodes[node.id];
                 let sDiff = node.stats.length !== node2.stats.length;
                 const moved = nodeSize && (Math.abs(node.x - node2.x) > nodeSize.width || Math.abs(node.y - node2.y) > nodeSize.height);
-                
+
                 for (const s of node.stats) {
                     let found = false;
                     for (const s2 of node2.stats) {
@@ -857,14 +857,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             if (this.tooltip !== undefined) {
                 const bounds = this.tooltip.getBounds();
                 if (this.tooltip.worldTransform.tx + bounds.width > screen.width) {
-                    this.tooltip.x -= this.tooltip.width / (PIXI.utils.isMobile.phone ? 2 : 1);
+                    this.tooltip.x -= this.tooltip.width / devicePixelRatio;
                 }
                 if (this.tooltip.worldTransform.ty + bounds.height > screen.height) {
-                    this.tooltip.y -= this.tooltip.height / (PIXI.utils.isMobile.phone ? 2 : 1);
+                    this.tooltip.y -= this.tooltip.height / devicePixelRatio;
                 }
-                if (!PIXI.utils.isMobile.phone) {
-                    this.tooltip.scale.set(this.tooltip.width / bounds.width, this.tooltip.height / bounds.height);
-                }
+
+                this.tooltip.scale.set(this.tooltip.width / bounds.width / devicePixelRatio, this.tooltip.height / bounds.height / devicePixelRatio);
             }
 
             if (this.tooltipCompare !== undefined) {
@@ -875,16 +874,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 }
                 else {
                     if (this.tooltipCompare.worldTransform.tx + boundsCompare.width > screen.width) {
-                        this.tooltipCompare.x -= this.tooltipCompare.width / (PIXI.utils.isMobile.phone ? 2 : 1);
+                        this.tooltipCompare.x -= this.tooltipCompare.width / devicePixelRatio;
                     }
                     if (this.tooltipCompare.worldTransform.ty + boundsCompare.height > screen.height) {
-                        this.tooltipCompare.y -= this.tooltipCompare.height / (PIXI.utils.isMobile.phone ? 2 : 1);
+                        this.tooltipCompare.y -= this.tooltipCompare.height / devicePixelRatio;
                     }
                 }
 
-                if (!PIXI.utils.isMobile.phone) {
-                    this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width, this.tooltipCompare.height / boundsCompare.height);
-                }
+                this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width / devicePixelRatio, this.tooltipCompare.height / boundsCompare.height / devicePixelRatio);
             }
 
             this.UpdateJewelSocketHighlightPosition();
