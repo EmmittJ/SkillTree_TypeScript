@@ -103,7 +103,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         if (node.isJewelSocket) {
             let settings = this.skillTreeData.Build.JewelSettings[node.id];
             if (settings === undefined) {
-                settings = { node_id: node.id } as ISkillTreeAlternateJewelSettings;
+                settings = { nodeId: node.id } as ISkillTreeAlternateJewelSettings;
             }
             SkillTreeEvents.fire("skilltree", "jewel-click-start", settings);
         } else if (node.faction !== 0) {
@@ -111,16 +111,16 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private UpdateFactionNode = (event: { node_id: number; alterante_ids: ISkillNodeAlternateState[] }) => {
-        const node = this.skillTreeData.nodes[event.node_id];
-        node.alternateIds = event.alterante_ids.length > 0 ? event.alterante_ids : undefined;
+    private UpdateFactionNode = (event: { nodeId: number; alteranteIds: ISkillNodeAlternateState[] }) => {
+        const node = this.skillTreeData.nodes[event.nodeId];
+        node.alternateIds = event.alteranteIds.length > 0 ? event.alteranteIds : undefined;
 
         this.CreateJewelSocketHightlights();
     }
 
     private CreateJewelSocketHightlights = (newSettings: ISkillTreeAlternateJewelSettings | undefined = undefined) => {
-        if (newSettings !== undefined && this.skillTreeData.Build.JewelSettings[newSettings.node_id] === undefined) {
-            this.skillTreeData.Build.JewelSettings[newSettings.node_id] = JSON.parse(JSON.stringify(newSettings));
+        if (newSettings !== undefined && this.skillTreeData.Build.JewelSettings[newSettings.nodeId] === undefined) {
+            this.skillTreeData.Build.JewelSettings[newSettings.nodeId] = JSON.parse(JSON.stringify(newSettings));
         }
 
         const usedNodes: string[] = [];
@@ -130,23 +130,23 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 continue;
             }
 
-            if (settings.extra_data instanceof PIXI.Container) {
-                this.pixi.ticker.remove(this.RotateJewelHighlights, settings.extra_data);
-                this.jewelSocketHighlights.removeChild(settings.extra_data);
-                settings.extra_data.destroy({ children: true });
-                settings.extra_data = undefined;
+            if (settings.extraData instanceof PIXI.Container) {
+                this.pixi.ticker.remove(this.RotateJewelHighlights, settings.extraData);
+                this.jewelSocketHighlights.removeChild(settings.extraData);
+                settings.extraData.destroy({ children: true });
+                settings.extraData = undefined;
             }
 
-            if (newSettings !== undefined && settings.node_id === newSettings.node_id) {
-                this.skillTreeData.Build.JewelSettings[newSettings.node_id] = JSON.parse(JSON.stringify(newSettings)) as ISkillTreeAlternateJewelSettings;
-                settings = this.skillTreeData.Build.JewelSettings[newSettings.node_id];
+            if (newSettings !== undefined && settings.nodeId === newSettings.nodeId) {
+                this.skillTreeData.Build.JewelSettings[newSettings.nodeId] = JSON.parse(JSON.stringify(newSettings)) as ISkillTreeAlternateJewelSettings;
+                settings = this.skillTreeData.Build.JewelSettings[newSettings.nodeId];
                 if (settings === undefined) {
                     continue;
                 }
             }
 
-            if (settings.size !== "None" && settings.extra_data === undefined) {
-                const node = this.skillTreeData.nodes[settings.node_id];
+            if (settings.size !== "None" && settings.extraData === undefined) {
+                const node = this.skillTreeData.nodes[settings.nodeId];
                 if (node === undefined) {
                     continue;
                 }
@@ -165,7 +165,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 container.addChild(sprite1);
 
                 this.jewelSocketHighlights.addChild(container);
-                settings.extra_data = container;
+                settings.extraData = container;
 
                 const singleNodes: { [id: number]: ISkillNodeAlternateState[] | undefined } = {};
                 if (settings.factionId in this.skillTreeAlternate.alternate_tree_keystones) {
@@ -199,8 +199,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     }
                 }
 
-                if (settings.extra_data instanceof PIXI.Container) {
-                    this.pixi.ticker.add(this.RotateJewelHighlights, settings.extra_data);
+                if (settings.extraData instanceof PIXI.Container) {
+                    this.pixi.ticker.add(this.RotateJewelHighlights, settings.extraData);
                 }
             }
         }

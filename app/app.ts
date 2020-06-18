@@ -162,8 +162,8 @@ export class App {
             }
 
             SkillTreeEvents.fire("skilltree", "faction-node-end", {
-                node_id: event.node.id,
-                alterante_ids: altIds
+                nodeId: event.node.id,
+                alteranteIds: altIds
             });
         };
 
@@ -318,7 +318,7 @@ export class App {
 
             SkillTreeEvents.fire("skilltree", "jewel-click-end",
                 {
-                    node_id: settings.node_id,
+                    nodeId: settings.nodeId,
                     size: sizeSelect.value,
                     factionId: sizeSelect.value !== "None" ? +factionSelect.value : 0,
                     seed: seedInput.value,
