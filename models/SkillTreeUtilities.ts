@@ -59,7 +59,7 @@ export class SkillTreeUtilities {
 
             this.skillTreeData.Build = JSON.parse(data);
             for (const id in this.skillTreeData.Build.NodeAlternateIdMap) {
-                this.skillTreeData.nodes[id].alternate_ids = this.skillTreeData.Build.NodeAlternateIdMap[id];
+                this.skillTreeData.nodes[id].alternateIds = this.skillTreeData.Build.NodeAlternateIdMap[id];
             }
             const def = this.skillTreeCodec.decodeURL(this.skillTreeData.Build.TreeHash, this.skillTreeData);
             this.skillTreeData.version = def.Version;
@@ -93,10 +93,10 @@ export class SkillTreeUtilities {
         this.skillTreeData.Build.NodeAlternateIdMap = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
-            if (node.alternate_ids !== undefined
+            if (node.alternateIds !== undefined
                 && (node.isRegular2 || node.isNotable)
-                && node.alternate_ids.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction).length > 1).length > 0) {
-                this.skillTreeData.Build.NodeAlternateIdMap[node.id] = node.alternate_ids;
+                && node.alternateIds.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction).length > 1).length > 0) {
+                this.skillTreeData.Build.NodeAlternateIdMap[node.id] = node.alternateIds;
             }
         }
         window.location.hash = `#${lzstring.compressToEncodedURIComponent(JSON.stringify(this.skillTreeData.Build, (key, value) => key === "extra_data" ? undefined : value))}`;

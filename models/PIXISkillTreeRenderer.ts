@@ -14,7 +14,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     private pixi: PIXI.Application;
     private viewport!: Viewport;
     private skillTreeData!: SkillTreeData;
-    private skillTreeData_compare!: SkillTreeData | undefined;
+    private skillTreeDataCompare!: SkillTreeData | undefined;
     private skillTreeAlternate!: SkillTreeAlternate;
 
     constructor() {
@@ -24,15 +24,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         PIXI.Loader.shared.reset();
     }
 
-    async Initialize(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeData_compare: SkillTreeData | undefined): Promise<boolean> {
+    async Initialize(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeDataCompare: SkillTreeData | undefined): Promise<boolean> {
         if (this.Initialized) {
             return true;
         }
 
         this.skillTreeData = skillTreeData;
-        this.skillTreeData_compare = skillTreeData_compare;
+        this.skillTreeDataCompare = skillTreeDataCompare;
         this.skillTreeAlternate = skillTreeAlternate;
-        this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, skillTreeAlternate, this.skillTreeData_compare !== undefined ? this.skillTreeData_compare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
+        this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, skillTreeAlternate, this.skillTreeDataCompare !== undefined ? this.skillTreeDataCompare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Base"));
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Compare"));
         SkillTreeEvents.on("skilltree", "jewel-click-end", this.CreateJewelSocketHightlights);
@@ -40,7 +40,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         container.appendChild(this.pixi.view);
 
         // #region Setup pixi-viewport
-        let zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
+        const zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
         this.viewport = new Viewport({
             screenWidth: this.pixi.screen.width,
             screenHeight: this.pixi.screen.height,
@@ -70,8 +70,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
         };
 
-        const promise = this.LoadAssets([skillTreeData, skillTreeData_compare]);
-        promise.then(_ => this.Initialized = true);
+        const promise = this.LoadAssets([skillTreeData, skillTreeDataCompare]);
+        promise.then(() => this.Initialized = true);
         //promise.catch(_ => this.Initialized = false);
         return promise;
     }
@@ -111,9 +111,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private UpdateFactionNode = (event: { node_id: number, alterante_ids: ISkillNodeAlternateState[] }) => {
+    private UpdateFactionNode = (event: { node_id: number; alterante_ids: ISkillNodeAlternateState[] }) => {
         const node = this.skillTreeData.nodes[event.node_id];
-        node.alternate_ids = event.alterante_ids.length > 0 ? event.alterante_ids : undefined;
+        node.alternateIds = event.alterante_ids.length > 0 ? event.alterante_ids : undefined;
 
         this.CreateJewelSocketHightlights();
     }
@@ -124,7 +124,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         const usedNodes: string[] = [];
-        for (let i in this.skillTreeData.Build.JewelSettings) {
+        for (const i in this.skillTreeData.Build.JewelSettings) {
             let settings = this.skillTreeData.Build.JewelSettings[i];
             if (settings === undefined) {
                 continue;
@@ -190,12 +190,12 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     usedNodes.push(o.id.toString());
                     o.faction = settings.factionId;
 
-                    if (o.alternate_ids !== undefined && o.alternate_ids.filter(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction !== (settings as ISkillTreeAlternateJewelSettings).factionId).length > 0) {
-                        o.alternate_ids = undefined;
+                    if (o.alternateIds !== undefined && o.alternateIds.filter(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction !== (settings as ISkillTreeAlternateJewelSettings).factionId).length > 0) {
+                        o.alternateIds = undefined;
                     }
 
-                    if (o.alternate_ids === undefined || o.GetPassiveType() === 4) {
-                        o.alternate_ids = singleNodes[o.GetPassiveType()];
+                    if (o.alternateIds === undefined || o.GetPassiveType() === 4) {
+                        o.alternateIds = singleNodes[o.GetPassiveType()];
                     }
                 }
 
@@ -499,15 +499,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 this.skillIcons.addChild(frame);
             }
 
-            if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] === undefined) {
+            if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.id] === undefined) {
                 const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0x00FF00);
                 if (highlighter !== null) {
                     this.skillIcons.addChild(highlighter);
                 }
             }
             const nodeSize = this.SkillNodeRenderer.GetNodeSize(node);
-            if (this.skillTreeData_compare !== undefined && this.skillTreeData_compare.nodes[node.id] !== undefined) {
-                const node2 = this.skillTreeData_compare.nodes[node.id];
+            if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.id] !== undefined) {
+                const node2 = this.skillTreeDataCompare.nodes[node.id];
                 let sDiff = node.stats.length !== node2.stats.length;
                 const moved = nodeSize && (Math.abs(node.x - node2.x) > nodeSize.width || Math.abs(node.y - node2.y) > nodeSize.height);
                 
@@ -536,13 +536,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
-        if (this.skillTreeData_compare !== undefined) {
-            for (const id in this.skillTreeData_compare.nodes) {
-                const node = this.skillTreeData_compare.nodes[id];
+        if (this.skillTreeDataCompare !== undefined) {
+            for (const id in this.skillTreeDataCompare.nodes) {
+                const node = this.skillTreeDataCompare.nodes[id];
                 if (this.skillTreeData.nodes[node.id] === undefined) {
                     node.add(SkillNodeStates.Compared);
                     this.skillIcons_compare.addChild(this.SkillNodeRenderer.CreateIcon(node, "Compare"));
-                    const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (this.skillTreeData_compare as SkillTreeData).nodes[x]));
+                    const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (this.skillTreeDataCompare as SkillTreeData).nodes[x]));
                     if (frame !== null) {
                         this.skillIcons_compare.addChild(frame);
                     }
@@ -585,7 +585,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         const drawnConnections: { [id: number]: Array<number> } = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
-            if ((!node.is(SkillNodeStates.Active) && node.alternate_ids === undefined) || node.classStartIndex !== undefined) {
+            if ((!node.is(SkillNodeStates.Active) && node.alternateIds === undefined) || node.classStartIndex !== undefined) {
                 continue;
             }
 
@@ -695,8 +695,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private tooltip: PIXI.Graphics | undefined = undefined;
-    private tooltip_compare: PIXI.Graphics | undefined = undefined;
-    private node_move_compare: PIXI.Graphics | undefined = undefined;
+    private tooltipCompare: PIXI.Graphics | undefined = undefined;
+    private nodeMoveCompare: PIXI.Graphics | undefined = undefined;
     private pathing_connections: PIXI.Container = new PIXI.Container();
     private pathing_skillIcons: PIXI.Container = new PIXI.Container();
     private RenderHover = (): void => {
@@ -712,25 +712,25 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.removeChild(this.tooltip);
         }
 
-        if (this.tooltip_compare !== undefined && this.viewport.children.indexOf(this.tooltip_compare) > 0) {
-            this.viewport.removeChild(this.tooltip_compare);
+        if (this.tooltipCompare !== undefined && this.viewport.children.indexOf(this.tooltipCompare) > 0) {
+            this.viewport.removeChild(this.tooltipCompare);
         }
 
-        if (this.node_move_compare !== undefined && this.viewport.children.indexOf(this.node_move_compare) > 0) {
-            this.viewport.removeChild(this.node_move_compare);
+        if (this.nodeMoveCompare !== undefined && this.viewport.children.indexOf(this.nodeMoveCompare) > 0) {
+            this.viewport.removeChild(this.nodeMoveCompare);
 
         }
-        this.node_move_compare = undefined;
+        this.nodeMoveCompare = undefined;
 
         if (this.tooltip !== undefined && this.tooltip.children.length > 0) {
             this.tooltip.removeChildren();
         }
         this.tooltip = undefined;
 
-        if (this.tooltip_compare !== undefined && this.tooltip_compare.children.length > 0) {
-            this.tooltip_compare.removeChildren();
+        if (this.tooltipCompare !== undefined && this.tooltipCompare.children.length > 0) {
+            this.tooltipCompare.removeChildren();
         }
-        this.tooltip_compare = undefined;
+        this.tooltipCompare = undefined;
 
         if (this.pathing_connections.children.length > 0) {
             this.pathing_connections.removeChildren();
@@ -788,13 +788,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
                 this.tooltip.position.set(mouse.x + 10, mouse.y - 5);
 
-                if (this.skillTreeData_compare !== undefined) {
-                    this.skillTreeData_compare.clearState(SkillNodeStates.Hovered);
+                if (this.skillTreeDataCompare !== undefined) {
+                    this.skillTreeDataCompare.clearState(SkillNodeStates.Hovered);
 
-                    let other = this.skillTreeData_compare.nodes[node.id];
+                    let other = this.skillTreeDataCompare.nodes[node.id];
                     if (other === undefined) {
-                        for (const idc in this.skillTreeData_compare.nodes) {
-                            const n = this.skillTreeData_compare.nodes[idc];
+                        for (const idc in this.skillTreeDataCompare.nodes) {
+                            const n = this.skillTreeDataCompare.nodes[idc];
                             if ((Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
                                 other = n;
                             }
@@ -808,30 +808,30 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
-        if (this.skillTreeData_compare !== undefined) {
-            for (const id in this.skillTreeData_compare.nodes) {
-                const node = this.skillTreeData_compare.nodes[id];
+        if (this.skillTreeDataCompare !== undefined) {
+            for (const id in this.skillTreeDataCompare.nodes) {
+                const node = this.skillTreeDataCompare.nodes[id];
                 if (node.is(SkillNodeStates.Hovered) && node.nodeGroup !== undefined) {
                     const padding = 10;
                     const text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
                     text.position.set(padding / 2, padding / 2);
 
-                    this.tooltip_compare = new PIXI.Graphics();
-                    this.tooltip_compare.beginFill(0x000000, .75);
-                    this.tooltip_compare.lineStyle(2, 0xFFB000)
-                    this.tooltip_compare.drawRect(0, 0, text.width + padding, text.height + padding);
-                    this.tooltip_compare.endFill();
+                    this.tooltipCompare = new PIXI.Graphics();
+                    this.tooltipCompare.beginFill(0x000000, .75);
+                    this.tooltipCompare.lineStyle(2, 0xFFB000)
+                    this.tooltipCompare.drawRect(0, 0, text.width + padding, text.height + padding);
+                    this.tooltipCompare.endFill();
 
-                    this.tooltip_compare.addChild(text);
+                    this.tooltipCompare.addChild(text);
                     const mouse = PIXI.utils.isMobile.phone
                         ? new PIXI.Point(node.x + 50, node.y - 15) :
                         this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
-                    this.tooltip_compare.position.set(mouse.x + 10, mouse.y - 5);
+                    this.tooltipCompare.position.set(mouse.x + 10, mouse.y - 5);
 
                     if (node.is(SkillNodeStates.Moved)) {
                         const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF1493)
                         if (highlighter !== null) {
-                            this.node_move_compare = highlighter;
+                            this.nodeMoveCompare = highlighter;
                         }
                     }
                 }
@@ -842,16 +842,16 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.addChildAt(this.pathing_connections, Math.max(this.viewport.children.indexOf(this.connections), this.viewport.children.indexOf(this.connectionsActive)) + 1);
             this.viewport.addChildAt(this.pathing_skillIcons, Math.max(this.viewport.children.indexOf(this.skillIcons), this.viewport.children.indexOf(this.skillIconsActive)) + 1);
 
-            if (this.node_move_compare !== undefined) {
-                this.viewport.addChild(this.node_move_compare);
+            if (this.nodeMoveCompare !== undefined) {
+                this.viewport.addChild(this.nodeMoveCompare);
             }
 
             if (this.tooltip !== undefined) {
                 this.viewport.addChild(this.tooltip);
             }
 
-            if (this.tooltip_compare !== undefined) {
-                this.viewport.addChild(this.tooltip_compare);
+            if (this.tooltipCompare !== undefined) {
+                this.viewport.addChild(this.tooltipCompare);
             }
 
             if (this.tooltip !== undefined) {
@@ -867,23 +867,23 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 }
             }
 
-            if (this.tooltip_compare !== undefined) {
-                const bounds_compare = this.tooltip_compare.getBounds();
+            if (this.tooltipCompare !== undefined) {
+                const boundsCompare = this.tooltipCompare.getBounds();
                 if (this.tooltip !== undefined) {
-                    this.tooltip_compare.y = this.tooltip.y;
-                    this.tooltip_compare.x = this.tooltip.x + this.tooltip.width;
+                    this.tooltipCompare.y = this.tooltip.y;
+                    this.tooltipCompare.x = this.tooltip.x + this.tooltip.width;
                 }
                 else {
-                    if (this.tooltip_compare.worldTransform.tx + bounds_compare.width > screen.width) {
-                        this.tooltip_compare.x -= this.tooltip_compare.width / (PIXI.utils.isMobile.phone ? 2 : 1);
+                    if (this.tooltipCompare.worldTransform.tx + boundsCompare.width > screen.width) {
+                        this.tooltipCompare.x -= this.tooltipCompare.width / (PIXI.utils.isMobile.phone ? 2 : 1);
                     }
-                    if (this.tooltip_compare.worldTransform.ty + bounds_compare.height > screen.height) {
-                        this.tooltip_compare.y -= this.tooltip_compare.height / (PIXI.utils.isMobile.phone ? 2 : 1);
+                    if (this.tooltipCompare.worldTransform.ty + boundsCompare.height > screen.height) {
+                        this.tooltipCompare.y -= this.tooltipCompare.height / (PIXI.utils.isMobile.phone ? 2 : 1);
                     }
                 }
 
                 if (!PIXI.utils.isMobile.phone) {
-                    this.tooltip_compare.scale.set(this.tooltip_compare.width / bounds_compare.width, this.tooltip_compare.height / bounds_compare.height);
+                    this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width, this.tooltipCompare.height / boundsCompare.height);
                 }
             }
 
@@ -957,7 +957,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private createRenderTexture = (obj: PIXI.Container, width: number, height: number): PIXI.RenderTexture => {
-        const renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: 1 });
+        const renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: devicePixelRatio });
         this.pixi.renderer.render(obj, renderTexture);
         return renderTexture;
     }

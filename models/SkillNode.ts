@@ -1,5 +1,15 @@
 ﻿import { utils } from "../app/utils";
 
+export enum SkillNodeStates {
+    None = 0,
+    Active = 1 << 0,
+    Hovered = 1 << 1,
+    Pathing = 1 << 2,
+    Highlighted = 1 << 3,
+    Compared = 1 << 4,
+    Moved = 1 << 5,
+}
+
 export class SkillNode implements ISkillNode {
     skill: number;
     id: number;
@@ -49,7 +59,7 @@ export class SkillNode implements ISkillNode {
     y: number;
     isRegular2: boolean;
     isRegular1: boolean;
-    alternate_ids: ISkillNodeAlternateState[] | undefined = undefined;
+    alternateIds: ISkillNodeAlternateState[] | undefined = undefined;
     faction = 0;
     hoverText: string | null = null;
 
@@ -198,14 +208,4 @@ export class SkillNode implements ISkillNode {
 
         return 0;
     }
-}
-
-export enum SkillNodeStates {
-    None = 0,
-    Active = 1 << 0,
-    Hovered = 1 << 1,
-    Pathing = 1 << 2,
-    Highlighted = 1 << 3,
-    Compared = 1 << 4,
-    Moved = 1 << 5,
 }

@@ -31,14 +31,14 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private GetNodeKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.id}_${node.alternate_ids}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.id}_${node.alternateIds}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
     private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.icon}_${node.alternate_ids}_${node.isNotable}_${node.isMastery}_${node.isKeystone}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.icon}_${node.alternateIds}_${node.isNotable}_${node.isMastery}_${node.isKeystone}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
-    public GetNodeSize = (node: SkillNode, source: "Base" | "Compare" = "Base"): { width: number, height: number } | null => {
+    public GetNodeSize = (node: SkillNode, source: "Base" | "Compare" = "Base"): { width: number; height: number } | null => {
         const sprite = this.NodeSprites[this.GetNodeKey(node, source)];
         if (sprite === undefined) {
             return null;
@@ -91,8 +91,8 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let icon = node.icon;
         if (source === "Compare") {
             skillSprites = this.SkillSpritesCompare;
-        } else if (node.alternate_ids !== undefined) {
-            const alternate = node.alternate_ids.find(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].icon !== "");
+        } else if (node.alternateIds !== undefined) {
+            const alternate = node.alternateIds.find(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].icon !== "");
             if (alternate !== undefined) {
                 skillSprites = this.skillTreeAlternate.skillSprites;
                 icon = this.skillTreeAlternate.nodes[typeof alternate === "string" ? alternate : alternate.id].icon;
@@ -192,16 +192,16 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             let flavour: PIXI.Text | null = node.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
             let reminder: PIXI.Text | null = node.reminderText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.reminderText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;
 
-            if (node.alternate_ids !== undefined) {
+            if (node.alternateIds !== undefined) {
                 const text: string[] = [];
-                for (const state of node.alternate_ids) {
+                for (const state of node.alternateIds) {
                     const alternate = this.skillTreeAlternate.nodes[typeof state === "string" ? state : state.id];
                     for (const stat of alternate.stats) {
                         text.push(stat.text.replace(/#/g, stat.min === stat.max ? stat.min : `${stat.min}-${stat.max}`));
                     }
                 }
 
-                const state = node.alternate_ids.find(x => !this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].isAddition)
+                const state = node.alternateIds.find(x => !this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].isAddition)
                 if (state !== undefined) {
                     const alternate = this.skillTreeAlternate.nodes[typeof state === "string" ? state : state.id];
                     title = alternate.name.length > 0 ? new PIXI.Text(`${alternate.name}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;

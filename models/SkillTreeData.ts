@@ -296,7 +296,7 @@ export class SkillTreeData implements ISkillTreeData {
                 continue;
             }
 
-            this.nodes[id].alternate_ids = undefined;
+            this.nodes[id].alternateIds = undefined;
             this.nodes[id].faction = 0;
         }
     }
