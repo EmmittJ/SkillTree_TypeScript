@@ -20,25 +20,25 @@ export class SkillTreeUtilities {
         this.skillTreeAlternate = skillTreeAlternate;
         this.skillTreeCodec = new SkillTreeCodec();
 
-        SkillTreeEvents.on("node", "click", this.click, false);
-        SkillTreeEvents.on("node", "tap", this.click, false);
-        SkillTreeEvents.on("node", "mouseover", this.mouseover, false);
-        SkillTreeEvents.on("node", "mouseout", this.mouseout, false);
-        SkillTreeEvents.on("node", "touchstart", this.touchstart, false);
-        SkillTreeEvents.on("node", "touchend", this.touchend, true);
-        SkillTreeEvents.on("node", "touchcancel", this.touchend, true);
+        SkillTreeEvents.on("node", "click", this.click);
+        SkillTreeEvents.on("node", "tap", this.click);
+        SkillTreeEvents.on("node", "mouseover", this.mouseover);
+        SkillTreeEvents.on("node", "mouseout", this.mouseout);
+        SkillTreeEvents.on("node", "touchstart", this.touchstart);
+        SkillTreeEvents.on("node", "touchend", this.touchend);
+        SkillTreeEvents.on("node", "touchcancel", this.touchend);
 
         this.dragStart = new PIXI.Point(0, 0);
         this.dragEnd = new PIXI.Point(0, 0);
-        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.IPoint) => this.dragStart = JSON.parse(JSON.stringify(point)), false);
-        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.IPoint) => this.dragEnd = JSON.parse(JSON.stringify(point)), false);
-        SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250), false);
-        SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250), true);
-        SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250), true);
+        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.IPoint) => this.dragStart = JSON.parse(JSON.stringify(point)));
+        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.IPoint) => this.dragEnd = JSON.parse(JSON.stringify(point)));
+        SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250));
+        SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250));
+        SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250));
 
-        SkillTreeEvents.on("controls", "class-change", this.changeStartClass, false);
-        SkillTreeEvents.on("controls", "ascendancy-class-change", this.changeAscendancyClass, false);
-        SkillTreeEvents.on("controls", "search-change", this.searchChange, true)
+        SkillTreeEvents.on("controls", "class-change", this.changeStartClass);
+        SkillTreeEvents.on("controls", "ascendancy-class-change", this.changeAscendancyClass);
+        SkillTreeEvents.on("controls", "search-change", this.searchChange);
 
         SkillTreeEvents.on("skilltree", "encode-url", this.encodeURL);
     }
