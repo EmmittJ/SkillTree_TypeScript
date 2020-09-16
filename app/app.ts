@@ -473,7 +473,7 @@ export class App {
 
 window.onload = () => {
     const query = App.decodeURLParams(window.location.search);
-    if (!query['v']) query['v'] = '3.11.0-pre';
+    if (!query['v']) query['v'] = '3.12.0-pre';
     if (!query['c']) query['c'] = '';
 
     new App().launch(query['v'], query['c']);
