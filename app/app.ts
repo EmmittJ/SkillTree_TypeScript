@@ -20,7 +20,7 @@ export class App {
         this.renderer = new PIXISkillTreeRenderer();
     }
 
-    public launch = async (version: string, versionCompare: string) => {
+    public launch = async (version: string, versionCompare: string, versionJson: IVersions) => {
         for (const i of [version, versionCompare]) {
             if (i === '') {
                 continue;
@@ -40,49 +40,45 @@ export class App {
         }
         this.skillTreeUtilities = new SkillTreeUtilities(this.skillTreeData, this.skillTreeAlternate);
 
-        fetch(`data/versions.json?t=${(new Date()).getTime()}`).then(response => {
-            return response.json();
-        }).then((json: IVersions) => {
-            const versionSelect = document.getElementById("skillTreeControl_Version") as HTMLSelectElement;
-            const compareSelect = document.getElementById("skillTreeControl_VersionCompare") as HTMLSelectElement;
-            for (const ver of json.versions) {
-                const v = document.createElement("option");
-                v.text = v.value = ver;
-                if (ver === version) {
-                    v.setAttribute('selected', 'selected');
-                }
-                versionSelect.appendChild(v);
+        const versionSelect = document.getElementById("skillTreeControl_Version") as HTMLSelectElement;
+        const compareSelect = document.getElementById("skillTreeControl_VersionCompare") as HTMLSelectElement;
+        for (const ver of versionJson.versions) {
+            const v = document.createElement("option");
+            v.text = v.value = ver;
+            if (ver === version) {
+                v.setAttribute('selected', 'selected');
+            }
+            versionSelect.appendChild(v);
 
-                const c = document.createElement("option");
-                c.text = c.value = ver;
-                if (ver === versionCompare) {
-                    c.setAttribute('selected', 'selected');
-                }
-                compareSelect.appendChild(c);
+            const c = document.createElement("option");
+            c.text = c.value = ver;
+            if (ver === versionCompare) {
+                c.setAttribute('selected', 'selected');
+            }
+            compareSelect.appendChild(c);
+        }
+
+        const controls = document.getElementsByClassName("skillTreeVersions") as HTMLCollectionOf<HTMLDivElement>;
+        for (const i in controls) {
+            if (controls[i].style !== undefined) {
+                controls[i].style.removeProperty('display');
+            }
+        }
+
+        const go = document.getElementById("skillTreeControl_VersionGo") as HTMLSelectElement;
+        go.addEventListener("click", () => {
+            let search = '?';
+            if (versionSelect.value !== '0') {
+                search += `v=${versionSelect.value}`;
             }
 
-            const controls = document.getElementsByClassName("skillTreeVersions") as HTMLCollectionOf<HTMLDivElement>;
-            for (const i in controls) {
-                if (controls[i].style !== undefined) {
-                    controls[i].style.removeProperty('display');
-                }
+            if (!search.endsWith('?') && compareSelect.value !== '0') search += '&';
+
+            if (compareSelect.value !== '0') {
+                search += `c=${compareSelect.value}`;
             }
 
-            const go = document.getElementById("skillTreeControl_VersionGo") as HTMLSelectElement;
-            go.addEventListener("click", () => {
-                let search = '?';
-                if (versionSelect.value !== '0') {
-                    search += `v=${versionSelect.value}`;
-                }
-
-                if (!search.endsWith('?') && compareSelect.value !== '0') search += '&';
-
-                if (compareSelect.value !== '0') {
-                    search += `c=${compareSelect.value}`;
-                }
-
-                window.location.search = search;
-            });
+            window.location.search = search;
         });
 
         const container = document.getElementById("skillTreeContainer");
@@ -471,10 +467,22 @@ export class App {
     };
 }
 
-window.onload = () => {
+window.onload = async () => {
     const query = App.decodeURLParams(window.location.search);
-    if (!query['v']) query['v'] = '3.12.0-pre';
-    if (!query['c']) query['c'] = '';
 
-    new App().launch(query['v'], query['c']);
+    const versionsJson: IVersions | undefined = await fetch(`data/versions.json?t=${(new Date()).getTime()}`).then(response => response.status === 200 ? response.json() : undefined);
+    if (versionsJson === undefined || versionsJson.versions.length === 0) {
+        console.error("Could not load skill tree versions!");
+        return;
+    }
+
+    if (!query['v']) {
+        query['v'] = versionsJson.versions[versionsJson.versions.length - 1];
+    }
+
+    if (!query['c']) {
+        query['c'] = '';
+    }
+
+    new App().launch(query['v'], query['c'], versionsJson);
 };
