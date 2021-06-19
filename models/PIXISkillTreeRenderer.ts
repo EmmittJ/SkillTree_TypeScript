@@ -76,7 +76,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         return promise;
     }
 
-    private HandleZoomClick = (click: PIXI.interaction.InteractionEvent, zoom: number) => {
+    private HandleZoomClick = (click: PIXI.InteractionEvent, zoom: number) => {
         if (!click.data.originalEvent.ctrlKey) {
             return;
         }
@@ -85,7 +85,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private jewelSocketHighlights: PIXI.Container = new PIXI.Container();
-    private HandleShiftClick = (click: PIXI.interaction.InteractionEvent) => {
+    private HandleShiftClick = (click: PIXI.InteractionEvent) => {
         if (!click.data.originalEvent.shiftKey) {
             return;
         }
@@ -329,8 +329,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.viewport.removeChildren();
         const backgroundContainer: PIXI.Container = new PIXI.Container();
-
-        const backgroundSprite = PIXI.TilingSprite.from("Background1", this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
+        const background = PIXI.Sprite.from("Background1");
+        const backgroundSprite = new PIXI.TilingSprite(background.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
         backgroundSprite.anchor.set(.5);
         this.viewport.addChild(backgroundSprite);
 

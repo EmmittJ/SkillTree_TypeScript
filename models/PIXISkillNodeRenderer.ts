@@ -150,7 +150,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             sprite.interactive = true;
 
             for (const event in SkillTreeEvents.events["node"]) {
-                sprite.on(event, (interaction: PIXI.interaction.InteractionEvent) => {
+                sprite.on(event, (interaction: PIXI.InteractionEvent) => {
                     if ((event === "click" || event === "tap") && (interaction.data.originalEvent.shiftKey || interaction.data.originalEvent.ctrlKey || interaction.data.originalEvent.altKey)) {
                         return;
                     }
@@ -354,7 +354,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             const lineTexure = new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(0, 0, length, texture.baseTexture.height));
             line = new PIXI.Sprite(lineTexure);
         } else {
-            line = PIXI.TilingSprite.from(asset, length, texture.baseTexture.height);
+            line = new PIXI.TilingSprite(texture, length, texture.baseTexture.height);
         }
         line.anchor.set(0, 0.5);
         line.position.set(node.x, node.y);

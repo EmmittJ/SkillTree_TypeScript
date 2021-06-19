@@ -2,7 +2,7 @@
 
 export class SkillTreeEvents {
     public static events: { [type: string]: { [event: string]: Array<Function> } } = {};
-    public static on = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function) => {
+    public static on = (type: SkillTreeEvent, event: PIXI.InteractionEventTypes | string, fn: Function) => {
         if (SkillTreeEvents.events[type] === undefined) {
             SkillTreeEvents.events[type] = {};
         }
@@ -13,7 +13,7 @@ export class SkillTreeEvents {
         SkillTreeEvents.events[type][event].push(fn);
     }
 
-    public static off = (type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, fn: Function) => {
+    public static off = (type: SkillTreeEvent, event: PIXI.InteractionEventTypes | string, fn: Function) => {
         if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined || SkillTreeEvents.events[type][event].indexOf(fn) === -1) {
             return;
         }
@@ -21,7 +21,7 @@ export class SkillTreeEvents {
         SkillTreeEvents.events[type][event].splice(SkillTreeEvents.events[type][event].indexOf(fn), 1);
     }
 
-    public static fire(type: SkillTreeEvent, event: PIXI.interaction.InteractionEventTypes | string, context?: any) {
+    public static fire(type: SkillTreeEvent, event: PIXI.InteractionEventTypes | string, context?: any) {
         if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined) {
             return;
         }

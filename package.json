@@ -1,5 +1,6 @@
 {
   "name": "SkillTree_TypeScript",
+  "repository": "https://github.com/EmmittJ/SkillTree_TypeScript",
   "version": "1.0.0",
   "description": "",
   "main": "./app/app.js",
@@ -19,7 +20,7 @@
   "license": "ISC",
   "devDependencies": {
     "gts": "^2.0.2",
-    "typescript": "^3.9.5"
+    "typescript": "^3.9.10"
   },
   "dependencies": {
     "@types/downloadjs": "^1.4.2",
@@ -30,12 +31,12 @@
     "html-webpack-plugin": "^3.2.0",
     "lz-string": "^1.4.4",
     "pixi-viewport": "^3.23.2",
-    "pixi.js": "^5.2.4",
+    "pixi.js": "^5.3.10",
     "requirejs": "^2.3.6",
     "style-loader": "^0.23.1",
     "ts-loader": "^5.4.5",
-    "webpack": "^4.43.0",
-    "webpack-cli": "^3.3.11"
+    "webpack": "^4.46.0",
+    "webpack-cli": "^3.3.12"
   },
   "-vs-binding": {
     "AfterBuild": [
