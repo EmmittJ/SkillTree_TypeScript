@@ -1,6 +1,7 @@
 ﻿import { ISkillTreeRenderer } from "./types/ISkillTreeRenderer";
 import { SkillTreeData } from './SkillTreeData';
 import Viewport = require("pixi-viewport");
+import PIXI = require("pixi.js");
 import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode } from "./SkillNode";
@@ -12,7 +13,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     SkillNodeRenderer!: PIXISkillNodeRenderer;
     private updateHover = false;
     private pixi: PIXI.Application;
-    private viewport!: Viewport;
+    private viewport!: Viewport.Viewport;
     private skillTreeData!: SkillTreeData;
     private skillTreeDataCompare!: SkillTreeData | undefined;
     private skillTreeAlternate!: SkillTreeAlternate;
@@ -41,7 +42,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         // #region Setup pixi-viewport
         const zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
-        this.viewport = new Viewport({
+        this.viewport = new Viewport.Viewport({
             screenWidth: this.pixi.screen.width,
             screenHeight: this.pixi.screen.height,
             worldWidth: skillTreeData.width * (skillTreeData.scale * 1.25),
@@ -222,6 +223,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private UpdateJewelSocketHighlightPosition = () => {
+        this.jewelSocketHighlights.interactive = false;
+        this.jewelSocketHighlights.interactiveChildren = false;
+        this.jewelSocketHighlights.containerUpdateTransform = () => { };
+
         if (this.viewport.children.indexOf(this.jewelSocketHighlights) < 0) {
             this.viewport.addChild(this.jewelSocketHighlights);
         }
@@ -328,12 +333,12 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.viewport.removeChildren();
-        const backgroundContainer: PIXI.Container = new PIXI.Container();
         const background = PIXI.Sprite.from("Background1");
         const backgroundSprite = new PIXI.TilingSprite(background.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
         backgroundSprite.anchor.set(.5);
         this.viewport.addChild(backgroundSprite);
 
+        const backgroundContainer: PIXI.Container = new PIXI.Container();
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
             const nodes = (group.n || group.nodes || []);
@@ -437,6 +442,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         // Render background as a texture
         this.background = this.createRenderTextureContainer(backgroundContainer);
         this.background.interactive = false;
+        this.background.interactiveChildren = false;
+        this.background.containerUpdateTransform = () => { };
         backgroundContainer.destroy();
         this.viewport.addChild(this.background);
 
@@ -444,14 +451,17 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.skillIcons_compare.interactive = false;
         this.skillIcons_compare.interactiveChildren = true;
+        this.skillIcons_compare.containerUpdateTransform = () => { };
         this.viewport.addChild(this.skillIcons_compare);
 
         this.skillIcons.interactive = false;
         this.skillIcons.interactiveChildren = true;
+        this.skillIcons.containerUpdateTransform = () => { };
         this.viewport.addChild(this.skillIcons);
 
         this.characterStarts.interactive = false;
         this.characterStarts.interactiveChildren = false;
+        this.characterStarts.containerUpdateTransform = () => { };
         this.viewport.addChild(this.characterStarts);
         this.UpdateJewelSocketHighlightPosition();
     }
@@ -557,6 +567,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         // Render connections as a texture
         this.connections = this.createRenderTextureContainer(connectionsContainer);
         this.connections.interactive = false;
+        this.connections.interactiveChildren = false;
+        this.connections.containerUpdateTransform = () => { };
         connectionsContainer.destroy();
         this.viewport.addChildAt(this.connections, this.viewport.children.indexOf(this.background) + 1);
     }
@@ -626,9 +638,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.connectionsActive.interactive = false;
-        this.skillIconsActive.interactive = false;
-
+        this.connectionsActive.interactiveChildren = false;
+        this.connectionsActive.containerUpdateTransform = () => { };
         this.viewport.addChildAt(this.connectionsActive, this.viewport.children.indexOf(this.connections) + 1);
+
+        this.skillIconsActive.interactive = false;
+        this.skillIconsActive.interactiveChildren = false;
+        this.skillIconsActive.containerUpdateTransform = () => { };
         this.viewport.addChildAt(this.skillIconsActive, this.viewport.children.indexOf(this.skillIcons) + 1);
         this.UpdateJewelSocketHighlightPosition();
     }
@@ -677,7 +693,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.characterStartsActive.addChild(nodeGraphic);
         }
 
+        this.backgroundActive.interactive = false;
+        this.backgroundActive.interactiveChildren = false;
+        this.backgroundActive.containerUpdateTransform = () => { };
         this.viewport.addChildAt(this.backgroundActive, this.viewport.children.indexOf(this.background));
+
+        this.characterStartsActive.interactive = false;
+        this.characterStartsActive.interactiveChildren = false;
+        this.characterStartsActive.containerUpdateTransform = () => { };
         this.viewport.addChild(this.characterStartsActive);
         this.UpdateJewelSocketHighlightPosition();
     }
@@ -839,18 +862,34 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         if (this.updateHover) {
+            this.pathing_connections.interactive = false;
+            this.pathing_connections.interactiveChildren = false;
+            this.pathing_connections.containerUpdateTransform = () => { };
             this.viewport.addChildAt(this.pathing_connections, Math.max(this.viewport.children.indexOf(this.connections), this.viewport.children.indexOf(this.connectionsActive)) + 1);
+
+            this.pathing_skillIcons.interactive = false;
+            this.pathing_skillIcons.interactiveChildren = false;
+            this.pathing_skillIcons.containerUpdateTransform = () => { };
             this.viewport.addChildAt(this.pathing_skillIcons, Math.max(this.viewport.children.indexOf(this.skillIcons), this.viewport.children.indexOf(this.skillIconsActive)) + 1);
 
             if (this.nodeMoveCompare !== undefined) {
+                this.nodeMoveCompare.interactive = false;
+                this.nodeMoveCompare.interactiveChildren = false;
+                this.nodeMoveCompare.containerUpdateTransform = () => { };
                 this.viewport.addChild(this.nodeMoveCompare);
             }
 
             if (this.tooltip !== undefined) {
+                this.tooltip.interactive = false;
+                this.tooltip.interactiveChildren = false;
+                this.tooltip.containerUpdateTransform = () => { };
                 this.viewport.addChild(this.tooltip);
             }
 
             if (this.tooltipCompare !== undefined) {
+                this.tooltipCompare.interactive = false;
+                this.tooltipCompare.interactiveChildren = false;
+                this.tooltipCompare.containerUpdateTransform = () => { };
                 this.viewport.addChild(this.tooltipCompare);
             }
 
@@ -913,6 +952,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.highlights = this.createRenderTextureContainer(highlightsContainer);
         this.highlights.interactive = false;
+        this.highlights.interactiveChildren = false;
+        this.highlights.containerUpdateTransform = () => { };
         highlightsContainer.destroy();
         this.viewport.addChild(this.highlights);
         this.UpdateJewelSocketHighlightPosition();
@@ -946,6 +987,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
                 const sprite = new PIXI.Sprite(this.createRenderTexture(obj, this.MAX_ROW_HEIGHT, this.MAX_COL_WIDTH));
                 sprite.position.set(-obj.position.x, -obj.position.y);
+                sprite.interactive = false;
+                sprite.interactiveChildren = false;
+                sprite.containerUpdateTransform = () => { };
                 returnContainer.addChild(sprite);
             }
         }
@@ -955,7 +999,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
     private createRenderTexture = (obj: PIXI.Container, width: number, height: number): PIXI.RenderTexture => {
         const renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: devicePixelRatio });
-        this.pixi.renderer.render(obj, renderTexture);
+        this.pixi.renderer.render(obj, { renderTexture: renderTexture, clear: false });
         return renderTexture;
     }
 

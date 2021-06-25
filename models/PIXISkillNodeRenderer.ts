@@ -180,6 +180,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .75 * (node.isMastery ? .5 : 1));
         graphic.endFill();
         graphic.position.set(node.x, node.y);
+
+        graphic.interactive = false;
+        graphic.interactiveChildren = false;
+        graphic.containerUpdateTransform = () => { };
+
         return graphic;
     }
 
@@ -243,7 +248,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                 reminder.position.set(0, height);
                 height += reminder.height;
             }
-            this.NodeTooltips[`${node.id}_${source}`];
+
+            tooltip.interactive = false;
+            tooltip.interactiveChildren = false;
+            tooltip.containerUpdateTransform = () => { };
+            this.NodeTooltips[`${node.id}_${source}`] = tooltip;
         }
 
         return tooltip;
@@ -267,6 +276,10 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                 container.addChild(connection);
             }
         }
+
+        container.interactive = false;
+        container.interactiveChildren = false;
+        container.containerUpdateTransform = () => { };
         return container;
     }
 
@@ -283,7 +296,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null;
         }
 
-        return node.group === other.group && node.orbit === other.orbit ? this.createArcConnection(node, other) : this.createLineConnection(node, other);
+        const container = node.group === other.group && node.orbit === other.orbit ? this.createArcConnection(node, other) : this.createLineConnection(node, other);
+        container.interactive = false;
+        container.interactiveChildren = false;
+        container.containerUpdateTransform = () => { };
+        return container;
     }
 
     private createArcConnection = (node: SkillNode, other: SkillNode): PIXI.Container => {

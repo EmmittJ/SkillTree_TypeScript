@@ -36,9 +36,6 @@ module.exports = {
             title: 'Skill Tree - TypeScript Example',
             template: './templates/index.html',
             filename: '../index.html'
-        }),
-        new webpack.ProvidePlugin({
-            PIXI: 'pixi.js'
         })
     ],
     optimization: {
