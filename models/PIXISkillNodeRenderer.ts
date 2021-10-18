@@ -76,14 +76,19 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     public CreateIcon = (node: SkillNode, source: "Base" | "Compare" = "Base"): PIXI.Sprite => {
         const drawType = node.is(SkillNodeStates.Active) ? "Active" : "Inactive";
         let spriteSheetKey = "";
+        let fallbackSpriteSheetKey = "";
         if (node.isKeystone) {
             spriteSheetKey = `keystone${drawType}`;
+            fallbackSpriteSheetKey = `keystone${drawType}`;
         } else if (node.isNotable) {
             spriteSheetKey = `notable${drawType}`;
+            fallbackSpriteSheetKey = `notable${drawType}`;
         } else if (node.isMastery) {
-            spriteSheetKey = "mastery";
+            spriteSheetKey = `mastery${drawType}`;
+            fallbackSpriteSheetKey = `mastery`;
         } else {
             spriteSheetKey = `normal${drawType}`;
+            fallbackSpriteSheetKey = `normal${drawType}`;
         }
 
         let texture: PIXI.Texture | undefined = this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)];
@@ -99,7 +104,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             }
         }
         if (texture === undefined) {
-            let spriteSheets = skillSprites[spriteSheetKey];
+            let spriteSheets = skillSprites[spriteSheetKey] || skillSprites[fallbackSpriteSheetKey];
             if (spriteSheets === undefined || this.ZoomLevel >= spriteSheets.length) {
                 if (skillSprites[drawType.toLowerCase()] && skillSprites[drawType.toLowerCase()].length - 1 <= this.ZoomLevel) {
                     spriteSheets = new Array<ISpriteSheet>();
@@ -115,7 +120,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                     }
                 }
                 else {
-                    throw Error(`Not sprite sheet for at zoomLevel: ${this.ZoomLevel}`);
+                    throw Error(`No sprite sheet for at zoomLevel: ${this.ZoomLevel} for key: ${spriteSheetKey} or fallback key: ${fallbackSpriteSheetKey}`);
                 }
             }
 
@@ -123,8 +128,19 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             if (!spriteSheet) {
                 throw Error(`Sprite Sheet (${spriteSheetKey}) not found in SpriteSheets (${spriteSheets})`);
             }
-            const spriteSheetTexture = PIXI.Texture.from(`${spriteSheet.filename}`);
-            const coords = spriteSheet.coords[icon];
+            const filename = spriteSheet.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
+            const spriteSheetTexture = PIXI.Texture.from(`${filename}`);
+            let coords = spriteSheet.coords[icon];
+            if (coords === undefined) {
+                switch (drawType) {
+                    case "Active":
+                        coords = spriteSheet.coords[node.activeIcon];
+                        break;
+                    case "Inactive":
+                        coords = spriteSheet.coords[node.inactiveIcon];
+                        break;
+                }
+            }
             texture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
             this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)] = texture;
         }
