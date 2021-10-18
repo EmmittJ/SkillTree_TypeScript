@@ -324,7 +324,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let endAngle = node.arc < other.arc ? other.arc : node.arc;
 
         const diff = endAngle - startAngle;
-        if (diff > Math.PI) {
+        if (diff >= Math.PI) {
             const c = 2 * Math.PI - diff;
             startAngle = endAngle;
             endAngle = startAngle + c;
