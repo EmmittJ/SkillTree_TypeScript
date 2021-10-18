@@ -14,6 +14,15 @@
     /** Icon of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
     icon: string;
 
+    /** Inactive Icon of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
+    inactiveIcon: string;
+
+    /** Active Icon of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
+    activeIcon: string;
+
+    /** Active Icon Effect of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
+    activeEffectImage: string;
+
     /** @deprecated Determines if the SkillNode is a Keystone */
     ks: boolean | undefined;
 

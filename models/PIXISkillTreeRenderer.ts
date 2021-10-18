@@ -264,12 +264,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             for (const id in i.skillSprites) {
                 const sprites = i.skillSprites[id];
                 const sprite = sprites[sprites.length - 1];
-                if (sprite && addedAssets.indexOf(sprite.filename) < 0) {
-                    addedAssets.push(sprite.filename);
-                    PIXI.Loader.shared.add(sprite.filename, `data/${i.patch}/assets/${sprite.filename}`);
-                    if (sprite.filename.includes("PassiveSkillScreen")) {
-                        PIXI.Loader.shared.add(sprite.filename.replace("PassiveSkillScreen", ""), `data/${i.patch}/assets/${sprite.filename.replace("PassiveSkillScreen", "")}`);
-                    }
+                const filename = sprite.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
+                if (sprite && addedAssets.indexOf(filename) < 0) {
+                    addedAssets.push(filename);
+                    PIXI.Loader.shared.add(filename, `data/${i.patch}/assets/${filename}`);
                 }
             }
         }
@@ -278,12 +276,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             for (const id in this.skillTreeAlternate.skillSprites) {
                 const sprites = this.skillTreeAlternate.skillSprites[id];
                 const sprite = sprites[sprites.length - 1];
-                if (sprite && addedAssets.indexOf(sprite.filename) < 0) {
-                    addedAssets.push(sprite.filename);
-                    PIXI.Loader.shared.add(sprite.filename, `data/${this.skillTreeAlternate.version}/assets/${sprite.filename}`);
-                    if (sprite.filename.includes("PassiveSkillScreen")) {
-                        PIXI.Loader.shared.add(sprite.filename.replace("PassiveSkillScreen", ""), `data/${this.skillTreeAlternate.version}/assets/${sprite.filename.replace("PassiveSkillScreen", "")}`);
-                    }
+                const filename = sprite.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
+                if (sprite && addedAssets.indexOf(filename) < 0) {
+                    addedAssets.push(filename);
+                    PIXI.Loader.shared.add(filename, `data/${this.skillTreeAlternate.version}/assets/${filename}`);
                 }
             }
         }
