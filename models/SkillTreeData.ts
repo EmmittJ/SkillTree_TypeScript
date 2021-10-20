@@ -74,10 +74,6 @@ export class SkillTreeData implements ISkillTreeData {
                 skillTree.nodes[id].in = [];
             }
             for (const id in skillTree.nodes) {
-                if (skillTree.nodes[id].isMastery) {
-                    continue;
-                }
-
                 for (const outId of skillTree.nodes[id].out) {
                     if (skillTree.nodes[id].in.indexOf(outId) < 0) {
                         skillTree.nodes[id].in.push(outId);

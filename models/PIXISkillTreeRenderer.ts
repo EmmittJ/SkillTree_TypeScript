@@ -330,7 +330,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.viewport.removeChildren();
         let background = PIXI.Sprite.from("Background1");
-        console.log(background.texture.valid)
         if (!background.texture.valid) {
             background = PIXI.Sprite.from("Background2");
         }
@@ -573,6 +572,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.addChildAt(this.connections, this.viewport.children.indexOf(this.background) + 1);
     }
 
+    private skillIconActiveEffects: PIXI.Container = new PIXI.Container();
     private connectionsActive: PIXI.Container = new PIXI.Container();
     private skillIconsActive: PIXI.Container = new PIXI.Container();
     public RenderActive = (): void => {
@@ -580,6 +580,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             return;
         }
 
+        if (this.viewport.children.indexOf(this.skillIconActiveEffects) > 0) {
+            this.viewport.removeChild(this.skillIconActiveEffects);
+        }
         if (this.viewport.children.indexOf(this.connectionsActive) > 0) {
             this.viewport.removeChild(this.connectionsActive);
         }
@@ -587,6 +590,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.removeChild(this.skillIconsActive);
         }
 
+        if (this.skillIconActiveEffects.children.length > 0) {
+            this.skillIconActiveEffects.removeChildren();
+        }
         if (this.connectionsActive.children.length > 0) {
             this.connectionsActive.removeChildren();
         }
@@ -622,6 +628,11 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     return this.skillTreeData.nodes[outID]
                 });
 
+            const effect = this.SkillNodeRenderer.CreateIconEffect(node);
+            if (effect !== null) {
+                this.skillIconActiveEffects.addChild(effect);
+            }
+
             this.connectionsActive.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
             for (const out of nodes) {
                 const frame = this.SkillNodeRenderer.CreateFrame(out, node.out.map(x => this.skillTreeData.nodes[x]));
@@ -637,10 +648,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
+        this.skillIconActiveEffects.interactive = false;
+        this.skillIconActiveEffects.interactiveChildren = false;
+        this.skillIconActiveEffects.containerUpdateTransform = () => { };
+        this.viewport.addChildAt(this.skillIconActiveEffects, this.viewport.children.indexOf(this.connections) + 1);
+
         this.connectionsActive.interactive = false;
         this.connectionsActive.interactiveChildren = false;
         this.connectionsActive.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.connectionsActive, this.viewport.children.indexOf(this.connections) + 1);
+        this.viewport.addChildAt(this.connectionsActive, this.viewport.children.indexOf(this.skillIconActiveEffects) + 1);
 
         this.skillIconsActive.interactive = false;
         this.skillIconsActive.interactiveChildren = false;

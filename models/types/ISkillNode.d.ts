@@ -15,16 +15,16 @@
     icon: string;
 
     /** Inactive Icon of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
-    inactiveIcon: string;
+    inactiveIcon: string | undefined;
 
     /** Active Icon of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
-    activeIcon: string;
+    activeIcon: string | undefined;
 
     /** Active Icon Effect of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
-    activeEffectImage: string;
+    activeEffectImage: string | undefined;
 
     /** Mastery Effects of the SkillNode */
-    masteryEffects: IMasteryEffect[]
+    masteryEffects: IMasteryEffect[] | undefined;
 
     /** @deprecated Determines if the SkillNode is a Keystone */
     ks: boolean | undefined;

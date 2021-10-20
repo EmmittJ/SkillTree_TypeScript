@@ -112,7 +112,7 @@ export class SkillTreeUtilities {
         let ascNodes = 0;
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
-            if (node.is(SkillNodeStates.Active) && node.classStartIndex === undefined && !node.isAscendancyStart) {
+            if (node.is(SkillNodeStates.Active) && node.classStartIndex === undefined && !node.isAscendancyStart && !node.isMastery) {
                 if (node.ascendancyName === "") {
                     normalNodes++;
                 } else {
@@ -208,7 +208,7 @@ export class SkillTreeUtilities {
             || (this.dragStart.y - this.dragEnd.y) * (this.dragStart.y - this.dragEnd.y) > this.DRAG_THRESHOLD_SQUARED) {
             return;
         }
-        if (node.classStartIndex !== undefined || node.isMastery || node.isAscendancyStart) {
+        if (node.classStartIndex !== undefined || node.isAscendancyStart) {
             return;
         }
 
@@ -325,9 +325,6 @@ export class SkillTreeUtilities {
                     continue;
                 }
                 if (out.isAscendancyStart && !out.is(SkillNodeStates.Active)) {
-                    continue;
-                }
-                if (out.isMastery) {
                     continue;
                 }
                 if (out.classStartIndex !== undefined && !out.is(SkillNodeStates.Active)) {
