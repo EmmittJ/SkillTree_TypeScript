@@ -154,6 +154,10 @@ export class SkillTreeData implements ISkillTreeData {
                     // Scion
                     baseX = this.min_x * .65;
                     baseY = this.max_y * .95;
+                    if (this.patch >= '3.16.0') {
+                        baseX = this.min_x * .85;
+                        baseY = this.max_y * .85;
+                    }
                 } else if (startGroup.x > -centerThreshold && startGroup.x < centerThreshold) {
                     // Witch, Duelist
                     baseX = startGroup.x + (Math.sign(startGroup.x) * offset * offsetDistance);
@@ -162,6 +166,9 @@ export class SkillTreeData implements ISkillTreeData {
                     // Templar, Marauder, Ranger, Shadow 
                     baseX = startGroup.x < 0 ? this.min_x * .80 : this.max_x;
                     baseY = startGroup.y + (Math.sign(startGroup.y) * (offset + 1) * offsetDistance);
+                    if (this.patch >= '3.16.0') {
+                        baseX = startGroup.x < 0 ? this.min_x * 1.05 : this.max_x;
+                    }
                 }
 
                 groupsCompleted[nodeGroupId] = true;

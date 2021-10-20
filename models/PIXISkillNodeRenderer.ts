@@ -342,7 +342,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                 continue
             }
             const mask = new PIXI.Graphics();
-            mask.lineStyle(8, 0x00FF00);
+            mask.lineStyle(15, 0x00FF00);
             mask.arc(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale, node.orbitRadii[node.orbit] * node.scale, startAngle, endAngle, false);
             arcContainer.addChild(mask);
 
