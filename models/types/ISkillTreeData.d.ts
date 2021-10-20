@@ -1,4 +1,5 @@
 ﻿interface ISkillTreeData {
+    tree: "Default" | "Royale" | undefined;
     patch: string;
     version: number;
     fullscreen: number;

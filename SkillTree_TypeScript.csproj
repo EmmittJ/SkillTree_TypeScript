@@ -90,6 +90,7 @@
     <TypeScriptCompile Include="models\types\IClassImage.d.ts" />
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
+    <TypeScriptCompile Include="models\types\IMasteryEffect.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNodeAlternate.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeAlternateJewelSettings.d.ts" />

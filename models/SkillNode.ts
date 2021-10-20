@@ -19,6 +19,7 @@ export class SkillNode implements ISkillNode {
     inactiveIcon: string;
     activeIcon: string;
     activeEffectImage: string;
+    masteryEffects: IMasteryEffect[];
     ks: boolean | undefined;
     isKeystone: boolean;
     not: boolean | undefined;
@@ -75,6 +76,7 @@ export class SkillNode implements ISkillNode {
         this.activeIcon = node.activeIcon || "";
         this.inactiveIcon = node.inactiveIcon || "";
         this.activeEffectImage = node.activeEffectImage || "";
+        this.masteryEffects = node.masteryEffects || [];
         this.ks = node.ks;
         this.isKeystone = node.isKeystone || node.ks || false;
         this.not = node.not;

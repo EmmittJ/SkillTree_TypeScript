@@ -23,6 +23,9 @@
     /** Active Icon Effect of the SkillNode (i.e. "Art/2DArt/SkillIcons/passives/Champion/AnEFortify.png") */
     activeEffectImage: string;
 
+    /** Mastery Effects of the SkillNode */
+    masteryEffects: IMasteryEffect[]
+
     /** @deprecated Determines if the SkillNode is a Keystone */
     ks: boolean | undefined;
 

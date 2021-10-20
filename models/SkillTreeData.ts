@@ -2,6 +2,7 @@
 import { Constants } from "./Constants";
 
 export class SkillTreeData implements ISkillTreeData {
+    tree: "Default" | "Royale" | undefined;
     patch: string;
     version: number;
     fullscreen: number;
@@ -30,6 +31,7 @@ export class SkillTreeData implements ISkillTreeData {
     Build: ISkillTreeBuild;
 
     constructor(skillTree: ISkillTreeData, patch: string, options: ISkillTreeOptions | undefined) {
+        this.tree = skillTree.tree || "Default"
         this.patch = patch || (options && options.version) || "test"
         this.version = 4; skillTree.version = this.version;
         this.fullscreen = skillTree.fullscreen = 0;
