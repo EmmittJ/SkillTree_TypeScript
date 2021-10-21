@@ -1,5 +1,7 @@
 ﻿export class utils {
     public static poecdn = "http://web.poecdn.com/";
+    public static DATA_URI = "data";
+    public static SKILL_TREES_URI = `${utils.DATA_URI}/skill-trees`;
 
     public static getKeyByValue(dict: { [key: string]: any }, value: any): string | undefined {
         return Object.keys(dict).find((key: string) => { return dict[key] === value; });

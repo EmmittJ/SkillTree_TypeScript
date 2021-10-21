@@ -257,7 +257,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const asset = i.assets[id];
                 if ((asset[i.scale] || asset["1"]) && addedAssets.indexOf(id) < 0) {
                     addedAssets.push(id);
-                    PIXI.Loader.shared.add(id, `data/${i.patch}/assets/${id}.png`);
+                    PIXI.Loader.shared.add(id, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${id}.png`);
                 }
             }
 
@@ -267,7 +267,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const filename = sprite.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
                 if (sprite && addedAssets.indexOf(filename) < 0) {
                     addedAssets.push(filename);
-                    PIXI.Loader.shared.add(filename, `data/${i.patch}/assets/${filename}`);
+                    PIXI.Loader.shared.add(filename, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
                 }
             }
         }
@@ -279,7 +279,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const filename = sprite.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
                 if (sprite && addedAssets.indexOf(filename) < 0) {
                     addedAssets.push(filename);
-                    PIXI.Loader.shared.add(filename, `data/${this.skillTreeAlternate.version}/assets/${filename}`);
+                    PIXI.Loader.shared.add(filename, `${utils.SKILL_TREES_URI}/${this.skillTreeAlternate.version}/assets/${filename}`);
                 }
             }
         }

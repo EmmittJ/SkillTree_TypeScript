@@ -1,7 +1,8 @@
-/// <binding />
+/// <binding AfterBuild='Run - Development' />
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
@@ -33,10 +34,14 @@ module.exports = {
         new CleanWebpackPlugin(['dist']),
         new HtmlWebpackPlugin({
             hash: true,
-            title: 'Skill Tree - TypeScript Example',
+            title: 'PoE Skill Tree',
             template: './templates/index.html',
-            filename: '../index.html'
-        })
+            filename: 'index.html'
+        }),
+        new CopyWebpackPlugin([
+            { from: 'favicon.ico', to: 'favicon.ico' },
+            { from: 'data', to: 'data' }
+        ]),
     ],
     optimization: {
         runtimeChunk: 'single',

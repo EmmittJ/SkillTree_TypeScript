@@ -8,6 +8,7 @@ import download = require("downloadjs");
 import { SkillTreeAlternate } from '../models/SkillTreeAlternate';
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
 import { SkillNode } from '../models/SkillNode';
+import { utils } from './utils';
 
 export class App {
     private skillTreeData!: SkillTreeData;
@@ -26,12 +27,12 @@ export class App {
                 continue;
             }
 
-            const options: ISkillTreeOptions | undefined = await fetch(`data/${i}/Opts.json`).then(response => response.status === 200 ? response.json() : undefined);
-            const data = new SkillTreeData(await fetch(`data/${i}/SkillTree.json`).then(response => response.json()), i, options);
+            const options: ISkillTreeOptions | undefined = await fetch(`${utils.SKILL_TREES_URI}/${i}/Opts.json`).then(response => response.status === 200 ? response.json() : undefined);
+            const data = new SkillTreeData(await fetch(`${utils.SKILL_TREES_URI}/${i}/SkillTree.json`).then(response => response.json()), i, options);
 
             if (i === version) {
                 this.skillTreeData = data;
-                this.skillTreeAlternate = new SkillTreeAlternate(await fetch(`data/${i}/SkillTreeAlternate.json`).then(response => response.ok ? response.json() : undefined));
+                this.skillTreeAlternate = new SkillTreeAlternate(await fetch(`${utils.SKILL_TREES_URI}/${i}/SkillTreeAlternate.json`).then(response => response.ok ? response.json() : undefined));
             }
 
             if (i === versionCompare) {
@@ -470,7 +471,7 @@ export class App {
 window.onload = async () => {
     const query = App.decodeURLParams(window.location.search);
 
-    const versionsJson: IVersions | undefined = await fetch(`data/versions.json?t=${(new Date()).getTime()}`).then(response => response.status === 200 ? response.json() : undefined);
+    const versionsJson: IVersions | undefined = await fetch(`${utils.DATA_URI}/versions.json?t=${(new Date()).getTime()}`).then(response => response.status === 200 ? response.json() : undefined);
     if (versionsJson === undefined || versionsJson.versions.length === 0) {
         console.error("Could not load skill tree versions!");
         return;
