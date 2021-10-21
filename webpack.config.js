@@ -47,8 +47,6 @@ module.exports = {
     ],
     optimization: {
         runtimeChunk: 'single',
-        usedExports: true,
-        sideEffects: false,
         splitChunks: {
             chunks: 'all',
             maxInitialRequests: Infinity,
