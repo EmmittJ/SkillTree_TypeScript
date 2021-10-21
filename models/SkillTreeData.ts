@@ -71,24 +71,20 @@ export class SkillTreeData implements ISkillTreeData {
         // #region Setup in/out properties correctly
         {
             for (const id in skillTree.nodes) {
-                skillTree.nodes[id].in = [];
+                skillTree.nodes[id].in = skillTree.nodes[id].in.map(x => +x).filter(x => x !== +id);
+                skillTree.nodes[id].out = skillTree.nodes[id].out.map(x => +x).filter(x => x !== +id);
             }
+
             for (const id in skillTree.nodes) {
                 for (const outId of skillTree.nodes[id].out) {
                     if (skillTree.nodes[id].in.indexOf(outId) < 0) {
                         skillTree.nodes[id].in.push(outId);
                     }
-                    if (skillTree.nodes[outId].out.indexOf(+id) < 0) {
-                        skillTree.nodes[outId].out.push(+id);
-                    }
                 }
 
                 for (const inId of skillTree.nodes[id].in) {
-                    if (skillTree.nodes[id].out.indexOf(inId) < 0) {
+                    if (!skillTree.nodes[id].isMastery && skillTree.nodes[id].out.indexOf(inId) < 0) {
                         skillTree.nodes[id].out.push(inId);
-                    }
-                    if (skillTree.nodes[inId].in.indexOf(+id) < 0) {
-                        skillTree.nodes[inId].in.push(+id);
                     }
                 }
             }
@@ -197,7 +193,6 @@ export class SkillTreeData implements ISkillTreeData {
             if (node.classStartIndex === 3) {
                 node.add(SkillNodeStates.Active);
             }
-
             this.nodes[id] = node;
             if (node.ascendancyName !== "") {
                 this.ascedancyNodes[id] = node;
