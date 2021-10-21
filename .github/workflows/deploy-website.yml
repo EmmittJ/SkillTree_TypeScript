@@ -2,7 +2,7 @@ name: Deploy Website
 
 on:
   push:
-    branches: [ features/deploy-website ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -24,3 +24,13 @@ jobs:
       run: |
         npm install
         npx webpack
+
+    - name: Publish
+      uses: nogsantos/ssh-scp-deploy@v1.3.0
+      with:
+        src: ./dist/*
+        host: ${{ secrets.SSH_HOST }}
+        remote: ${{ secrets.SSH_DIR }}
+        port: ${{ secrets.SSH_PORT }}
+        user: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
