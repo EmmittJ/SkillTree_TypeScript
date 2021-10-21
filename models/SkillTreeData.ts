@@ -80,11 +80,17 @@ export class SkillTreeData implements ISkillTreeData {
                     if (skillTree.nodes[id].in.indexOf(outId) < 0) {
                         skillTree.nodes[id].in.push(outId);
                     }
+                    if (!skillTree.nodes[outId].isMastery && skillTree.nodes[outId].out.indexOf(+id) < 0) {
+                        skillTree.nodes[outId].out.push(+id);
+                    }
                 }
 
                 for (const inId of skillTree.nodes[id].in) {
                     if (!skillTree.nodes[id].isMastery && skillTree.nodes[id].out.indexOf(inId) < 0) {
                         skillTree.nodes[id].out.push(inId);
+                    }
+                    if (skillTree.nodes[inId].in.indexOf(+id) < 0) {
+                        skillTree.nodes[inId].in.push(+id);
                     }
                 }
             }
