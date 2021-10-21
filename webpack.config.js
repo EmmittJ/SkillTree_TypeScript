@@ -1,14 +1,13 @@
 /// <binding AfterBuild='Run - Development' />
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
     mode: 'production',
     entry: path.resolve(__dirname, 'app/app.ts'),
-    devtool: "none",
+    devtool: 'source-map',
     module: {
         rules: [
             {
@@ -28,23 +27,28 @@ module.exports = {
     },
     output: {
         filename: '[name].[contenthash].js',
-        path: path.resolve(__dirname, 'dist')
+        path: path.resolve(__dirname, 'dist'),
+        clean: true
     },
     plugins: [
-        new CleanWebpackPlugin(['dist']),
+        new webpack.ProgressPlugin(),
         new HtmlWebpackPlugin({
             hash: true,
             title: 'PoE Skill Tree',
             template: './templates/index.html',
             filename: 'index.html'
         }),
-        new CopyWebpackPlugin([
-            { from: 'favicon.ico', to: 'favicon.ico' },
-            { from: 'data', to: 'data' }
-        ]),
+        new CopyWebpackPlugin({
+            patterns: [
+                { from: 'favicon.ico', to: 'favicon.ico' },
+                { from: 'data', to: 'data' }
+            ],
+        }),
     ],
     optimization: {
         runtimeChunk: 'single',
+        usedExports: true,
+        sideEffects: false,
         splitChunks: {
             chunks: 'all',
             maxInitialRequests: Infinity,

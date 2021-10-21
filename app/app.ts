@@ -253,7 +253,7 @@ export class App {
         };
     }
 
-    private seedTimeout: number | null = null;
+    private seedTimeout: NodeJS.Timeout | null = null;
     private showJewelPopup = (settings: ISkillTreeAlternateJewelSettings) => {
         const sizeSelect = document.getElementById("skillTreeJewelPopupSize") as HTMLSelectElement;
         const factionSelect = document.getElementById("skillTreeJewelPopupFaction") as HTMLSelectElement;
@@ -436,7 +436,7 @@ export class App {
         };
     }
 
-    private searchTimout: number | null = null;
+    private searchTimout: NodeJS.Timeout | null = null;
     private bindSearchBox = (searchControl: HTMLInputElement) => {
         searchControl.onkeyup = () => {
             if (this.searchTimout !== null) {
