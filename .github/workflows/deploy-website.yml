@@ -26,31 +26,40 @@ jobs:
       run: |
         npm install
         npx webpack
-
-    - name: Create tmp directory
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        port: ${{ secrets.SSH_PORT }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        script: mkdir -p ${{ secrets.SSH_TMP_DIR }}
-
-    - name: Publish to tmp
-      uses: nogsantos/ssh-scp-deploy@v1.3.0
-      with:
-        src: ./dist/*
-        host: ${{ secrets.SSH_HOST }}
-        port: ${{ secrets.SSH_PORT }}
-        user: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        remote: ${{ secrets.SSH_TMP_DIR }}
-    
+ 
     - name: Publish
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        port: ${{ secrets.SSH_PORT }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_KEY }}
-        script: rm -rf ${{ secrets.SSH_DIR }} && mv ${{ secrets.SSH_TMP_DIR }} ${{ secrets.SSH_TMP_DIR }}
+      uses: easingthemes/ssh-deploy@main
+      env:
+        REMOTE_HOST: ${{ secrets.SSH_HOST }}
+        REMOTE_USER: ${{ secrets.SSH_USER }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+        SOURCE: "dist/"
+        TARGET: ${{ secrets.SSH_TMP_DIR }}
+
+#     - name: Create tmp directory
+#       uses: appleboy/ssh-action@master
+#       with:
+#         host: ${{ secrets.SSH_HOST }}
+#         port: ${{ secrets.SSH_PORT }}
+#         username: ${{ secrets.SSH_USER }}
+#         key: ${{ secrets.SSH_KEY }}
+#         script: mkdir -p ${{ secrets.SSH_TMP_DIR }}
+
+#     - name: Publish to tmp
+#       uses: nogsantos/ssh-scp-deploy@v1.3.0
+#       with:
+#         src: ./dist/*
+#         host: ${{ secrets.SSH_HOST }}
+#         port: ${{ secrets.SSH_PORT }}
+#         user: ${{ secrets.SSH_USER }}
+#         key: ${{ secrets.SSH_KEY }}
+#         remote: ${{ secrets.SSH_TMP_DIR }}
+    
+#     - name: Publish
+#       uses: appleboy/ssh-action@master
+#       with:
+#         host: ${{ secrets.SSH_HOST }}
+#         port: ${{ secrets.SSH_PORT }}
+#         username: ${{ secrets.SSH_USER }}
+#         key: ${{ secrets.SSH_KEY }}
+#         script: rm -rf ${{ secrets.SSH_DIR }} && mv ${{ secrets.SSH_TMP_DIR }} ${{ secrets.SSH_TMP_DIR }}
