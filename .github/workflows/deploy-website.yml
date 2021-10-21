@@ -14,6 +14,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
@@ -24,3 +26,12 @@ jobs:
       run: |
         npm install
         npx webpack
+ 
+    - name: Publish
+      uses: easingthemes/ssh-deploy@main
+      env:
+        REMOTE_HOST: ${{ secrets.SSH_HOST }}
+        REMOTE_USER: ${{ secrets.SSH_USER }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY }}
+        SOURCE: "dist/"
+        TARGET: ${{ secrets.SSH_DIR }}
