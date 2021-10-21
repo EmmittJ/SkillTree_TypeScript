@@ -22,17 +22,35 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    - name: Build
+    - name: build
       run: |
         npm install
         npx webpack
 
-    - name: Publish
+    - name: create tmp directory
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        port: ${{ secrets.SSH_PORT }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: mkdir -p ${{ secrets.SSH_TMP_DIR }}
+
+    - name: publish to tmp
       uses: nogsantos/ssh-scp-deploy@v1.3.0
       with:
         src: ./dist/*
         host: ${{ secrets.SSH_HOST }}
-        remote: ${{ secrets.SSH_DIR }}
         port: ${{ secrets.SSH_PORT }}
         user: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_KEY }}
+        remote: ${{ secrets.SSH_TMP_DIR }}
+    
+    - name: publish
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        port: ${{ secrets.SSH_PORT }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        script: rm -rf ${{ secrets.SSH_DIR }} && mv ${{ secrets.SSH_TMP_DIR }} ${{ secrets.SSH_TMP_DIR }}
