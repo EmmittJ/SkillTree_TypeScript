@@ -163,7 +163,7 @@ export class SkillNode implements ISkillNode {
 
         let assetKey = "";
         if (this.isAscendancyStart) {
-            assetKey = "PassiveSkillScreenAscendancyMiddle";
+            assetKey = "AscendancyMiddle";
         } else if (this.isJewelSocket) {
             assetKey = `JewelFrame${drawType}`;
         } else if (this.isKeystone) {
@@ -171,11 +171,11 @@ export class SkillNode implements ISkillNode {
         } else if (this.isNotable && this.ascendancyName === "") {
             assetKey = `NotableFrame${drawType}`;
         } else if (this.isNotable && this.ascendancyName !== "") {
-            assetKey = `PassiveSkillScreenAscendancyFrameLarge${drawType}`;
+            assetKey = `AscendancyFrameLarge${drawType}`;
         } else if (this.isMastery) {
             assetKey = "";
         } else if (this.ascendancyName !== "") {
-            assetKey = `PassiveSkillScreenAscendancyFrameSmall${drawType}`;
+            assetKey = `AscendancyFrameSmall${drawType}`;
         } else {
             switch (drawType) {
                 case "Unallocated":

@@ -153,8 +153,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 }
                 const jewelWidth = this.skillTreeData.circles[settings.size][this.skillTreeData.imageZoomLevels.length - 1].width;
                 const factionCircleName = this.skillTreeAlternate.getJewelCircleNameFromFaction(settings.factionId);
-                const sprite1 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle1`);
-                const sprite2 = PIXI.Sprite.from(`PassiveSkillScreen${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
+                const sprite1 = PIXI.Sprite.from(`${factionCircleName}JewelCircle1`);
+                const sprite2 = PIXI.Sprite.from(`${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
                 sprite1.width = sprite1.height = sprite2.width = sprite2.height = jewelWidth;
                 sprite1.x = sprite2.x = node.x;
                 sprite1.y = sprite2.y = node.y;
@@ -257,17 +257,17 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const asset = i.assets[id];
                 if ((asset[i.scale] || asset["1"]) && addedAssets.indexOf(id) < 0) {
                     addedAssets.push(id);
-                    PIXI.Loader.shared.add(id, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${id}.png`);
+                    PIXI.Loader.shared.add(id.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${i.patch}/assets/${id}.png`);
                 }
             }
 
             for (const id in i.skillSprites) {
                 const sprites = i.skillSprites[id];
                 const sprite = sprites[sprites.length - 1];
-                const filename = sprite.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
+                const filename = sprite.filename.replace("https://web.poecdn.com/image/passive-skill/", "");
                 if (sprite && addedAssets.indexOf(filename) < 0) {
                     addedAssets.push(filename);
-                    PIXI.Loader.shared.add(filename, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
+                    PIXI.Loader.shared.add(filename.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
                 }
             }
         }
@@ -276,10 +276,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             for (const id in this.skillTreeAlternate.skillSprites) {
                 const sprites = this.skillTreeAlternate.skillSprites[id];
                 const sprite = sprites[sprites.length - 1];
-                const filename = sprite.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
+                const filename = sprite.filename.replace("https://web.poecdn.com/image/passive-skill/", "");
                 if (sprite && addedAssets.indexOf(filename) < 0) {
                     addedAssets.push(filename);
-                    PIXI.Loader.shared.add(filename, `${utils.SKILL_TREES_URI}/${this.skillTreeAlternate.version}/assets/${filename}`);
+                    PIXI.Loader.shared.add(filename.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${this.skillTreeAlternate.version}/assets/${filename}`);
                 }
             }
         }

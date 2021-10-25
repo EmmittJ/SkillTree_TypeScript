@@ -54,10 +54,10 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null;
         }
 
-        let texture: PIXI.Texture | undefined = this.NodeFrameTextures[asset] || this.NodeFrameTextures[asset.replace("PassiveSkillScreen", "")];
+        let texture: PIXI.Texture | undefined = this.NodeFrameTextures[asset];
         if (texture === undefined) {
             texture = PIXI.Texture.from(asset);
-            if (!texture.valid) texture = PIXI.Texture.from(asset.replace("PassiveSkillScreen", ""));
+            if (!texture.valid) texture = PIXI.Texture.from(asset);
             this.NodeFrameTextures[asset] = texture;
         }
 
