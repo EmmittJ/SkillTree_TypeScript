@@ -144,14 +144,11 @@ export class SkillNode implements ISkillNode {
 
     public GetIcon = () => {
         if (this.isMastery) {
-            console.log(`Mastery: ${this.name}`);
             if (this.is(SkillNodeStates.Active) && this.activeIcon) {
-                console.log("Active Mastery");
                 return this.activeIcon;
             }
 
             if (this.inactiveIcon) {
-                console.log("Inactive Mastery");
                 return this.inactiveIcon;
             }
         }
