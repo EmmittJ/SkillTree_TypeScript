@@ -142,6 +142,23 @@ export class SkillNode implements ISkillNode {
         this.state &= ~state;
     }
 
+    public GetIcon = () => {
+        if (this.isMastery) {
+            console.log(`Mastery: ${this.name}`);
+            if (this.is(SkillNodeStates.Active) && this.activeIcon) {
+                console.log("Active Mastery");
+                return this.activeIcon;
+            }
+
+            if (this.inactiveIcon) {
+                console.log("Inactive Mastery");
+                return this.inactiveIcon;
+            }
+        }
+
+        return this.icon;
+    }
+
     public GetDrawType = (others: SkillNode[]): "Allocated" | "CanAllocate" | "Unallocated" | "Normal" => {
         let drawType: "Allocated" | "CanAllocate" | "Unallocated" | "Normal";
 

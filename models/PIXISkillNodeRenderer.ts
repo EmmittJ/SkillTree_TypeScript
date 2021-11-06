@@ -36,7 +36,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.icon}_${node.alternateIds}_${node.isNotable}_${node.isMastery}_${node.isKeystone}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.GetIcon()}_${node.alternateIds}_${node.isNotable}_${node.isMastery}_${node.isKeystone}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
     public GetNodeSize = (node: SkillNode, source: "Base" | "Compare" = "Base"): { width: number; height: number } | null => {
@@ -78,7 +78,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let texture: PIXI.Texture | undefined = this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)];
 
         if (texture === undefined) {
-            let icon = node.icon;
+            let icon = node.GetIcon();
             if (source !== "Compare" && node.alternateIds !== undefined) {
                 const alternate = node.alternateIds.find(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].icon !== "");
                 if (alternate !== undefined) {
@@ -88,7 +88,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
             const spriteSheetKey = this.getSpriteSheetKey(node);
             const spriteSheet = this.getSpriteSheet(node, spriteSheetKey, source);
-            const coords = spriteSheet.coords[icon] || spriteSheet.coords[node.activeIcon] || spriteSheet.coords[node.inactiveIcon];
+            const coords = spriteSheet.coords[icon];
             if (coords === undefined) {
                 throw Error(`Sprite Sheet (${spriteSheetKey}) did not have coords for Node[${node.id}]: ${icon} | ${node.activeIcon} | ${node.inactiveIcon}`);
             }
@@ -193,7 +193,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
     private getSpriteSheetTexture = (spriteSheet: ISpriteSheet): PIXI.Texture => {
         const filename = spriteSheet.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", "");
-        return PIXI.Texture.from(`${filename}`);
+        return PIXI.Texture.from(filename);
     }
 
     private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {

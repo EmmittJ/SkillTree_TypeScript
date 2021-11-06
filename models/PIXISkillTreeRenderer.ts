@@ -329,10 +329,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.viewport.removeChildren();
-        let background = PIXI.Sprite.from("Background1");
-        if (!background.texture.valid) {
-            background = PIXI.Sprite.from("Background2");
-        }
+        const backgroundAsset = this.skillTreeData.assets["Background1"] ? "Background1" : "Background2";
+        const background = PIXI.Sprite.from(backgroundAsset);
         const backgroundSprite = new PIXI.TilingSprite(background.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
         backgroundSprite.anchor.set(.5);
         this.viewport.addChild(backgroundSprite);
