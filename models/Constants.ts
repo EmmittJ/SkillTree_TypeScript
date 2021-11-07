@@ -16,13 +16,13 @@ export class Constants implements IConstants {
         this.orbitRadii = constants.orbitRadii;
 
         this.classesToName = {
-            "StrClass": "marauder",
-            "DexClass": "ranger",
-            "IntClass": "witch",
-            "StrDexClass": "duelist",
-            "StrIntClass": "templar",
-            "DexIntClass": "shadow",
-            "StrDexIntClass": "scion"
+            "StrClass": "Marauder",
+            "DexClass": "Ranger",
+            "IntClass": "Witch",
+            "StrDexClass": "Duelist",
+            "StrIntClass": "Templar",
+            "DexIntClass": "Shadow",
+            "StrDexIntClass": "Scion"
         };
 
         this.classIdToName = {

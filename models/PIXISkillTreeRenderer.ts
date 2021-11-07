@@ -151,7 +151,12 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 if (node === undefined) {
                     continue;
                 }
-                const jewelWidth = this.skillTreeData.circles[settings.size][this.skillTreeData.imageZoomLevels.length - 1].width;
+                const sizes = this.skillTreeData.circles[settings.size];
+                const index = this.skillTreeData.imageZoomLevels.length - 1;
+                if (index >= sizes.length) {
+                    continue;
+                }
+                const jewelWidth = sizes[index].width;
                 const factionCircleName = this.skillTreeAlternate.getJewelCircleNameFromFaction(settings.factionId);
                 const sprite1 = PIXI.Sprite.from(`${factionCircleName}JewelCircle1`);
                 const sprite2 = PIXI.Sprite.from(`${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
@@ -690,17 +695,21 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             if (classId === undefined || !node.is(SkillNodeStates.Active) || node.nodeGroup === undefined) {
                 continue;
             }
+
             const className = utils.getKeyByValue(this.skillTreeData.constants.classes, classId);
             if (className === undefined) {
                 throw new Error(`Couldn't find class name from constants: ${classId}`);
             }
 
-            const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
-            classNodeGraphic.anchor.set(.5)
-            classNodeGraphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
-            this.backgroundActive.addChild(classNodeGraphic);
-
             const commonName = this.skillTreeData.constants.classesToName[className];
+            const extraImage = this.skillTreeData.extraImages[commonName]
+            if (extraImage) {
+                const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
+                classNodeGraphic.anchor.set(0)
+                classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
+                this.backgroundActive.addChild(classNodeGraphic);
+            }
+            
             const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
             nodeGraphic.anchor.set(.5)
             nodeGraphic.position.set(node.x, node.y);
