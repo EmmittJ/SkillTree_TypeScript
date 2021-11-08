@@ -162,20 +162,19 @@ export class SkillNode implements ISkillNode {
         return this.icon;
     }
 
-    public GetDrawType = (others: SkillNode[]): "Allocated" | "CanAllocate" | "Unallocated" | "Normal" => {
-        let drawType: "Allocated" | "CanAllocate" | "Unallocated" | "Normal";
-
+    public GetDrawType = (others: SkillNode[]): "Allocated" | "Active" | "CanAllocate" | "Unallocated" | "Normal" => {
         if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
-            drawType = "Allocated";
+            if (this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
+                return "Active";
+            }
+            return "Allocated";
         } else if (others.filter(x => x && x.is(SkillNodeStates.Active)).length > 0) {
-            drawType = "CanAllocate";
+            return "CanAllocate";
         } else if (this.ascendancyName !== "" || this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
-            drawType = "Normal";
-        } else {
-            drawType = "Unallocated";
+            return "Normal";
         }
 
-        return drawType;
+        return "Unallocated";
     }
 
     public GetFrameAssetKey = (others: SkillNode[]): string | null => {
@@ -201,16 +200,17 @@ export class SkillNode implements ISkillNode {
             return null;
         } else if (this.ascendancyName !== "") {
             return `AscendancyFrameSmall${drawType}`;
-        } else {
-            switch (drawType) {
-                case "Normal":
-                case "Unallocated":
-                    return "PSSkillFrame";
-                case "CanAllocate":
-                    return "PSSkillFrameHighlighted";
-                case "Allocated":
-                    return "PSSkillFrameActive";
-            }
+        }
+
+        switch (drawType) {
+            case "Normal":
+            case "Unallocated":
+                return "PSSkillFrame";
+            case "CanAllocate":
+                return "PSSkillFrameHighlighted";
+            case "Active":
+            case "Allocated":
+                return "PSSkillFrameActive";
         }
     }
 
