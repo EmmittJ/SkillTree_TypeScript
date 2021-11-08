@@ -283,6 +283,10 @@ export class SkillTreeUtilities {
     }
 
     private getShortestPath = (target: SkillNode): Array<SkillNode> => {
+        if (target.isBlighted) {
+            return new Array<SkillNode>(target);
+        }
+
         const skilled = this.skillTreeData.getSkilledNodes();
         if (skilled[target.id]) {
             return new Array<SkillNode>();

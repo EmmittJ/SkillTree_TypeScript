@@ -47,11 +47,20 @@
     /** Determines if the Skillnode is a Jewel Socket */
     isJewelSocket: boolean;
 
+    /** Expansion Jewel properties of a Jewel Socket */
+    expansionJewel: IExpansionJewel | undefined;
+
     /** Determines if the SkillNode is Multiple Choice */
     isMultipleChoice: boolean;
 
     /** Options of a Multiple Choice node */
     isMultipleChoiceOption: boolean;
+
+    /** Determines if the SkillNode is a proxy (cluster jewel) */
+    isProxy: boolean | undefined;
+
+    /** Determines if the SkillNode is a Blighted Notable */
+    isBlighted: boolean | undefined;
 
     /** Determines the number of passive points received when this SkillNode is skilled */
     passivePointsGranted: number;

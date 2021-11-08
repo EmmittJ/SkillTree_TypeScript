@@ -50,7 +50,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
     public CreateFrame = (node: SkillNode, others: SkillNode[]): PIXI.Sprite | null => {
         const asset = node.GetFrameAssetKey(others);
-        if (asset === "") {
+        if (asset === null) {
             return null;
         }
 

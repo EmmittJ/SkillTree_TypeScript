@@ -16,4 +16,7 @@
 
     /** A list of SkillNodes by Id */
     nodes: Array<number> | undefined;
+
+    /** Determines if the group is a proxy (cluster jewel) */
+    isProxy: boolean | undefined;
 }

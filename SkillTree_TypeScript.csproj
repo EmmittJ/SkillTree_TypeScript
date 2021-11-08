@@ -89,6 +89,7 @@
     <TypeScriptCompile Include="models\types\ICharacter.d.ts" />
     <TypeScriptCompile Include="models\types\IClassImage.d.ts" />
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
+    <TypeScriptCompile Include="models\types\IExpansionJewel.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
     <TypeScriptCompile Include="models\types\IMasteryEffect.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />

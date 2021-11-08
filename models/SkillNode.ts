@@ -26,9 +26,12 @@ export class SkillNode implements ISkillNode {
     isNotable: boolean;
     m: boolean | undefined;
     isMastery: boolean;
+    isBlighted: boolean;
     isJewelSocket: boolean;
+    expansionJewel: IExpansionJewel | undefined;
     isMultipleChoice: boolean;
     isMultipleChoiceOption: boolean;
+    isProxy: boolean;
     passivePointsGranted: number;
     ascendancyName: string;
     isAscendancyStart: boolean;
@@ -83,9 +86,12 @@ export class SkillNode implements ISkillNode {
         this.isNotable = node.isNotable || node.not || false;
         this.m = node.m;
         this.isMastery = node.isMastery || node.m || false;
+        this.isBlighted = node.isBlighted || false;
         this.isJewelSocket = node.isJewelSocket || false;
+        this.expansionJewel = node.expansionJewel;
         this.isMultipleChoice = node.isMultipleChoice || false;
         this.isMultipleChoiceOption = node.isMultipleChoiceOption || false;
+        this.isProxy = node.isProxy || false;
         this.passivePointsGranted = node.passivePointsGranted || 0;
         this.ascendancyName = node.ascendancyName || "";
         this.isAscendancyStart = node.isAscendancyStart || false;
@@ -163,7 +169,7 @@ export class SkillNode implements ISkillNode {
             drawType = "Allocated";
         } else if (others.filter(x => x && x.is(SkillNodeStates.Active)).length > 0) {
             drawType = "CanAllocate";
-        } else if (this.ascendancyName !== "") {
+        } else if (this.ascendancyName !== "" || this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
             drawType = "Normal";
         } else {
             drawType = "Unallocated";
@@ -172,39 +178,40 @@ export class SkillNode implements ISkillNode {
         return drawType;
     }
 
-    public GetFrameAssetKey = (others: SkillNode[]): string => {
+    public GetFrameAssetKey = (others: SkillNode[]): string | null => {
         const drawType = this.GetDrawType(others);
 
-        let assetKey = "";
         if (this.isAscendancyStart) {
-            assetKey = "AscendancyMiddle";
+            return "AscendancyMiddle";
         } else if (this.isJewelSocket) {
-            assetKey = `JewelFrame${drawType}`;
+            if (this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
+                return `JewelSocketAlt${drawType}`;
+            }
+            return `JewelFrame${drawType}`;
         } else if (this.isKeystone) {
-            assetKey = `KeystoneFrame${drawType}`;
+            return `KeystoneFrame${drawType}`;
         } else if (this.isNotable && this.ascendancyName === "") {
-            assetKey = `NotableFrame${drawType}`;
+            if (this.isBlighted) {
+                return `BlightedNotableFrame${drawType}`
+            }
+            return `NotableFrame${drawType}`;
         } else if (this.isNotable && this.ascendancyName !== "") {
-            assetKey = `AscendancyFrameLarge${drawType}`;
+            return `AscendancyFrameLarge${drawType}`;
         } else if (this.isMastery) {
-            assetKey = "";
+            return null;
         } else if (this.ascendancyName !== "") {
-            assetKey = `AscendancyFrameSmall${drawType}`;
+            return `AscendancyFrameSmall${drawType}`;
         } else {
             switch (drawType) {
+                case "Normal":
                 case "Unallocated":
-                    assetKey = "PSSkillFrame";
-                    break;
+                    return "PSSkillFrame";
                 case "CanAllocate":
-                    assetKey = "PSSkillFrameHighlighted";
-                    break;
+                    return "PSSkillFrameHighlighted";
                 case "Allocated":
-                    assetKey = "PSSkillFrameActive";
-                    break;
+                    return "PSSkillFrameActive";
             }
         }
-
-        return assetKey;
     }
 
     public GetConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {
