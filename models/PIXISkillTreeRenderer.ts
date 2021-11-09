@@ -340,7 +340,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         backgroundSprite.anchor.set(.5);
         this.viewport.addChild(backgroundSprite);
 
-        const backgroundContainer: PIXI.Container = new PIXI.Container();
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
             const nodes = (group.n || group.nodes || []);
@@ -366,7 +365,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             const sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
-            backgroundContainer.addChild(sprite);
+            this.background.addChild(sprite);
 
             if (max === 3) {
                 sprite.anchor.set(.5, 1);
@@ -374,7 +373,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 sprite2.rotation = Math.PI;
                 sprite2.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
                 sprite2.anchor.set(.5, 1);
-                backgroundContainer.addChild(sprite2);
+                this.background.addChild(sprite2);
             }
         }
 
@@ -388,7 +387,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             const sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
-            backgroundContainer.addChild(sprite);
+            this.background.addChild(sprite);
 
             if (this.skillTreeData.classes === undefined) {
                 continue;
@@ -423,7 +422,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                         const text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
                         text.position.set(x, y);
                         text.scale.set(this.skillTreeData.scale);
-                        backgroundContainer.addChild(text);
+                        this.background.addChild(text);
                     }
                 }
             }
@@ -442,11 +441,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         // Render background as a texture
-        this.background = this.createRenderTextureContainer(backgroundContainer);
         this.background.interactive = false;
         this.background.interactiveChildren = false;
         this.background.containerUpdateTransform = () => { };
-        backgroundContainer.destroy();
         this.viewport.addChild(this.background);
 
         this.RenderBaseNodes();
@@ -473,11 +470,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.removeChild(this.connections);
         }
         if (this.connections.children.length > 0) {
-            this.connections.removeChildren();
+            this.connections = new PIXI.Container();
         }
 
-        const connectionsContainer: PIXI.Container = new PIXI.Container();
-        const drawnConnections: { [id: number]: Array<number> } = {};
+        const drawnConnections: { [id: string]: boolean } = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
             if (node.nodeGroup === undefined) {
@@ -485,25 +481,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
             const nodes = node.in
                 .filter((outID) => {
-                    if (drawnConnections[outID] === undefined || drawnConnections[+id] === undefined) {
-                        return true;
-                    } else {
-                        return drawnConnections[outID].indexOf(+id) < 0 && drawnConnections[+id].indexOf(outID) < 0;
-                    }
+                    return !drawnConnections[`${+id}-${outID}`] || !drawnConnections[`${outID}-${+id}`];
                 })
                 .map((outID) => {
-                    if (drawnConnections[outID] === undefined) {
-                        drawnConnections[outID] = new Array<number>();
-                    }
-                    if (drawnConnections[+id] === undefined) {
-                        drawnConnections[+id] = new Array<number>();
-                    }
-                    drawnConnections[outID].push(+id);
-                    drawnConnections[+id].push(outID);
-
+                    drawnConnections[`${+id}-${outID}`] = true;
+                    drawnConnections[`${outID}-${+id}`] = true;
                     return this.skillTreeData.nodes[outID]
                 });
-            connectionsContainer.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+
+            this.connections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
 
             this.skillIcons.addChild(this.SkillNodeRenderer.CreateIcon(node));
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
@@ -567,11 +553,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         // Render connections as a texture
-        this.connections = this.createRenderTextureContainer(connectionsContainer);
         this.connections.interactive = false;
         this.connections.interactiveChildren = false;
         this.connections.containerUpdateTransform = () => { };
-        connectionsContainer.destroy();
         this.viewport.addChildAt(this.connections, this.viewport.children.indexOf(this.background) + 1);
     }
 
@@ -594,16 +578,16 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         if (this.skillIconActiveEffects.children.length > 0) {
-            this.skillIconActiveEffects.removeChildren();
+            this.skillIconActiveEffects = new PIXI.Container();
         }
         if (this.connectionsActive.children.length > 0) {
-            this.connectionsActive.removeChildren();
+            this.connectionsActive = new PIXI.Container();
         }
         if (this.skillIconsActive.children.length > 0) {
-            this.skillIconsActive.removeChildren();
+            this.skillIconsActive = new PIXI.Container();
         }
 
-        const drawnConnections: { [id: number]: Array<number> } = {};
+        const drawnConnections: { [id: string]: boolean } = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
             if ((!node.is(SkillNodeStates.Active) && node.alternateIds === undefined) || node.classStartIndex !== undefined) {
@@ -612,22 +596,11 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
             const nodes = node.in
                 .filter((outID) => {
-                    if (drawnConnections[outID] === undefined || drawnConnections[+id] === undefined) {
-                        return true;
-                    } else {
-                        return drawnConnections[outID].indexOf(+id) < 0 && drawnConnections[+id].indexOf(outID) < 0;
-                    }
+                    return !drawnConnections[`${+id}-${outID}`] || !drawnConnections[`${outID}-${+id}`];
                 })
                 .map((outID) => {
-                    if (drawnConnections[outID] === undefined) {
-                        drawnConnections[outID] = new Array<number>();
-                    }
-                    if (drawnConnections[+id] === undefined) {
-                        drawnConnections[+id] = new Array<number>();
-                    }
-                    drawnConnections[outID].push(+id);
-                    drawnConnections[+id].push(outID);
-
+                    drawnConnections[`${+id}-${outID}`] = true;
+                    drawnConnections[`${outID}-${+id}`] = true;
                     return this.skillTreeData.nodes[outID]
                 });
 
@@ -683,10 +656,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         if (this.backgroundActive.children.length > 0) {
-            this.backgroundActive.removeChildren();
+            this.backgroundActive = new PIXI.Container();
         }
         if (this.characterStartsActive.children.length > 0) {
-            this.characterStartsActive.removeChildren();
+            this.characterStartsActive = new PIXI.Container();
         }
 
         for (const id of this.skillTreeData.root.out) {
@@ -709,7 +682,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
                 this.backgroundActive.addChild(classNodeGraphic);
             }
-            
+
             const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
             nodeGraphic.anchor.set(.5)
             nodeGraphic.position.set(node.x, node.y);
@@ -730,36 +703,32 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
     public StopRenderHover = (): void => {
         this.updateHover = false;
-    }
-    public StartRenderHover = (): void => {
         if (!this.Initialized) {
             return;
         }
 
+        requestAnimationFrame(this.RenderHover);
+    }
+    public StartRenderHover = (): void => {
         this.updateHover = true;
-        this.RenderHover();
+        if (!this.Initialized) {
+            return;
+        }
+
+        requestAnimationFrame(this.RenderHover);
+        requestAnimationFrame(this.RenderTooltip);
     }
 
-    private tooltip: PIXI.Graphics | undefined = undefined;
-    private tooltipCompare: PIXI.Graphics | undefined = undefined;
     private nodeMoveCompare: PIXI.Graphics | undefined = undefined;
-    private pathing_connections: PIXI.Container = new PIXI.Container();
-    private pathing_skillIcons: PIXI.Container = new PIXI.Container();
+    private pathingConnections: PIXI.Container = new PIXI.Container();
+    private pathingSkillIcons: PIXI.Container = new PIXI.Container();
     private RenderHover = (): void => {
-        if (this.viewport.children.indexOf(this.pathing_connections) > 0) {
-            this.viewport.removeChild(this.pathing_connections);
+        if (this.viewport.children.indexOf(this.pathingConnections) > 0) {
+            this.viewport.removeChild(this.pathingConnections);
         }
 
-        if (this.viewport.children.indexOf(this.pathing_skillIcons) > 0) {
-            this.viewport.removeChild(this.pathing_skillIcons);
-        }
-
-        if (this.tooltip !== undefined && this.viewport.children.indexOf(this.tooltip) > 0) {
-            this.viewport.removeChild(this.tooltip);
-        }
-
-        if (this.tooltipCompare !== undefined && this.viewport.children.indexOf(this.tooltipCompare) > 0) {
-            this.viewport.removeChild(this.tooltipCompare);
+        if (this.viewport.children.indexOf(this.pathingSkillIcons) > 0) {
+            this.viewport.removeChild(this.pathingSkillIcons);
         }
 
         if (this.nodeMoveCompare !== undefined && this.viewport.children.indexOf(this.nodeMoveCompare) > 0) {
@@ -768,187 +737,204 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
         this.nodeMoveCompare = undefined;
 
-        if (this.tooltip !== undefined && this.tooltip.children.length > 0) {
-            this.tooltip.removeChildren();
-        }
-        this.tooltip = undefined;
-
-        if (this.tooltipCompare !== undefined && this.tooltipCompare.children.length > 0) {
-            this.tooltipCompare.removeChildren();
-        }
-        this.tooltipCompare = undefined;
-
-        if (this.pathing_connections.children.length > 0) {
-            this.pathing_connections.removeChildren();
-        }
-        if (this.pathing_skillIcons.children.length > 0) {
-            this.pathing_skillIcons.removeChildren();
+        if (this.pathingConnections.children.length > 0) {
+            this.pathingConnections = new PIXI.Container();
         }
 
-        const drawnConnections: { [id: number]: Array<number> } = {};
+        if (this.pathingSkillIcons.children.length > 0) {
+            this.pathingSkillIcons = new PIXI.Container();
+        }
+
+        if (!this.updateHover) {
+            return;
+        }
+
+        const drawnConnections: { [id: string]: boolean } = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
             if (node.is(SkillNodeStates.Pathing)) {
                 const nodes = node.in
                     .filter((outID) => {
-                        if (drawnConnections[outID] === undefined || drawnConnections[+id] === undefined) {
-                            return true;
-                        } else {
-                            return drawnConnections[outID].indexOf(+id) < 0 && drawnConnections[+id].indexOf(outID) < 0;
-                        }
+                        return !drawnConnections[`${+id}-${outID}`] || !drawnConnections[`${outID}-${+id}`];
                     })
                     .map((outID) => {
-                        if (drawnConnections[outID] === undefined) {
-                            drawnConnections[outID] = new Array<number>();
-                        }
-                        if (drawnConnections[+id] === undefined) {
-                            drawnConnections[+id] = new Array<number>();
-                        }
-                        drawnConnections[outID].push(+id);
-                        drawnConnections[+id].push(outID);
-
+                        drawnConnections[`${+id}-${outID}`] = true;
+                        drawnConnections[`${outID}-${+id}`] = true;
                         return this.skillTreeData.nodes[outID]
                     });
 
-                this.pathing_connections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+                this.pathingConnections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
                 const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
-                    this.pathing_skillIcons.addChild(frame);
+                    this.pathingSkillIcons.addChild(frame);
                 }
             }
 
-            if (node.is(SkillNodeStates.Hovered)) {
-                const padding = 10;
-                const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
-                text.position.set(padding / 2, padding / 2);
+            if (this.skillTreeDataCompare !== undefined && node.is(SkillNodeStates.Hovered)) {
+                this.skillTreeDataCompare.clearState(SkillNodeStates.Hovered);
 
-                this.tooltip = new PIXI.Graphics();
-                this.tooltip.beginFill(0x000000, .75);
-                this.tooltip.lineStyle(2, 0xCBB59C)
-                this.tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
-                this.tooltip.endFill();
-
-                this.tooltip.addChild(text);
-                const mouse = PIXI.utils.isMobile.phone
-                    ? new PIXI.Point(node.x + 50, node.y - 15) :
-                    this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
-                this.tooltip.position.set(mouse.x + 10, mouse.y - 5);
-
-                if (this.skillTreeDataCompare !== undefined) {
-                    this.skillTreeDataCompare.clearState(SkillNodeStates.Hovered);
-
-                    let other = this.skillTreeDataCompare.nodes[node.id];
-                    if (other === undefined) {
-                        for (const idc in this.skillTreeDataCompare.nodes) {
-                            const n = this.skillTreeDataCompare.nodes[idc];
-                            if ((Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
-                                other = n;
-                            }
+                let other = this.skillTreeDataCompare.nodes[node.id];
+                if (other === undefined) {
+                    for (const idc in this.skillTreeDataCompare.nodes) {
+                        const n = this.skillTreeDataCompare.nodes[idc];
+                        if ((Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
+                            other = n;
                         }
                     }
+                }
 
-                    if (other && other.is(SkillNodeStates.Compared)) {
-                        other.add(SkillNodeStates.Hovered);
-                    }
+                if (other && other.is(SkillNodeStates.Compared)) {
+                    other.add(SkillNodeStates.Hovered);
                 }
             }
         }
 
         if (this.skillTreeDataCompare !== undefined) {
-            for (const id in this.skillTreeDataCompare.nodes) {
-                const node = this.skillTreeDataCompare.nodes[id];
-                if (node.is(SkillNodeStates.Hovered) && node.nodeGroup !== undefined) {
-                    const padding = 10;
-                    const text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
-                    text.position.set(padding / 2, padding / 2);
+            const nodes = this.skillTreeDataCompare.getNodes(SkillNodeStates.Hovered);
+            for (const id in nodes) {
+                const node = nodes[id];
+                if (node.nodeGroup === undefined) {
+                    continue;
+                }
 
-                    this.tooltipCompare = new PIXI.Graphics();
-                    this.tooltipCompare.beginFill(0x000000, .75);
-                    this.tooltipCompare.lineStyle(2, 0xFFB000)
-                    this.tooltipCompare.drawRect(0, 0, text.width + padding, text.height + padding);
-                    this.tooltipCompare.endFill();
-
-                    this.tooltipCompare.addChild(text);
-                    const mouse = PIXI.utils.isMobile.phone
-                        ? new PIXI.Point(node.x + 50, node.y - 15) :
-                        this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
-                    this.tooltipCompare.position.set(mouse.x + 10, mouse.y - 5);
-
-                    if (node.is(SkillNodeStates.Moved)) {
-                        const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF1493)
-                        if (highlighter !== null) {
-                            this.nodeMoveCompare = highlighter;
-                        }
+                if (node.is(SkillNodeStates.Moved)) {
+                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF1493)
+                    if (highlighter !== null) {
+                        this.nodeMoveCompare = highlighter;
                     }
                 }
             }
         }
 
-        if (this.updateHover) {
-            this.pathing_connections.interactive = false;
-            this.pathing_connections.interactiveChildren = false;
-            this.pathing_connections.containerUpdateTransform = () => { };
-            this.viewport.addChildAt(this.pathing_connections, Math.max(this.viewport.children.indexOf(this.connections), this.viewport.children.indexOf(this.connectionsActive)) + 1);
+        this.pathingConnections.interactive = false;
+        this.pathingConnections.interactiveChildren = false;
+        this.pathingConnections.containerUpdateTransform = () => { };
+        this.viewport.addChildAt(this.pathingConnections, Math.max(this.viewport.children.indexOf(this.connections), this.viewport.children.indexOf(this.connectionsActive)) + 1);
 
-            this.pathing_skillIcons.interactive = false;
-            this.pathing_skillIcons.interactiveChildren = false;
-            this.pathing_skillIcons.containerUpdateTransform = () => { };
-            this.viewport.addChildAt(this.pathing_skillIcons, Math.max(this.viewport.children.indexOf(this.skillIcons), this.viewport.children.indexOf(this.skillIconsActive)) + 1);
+        this.pathingSkillIcons.interactive = false;
+        this.pathingSkillIcons.interactiveChildren = false;
+        this.pathingSkillIcons.containerUpdateTransform = () => { };
+        this.viewport.addChildAt(this.pathingSkillIcons, Math.max(this.viewport.children.indexOf(this.skillIcons), this.viewport.children.indexOf(this.skillIconsActive)) + 1);
 
-            if (this.nodeMoveCompare !== undefined) {
-                this.nodeMoveCompare.interactive = false;
-                this.nodeMoveCompare.interactiveChildren = false;
-                this.nodeMoveCompare.containerUpdateTransform = () => { };
-                this.viewport.addChild(this.nodeMoveCompare);
-            }
-
-            if (this.tooltip !== undefined) {
-                this.tooltip.interactive = false;
-                this.tooltip.interactiveChildren = false;
-                this.tooltip.containerUpdateTransform = () => { };
-                this.viewport.addChild(this.tooltip);
-            }
-
-            if (this.tooltipCompare !== undefined) {
-                this.tooltipCompare.interactive = false;
-                this.tooltipCompare.interactiveChildren = false;
-                this.tooltipCompare.containerUpdateTransform = () => { };
-                this.viewport.addChild(this.tooltipCompare);
-            }
-
-            if (this.tooltip !== undefined) {
-                const bounds = this.tooltip.getBounds();
-                if (this.tooltip.worldTransform.tx + bounds.width > screen.width) {
-                    this.tooltip.x -= this.tooltip.width / devicePixelRatio;
-                }
-                if (this.tooltip.worldTransform.ty + bounds.height > screen.height) {
-                    this.tooltip.y -= this.tooltip.height / devicePixelRatio;
-                }
-
-                this.tooltip.scale.set(this.tooltip.width / bounds.width / devicePixelRatio, this.tooltip.height / bounds.height / devicePixelRatio);
-            }
-
-            if (this.tooltipCompare !== undefined) {
-                const boundsCompare = this.tooltipCompare.getBounds();
-                if (this.tooltip !== undefined) {
-                    this.tooltipCompare.y = this.tooltip.y;
-                    this.tooltipCompare.x = this.tooltip.x + this.tooltip.width;
-                }
-                else {
-                    if (this.tooltipCompare.worldTransform.tx + boundsCompare.width > screen.width) {
-                        this.tooltipCompare.x -= this.tooltipCompare.width / devicePixelRatio;
-                    }
-                    if (this.tooltipCompare.worldTransform.ty + boundsCompare.height > screen.height) {
-                        this.tooltipCompare.y -= this.tooltipCompare.height / devicePixelRatio;
-                    }
-                }
-
-                this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width / devicePixelRatio, this.tooltipCompare.height / boundsCompare.height / devicePixelRatio);
-            }
-
-            this.UpdateJewelSocketHighlightPosition();
-            requestAnimationFrame(this.RenderHover);
+        if (this.nodeMoveCompare !== undefined) {
+            this.nodeMoveCompare.interactive = false;
+            this.nodeMoveCompare.interactiveChildren = false;
+            this.nodeMoveCompare.containerUpdateTransform = () => { };
+            this.viewport.addChild(this.nodeMoveCompare);
         }
+    }
+
+    private tooltip: PIXI.Graphics | undefined = undefined;
+    private tooltipCompare: PIXI.Graphics | undefined = undefined;
+    private RenderTooltip = () => {
+        if (this.tooltip !== undefined && this.viewport.children.indexOf(this.tooltip) > 0) {
+            this.viewport.removeChild(this.tooltip);
+        }
+
+        if (this.tooltipCompare !== undefined && this.viewport.children.indexOf(this.tooltipCompare) > 0) {
+            this.viewport.removeChild(this.tooltipCompare);
+        }
+
+        this.tooltip = undefined;
+        this.tooltipCompare = undefined;
+
+        if (!this.updateHover) {
+            return
+        }
+
+        const nodes = this.skillTreeData.getNodes(SkillNodeStates.Hovered);
+        for (const id in nodes) {
+            const node = nodes[id];
+
+            const padding = 10;
+            const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
+            text.position.set(padding / 2, padding / 2);
+
+            this.tooltip = new PIXI.Graphics();
+            this.tooltip.beginFill(0x000000, .75);
+            this.tooltip.lineStyle(2, 0xCBB59C)
+            this.tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
+            this.tooltip.endFill();
+
+            this.tooltip.addChild(text);
+            const mouse = PIXI.utils.isMobile.phone
+                ? new PIXI.Point(node.x + 50, node.y - 15) :
+                this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
+            this.tooltip.position.set(mouse.x + 10, mouse.y - 5);
+        }
+
+        if (this.skillTreeDataCompare !== undefined) {
+            const nodes = this.skillTreeDataCompare.getNodes(SkillNodeStates.Hovered);
+            for (const id in nodes) {
+                const node = nodes[id];
+                if (node.nodeGroup === undefined) {
+                    continue;
+                }
+
+                const padding = 10;
+                const text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
+                text.position.set(padding / 2, padding / 2);
+
+                this.tooltipCompare = new PIXI.Graphics();
+                this.tooltipCompare.beginFill(0x000000, .75);
+                this.tooltipCompare.lineStyle(2, 0xFFB000)
+                this.tooltipCompare.drawRect(0, 0, text.width + padding, text.height + padding);
+                this.tooltipCompare.endFill();
+
+                this.tooltipCompare.addChild(text);
+                const mouse = PIXI.utils.isMobile.phone
+                    ? new PIXI.Point(node.x + 50, node.y - 15) :
+                    this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
+                this.tooltipCompare.position.set(mouse.x + 10, mouse.y - 5);
+            }
+        }
+
+        if (this.tooltip !== undefined) {
+            this.tooltip.interactive = false;
+            this.tooltip.interactiveChildren = false;
+            this.tooltip.containerUpdateTransform = () => { };
+            this.viewport.addChild(this.tooltip);
+        }
+
+        if (this.tooltipCompare !== undefined) {
+            this.tooltipCompare.interactive = false;
+            this.tooltipCompare.interactiveChildren = false;
+            this.tooltipCompare.containerUpdateTransform = () => { };
+            this.viewport.addChild(this.tooltipCompare);
+        }
+
+        if (this.tooltip !== undefined) {
+            const bounds = this.tooltip.getBounds();
+            if (this.tooltip.worldTransform.tx + bounds.width > screen.width) {
+                this.tooltip.x -= this.tooltip.width / devicePixelRatio;
+            }
+            if (this.tooltip.worldTransform.ty + bounds.height > screen.height) {
+                this.tooltip.y -= this.tooltip.height / devicePixelRatio;
+            }
+
+            this.tooltip.scale.set(this.tooltip.width / bounds.width / devicePixelRatio, this.tooltip.height / bounds.height / devicePixelRatio);
+        }
+
+        if (this.tooltipCompare !== undefined) {
+            const boundsCompare = this.tooltipCompare.getBounds();
+            if (this.tooltip !== undefined) {
+                this.tooltipCompare.y = this.tooltip.y;
+                this.tooltipCompare.x = this.tooltip.x + this.tooltip.width;
+            }
+            else {
+                if (this.tooltipCompare.worldTransform.tx + boundsCompare.width > screen.width) {
+                    this.tooltipCompare.x -= this.tooltipCompare.width / devicePixelRatio;
+                }
+                if (this.tooltipCompare.worldTransform.ty + boundsCompare.height > screen.height) {
+                    this.tooltipCompare.y -= this.tooltipCompare.height / devicePixelRatio;
+                }
+            }
+
+            this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width / devicePixelRatio, this.tooltipCompare.height / boundsCompare.height / devicePixelRatio);
+        }
+
+        this.UpdateJewelSocketHighlightPosition();
+        requestAnimationFrame(this.RenderTooltip);
     }
 
     private highlights: PIXI.Container = new PIXI.Container();
@@ -961,23 +947,20 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.removeChild(this.highlights);
         }
         if (this.highlights.children.length > 0) {
-            this.highlights.removeChildren();
+            this.highlights = new PIXI.Container();
         }
 
-        const highlightsContainer: PIXI.Container = new PIXI.Container();
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
             const highlight = this.SkillNodeRenderer.CreateHighlight(node);
             if (highlight !== null) {
-                highlightsContainer.addChild(highlight)
+                this.highlights.addChild(highlight)
             }
         }
 
-        this.highlights = this.createRenderTextureContainer(highlightsContainer);
         this.highlights.interactive = false;
         this.highlights.interactiveChildren = false;
         this.highlights.containerUpdateTransform = () => { };
-        highlightsContainer.destroy();
         this.viewport.addChild(this.highlights);
         this.UpdateJewelSocketHighlightPosition();
     }
@@ -985,45 +968,4 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     public CreateScreenshot = (mimeType: 'image/jpeg' | 'image/webp'): string => {
         return this.pixi.renderer.plugins.extract.base64(this.viewport, mimeType, 1);
     }
-
-    private MAX_COL_WIDTH = 2048;
-    private MAX_ROW_HEIGHT = 2048;
-    private createRenderTextureContainer = (obj: PIXI.Container, offset: PIXI.Rectangle | null = null): PIXI.Container => {
-        const DEFAULT_OFFSET: PIXI.Rectangle = new PIXI.Rectangle(Math.abs(this.skillTreeData.min_x * this.skillTreeData.scale) * 1.25, Math.abs(this.skillTreeData.min_y * this.skillTreeData.scale) * 1.35, this.skillTreeData.width * this.skillTreeData.scale, this.skillTreeData.height * this.skillTreeData.scale);
-        if (offset === null) {
-            offset = DEFAULT_OFFSET;
-        }
-
-        const returnContainer = new PIXI.Container();
-        obj.position.set(offset.x, offset.y);
-
-        const cols = Math.ceil((offset.width * 1.15) / this.MAX_COL_WIDTH);
-        const rows = Math.ceil((offset.height * 1.15) / this.MAX_ROW_HEIGHT);
-
-        for (let i = 0; i < cols; i++) {
-            const x = i * this.MAX_COL_WIDTH;
-            obj.position.x = offset.x - x;
-
-            for (let j = 0; j < rows; j++) {
-                const y = j * this.MAX_ROW_HEIGHT;
-                obj.position.y = offset.y - y;
-
-                const sprite = new PIXI.Sprite(this.createRenderTexture(obj, this.MAX_ROW_HEIGHT, this.MAX_COL_WIDTH));
-                sprite.position.set(-obj.position.x, -obj.position.y);
-                sprite.interactive = false;
-                sprite.interactiveChildren = false;
-                sprite.containerUpdateTransform = () => { };
-                returnContainer.addChild(sprite);
-            }
-        }
-
-        return returnContainer;
-    }
-
-    private createRenderTexture = (obj: PIXI.Container, width: number, height: number): PIXI.RenderTexture => {
-        const renderTexture = PIXI.RenderTexture.create({ height: height, width: width, scaleMode: PIXI.SCALE_MODES.LINEAR, resolution: devicePixelRatio });
-        this.pixi.renderer.render(obj, { renderTexture: renderTexture, clear: false });
-        return renderTexture;
-    }
-
 }

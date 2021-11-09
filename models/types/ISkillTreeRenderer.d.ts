@@ -1,6 +1,7 @@
 ﻿import { SkillTreeData } from "../SkillTreeData";
 import { ISkillNodeRenderer } from "./ISkillNodeRenderer";
 import { SkillTreeAlternate } from "../SkillTreeAlternate";
+import { SkillNode } from "../SkillNode";
 
 interface ISkillTreeRenderer {
     SkillNodeRenderer: ISkillNodeRenderer;
@@ -11,7 +12,7 @@ interface ISkillTreeRenderer {
     RenderBase(): void;
     RenderCharacterStartsActive(): void;
     RenderHighlight(): void;
-    StartRenderHover(): void;
+    StartRenderHover(skillNode: SkillNode): void;
     StopRenderHover(): void;
     CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
 }
