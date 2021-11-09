@@ -12,11 +12,13 @@ export class SkillTreeUtilities {
     private DRAG_THRESHOLD_SQUARED = 5 * 5;
     private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
+    skillTreeDataComapre: SkillTreeData | undefined;
     skillTreeCodec: SkillTreeCodec;
     skillTreeAlternate!: SkillTreeAlternate;
 
-    constructor(context: SkillTreeData, skillTreeAlternate: SkillTreeAlternate) {
+    constructor(context: SkillTreeData, contextComapre: SkillTreeData | undefined, skillTreeAlternate: SkillTreeAlternate) {
         this.skillTreeData = context;
+        this.skillTreeDataComapre = contextComapre;
         this.skillTreeAlternate = skillTreeAlternate;
         this.skillTreeCodec = new SkillTreeCodec();
 
@@ -207,6 +209,10 @@ export class SkillTreeUtilities {
     }
 
     private click = (node: SkillNode) => {
+        if (node.is(SkillNodeStates.Compared)) {
+            return;
+        }
+
         if ((this.dragStart.x - this.dragEnd.x) * (this.dragStart.x - this.dragEnd.x) > this.DRAG_THRESHOLD_SQUARED
             || (this.dragStart.y - this.dragEnd.y) * (this.dragStart.y - this.dragEnd.y) > this.DRAG_THRESHOLD_SQUARED) {
             return;
@@ -235,6 +241,7 @@ export class SkillTreeUtilities {
 
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
+        this.skillTreeDataComapre?.clearState(SkillNodeStates.Hovered);
         this.encodeURL();
     }
 
@@ -254,9 +261,14 @@ export class SkillTreeUtilities {
     private mouseover = (node: SkillNode) => {
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
+        this.skillTreeDataComapre?.clearState(SkillNodeStates.Hovered);
 
         if (node.classStartIndex === undefined) {
-            this.skillTreeData.addState(node, SkillNodeStates.Hovered);
+            if (node.is(SkillNodeStates.Compared)) {
+                this.skillTreeDataComapre?.addState(node, SkillNodeStates.Hovered);
+            } else {
+                this.skillTreeData.addState(node, SkillNodeStates.Hovered);
+            }
         }
         const shortest = this.getShortestPath(node);
         for (const i of shortest) {
@@ -282,6 +294,7 @@ export class SkillTreeUtilities {
     private mouseout = (node: SkillNode) => {
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
+        this.skillTreeDataComapre?.clearState(SkillNodeStates.Hovered);
         SkillTreeEvents.fire("skilltree", "hovered-nodes-end", node);
     }
 

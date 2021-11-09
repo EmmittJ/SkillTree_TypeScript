@@ -241,4 +241,20 @@ export class SkillNode implements ISkillNode {
 
         return 0;
     }
+
+    public GetTargetSize = (): { width: number, height: number } => {
+        if (this.isRegular1 || this.isRegular2) {
+            return { width: 70 * this.scale, height: 70 * this.scale };
+        }
+
+        if (this.isNotable || this.isJewelSocket || this.isMastery) {
+            return { width: 99 * this.scale, height: 99 * this.scale };
+        }
+
+        if (this.isKeystone) {
+            return { width: 138 * this.scale, height: 140 * this.scale };
+        }
+
+        return { width: 0, height: 0 };
+    }
 }

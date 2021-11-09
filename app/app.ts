@@ -39,7 +39,7 @@ export class App {
                 this.skillTreeDataCompare = data;
             }
         }
-        this.skillTreeUtilities = new SkillTreeUtilities(this.skillTreeData, this.skillTreeAlternate);
+        this.skillTreeUtilities = new SkillTreeUtilities(this.skillTreeData, this.skillTreeDataCompare, this.skillTreeAlternate);
 
         const versionSelect = document.getElementById("skillTreeControl_Version") as HTMLSelectElement;
         const compareSelect = document.getElementById("skillTreeControl_VersionCompare") as HTMLSelectElement;

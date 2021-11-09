@@ -315,6 +315,10 @@ export class SkillTreeData implements ISkillTreeData {
 
     public addState = (node: SkillNode, state: SkillNodeStates) => this.addStateById(node.GetId(), state);
     public addStateById = (id: string, state: SkillNodeStates) => {
+        if (this.nodes[id] === undefined) {
+            return;
+        }
+
         if (this.nodes[id].is(state)) {
             return;
         }
@@ -325,6 +329,10 @@ export class SkillTreeData implements ISkillTreeData {
 
     public removeState = (node: SkillNode, state: SkillNodeStates) => this.removeStateById(node.GetId(), state);
     public removeStateById = (id: string, state: SkillNodeStates) => {
+        if (this.nodes[id] === undefined) {
+            return;
+        }
+
         if (!this.nodes[id].is(state)) {
             return;
         }

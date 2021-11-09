@@ -713,6 +713,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.RenderHover();
+        this.RenderTooltip();
     }
     public StartRenderHover = (): void => {
         this.updateHover = true;
@@ -844,8 +845,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         const nodes = this.skillTreeData.getNodes(SkillNodeStates.Hovered);
+        let hoveredNode: SkillNode | undefined = undefined;
         for (const id in nodes) {
             const node = nodes[id];
+            hoveredNode = node;
 
             const padding = 10;
             const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
@@ -858,12 +861,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.tooltip.endFill();
 
             this.tooltip.addChild(text);
-            const mouse = PIXI.utils.isMobile.phone
-                ? new PIXI.Point(node.x + 50, node.y - 15) :
-                this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
-            this.tooltip.position.set(mouse.x + 10, mouse.y - 5);
+
         }
 
+        let hoveredCompareNode: SkillNode | undefined = undefined;
         if (this.skillTreeDataCompare !== undefined) {
             const nodes = this.skillTreeDataCompare.getNodes(SkillNodeStates.Hovered);
             for (const id in nodes) {
@@ -871,6 +872,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 if (node.nodeGroup === undefined) {
                     continue;
                 }
+                hoveredCompareNode = node;
 
                 const padding = 10;
                 const text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
@@ -883,11 +885,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 this.tooltipCompare.endFill();
 
                 this.tooltipCompare.addChild(text);
-                const mouse = PIXI.utils.isMobile.phone
-                    ? new PIXI.Point(node.x + 50, node.y - 15) :
-                    this.pixi.renderer.plugins.interaction.mouse.getLocalPosition(this.viewport);
-                this.tooltipCompare.position.set(mouse.x + 10, mouse.y - 5);
             }
+        }
+
+        if (this.tooltip === undefined && this.tooltipCompare !== undefined) {
+            this.tooltip = this.tooltipCompare;
+            hoveredNode = hoveredCompareNode;
+
+            this.tooltipCompare = undefined;
+            hoveredCompareNode = undefined;
         }
 
         if (this.tooltip !== undefined) {
@@ -904,38 +910,38 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.addChild(this.tooltipCompare);
         }
 
-        if (this.tooltip !== undefined) {
+        if (this.tooltip !== undefined && hoveredNode !== undefined) {
+
             const bounds = this.tooltip.getBounds();
+            const size = hoveredNode.GetTargetSize();
+            const scaleX = this.tooltip.width / bounds.width / devicePixelRatio;
+            const scaleY = this.tooltip.height / bounds.height / devicePixelRatio;
+
             if (this.tooltip.worldTransform.tx + bounds.width > screen.width) {
-                this.tooltip.x -= this.tooltip.width / devicePixelRatio;
+                this.tooltip.x = hoveredNode.x - this.tooltip.width * scaleX - size.width;
+            } else {
+                this.tooltip.x = hoveredNode.x + size.width;
             }
+
             if (this.tooltip.worldTransform.ty + bounds.height > screen.height) {
-                this.tooltip.y -= this.tooltip.height / devicePixelRatio;
+                this.tooltip.y = hoveredNode.y - this.tooltip.height * scaleY + size.height / 2;
+            } else {
+                this.tooltip.y = hoveredNode.y - size.height / 2;
             }
 
-            this.tooltip.scale.set(this.tooltip.width / bounds.width / devicePixelRatio, this.tooltip.height / bounds.height / devicePixelRatio);
-        }
+            this.tooltip.scale.set(scaleX, scaleY);
 
-        if (this.tooltipCompare !== undefined) {
-            const boundsCompare = this.tooltipCompare.getBounds();
-            if (this.tooltip !== undefined) {
+            if (this.tooltipCompare !== undefined && hoveredCompareNode !== undefined) {
+                const boundsCompare = this.tooltipCompare.getBounds();
+
                 this.tooltipCompare.y = this.tooltip.y;
                 this.tooltipCompare.x = this.tooltip.x + this.tooltip.width;
-            }
-            else {
-                if (this.tooltipCompare.worldTransform.tx + boundsCompare.width > screen.width) {
-                    this.tooltipCompare.x -= this.tooltipCompare.width / devicePixelRatio;
-                }
-                if (this.tooltipCompare.worldTransform.ty + boundsCompare.height > screen.height) {
-                    this.tooltipCompare.y -= this.tooltipCompare.height / devicePixelRatio;
-                }
-            }
 
-            this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width / devicePixelRatio, this.tooltipCompare.height / boundsCompare.height / devicePixelRatio);
+                this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width / devicePixelRatio, this.tooltipCompare.height / boundsCompare.height / devicePixelRatio);
+            }
         }
 
         this.UpdateJewelSocketHighlightPosition();
-        requestAnimationFrame(this.RenderTooltip);
     }
 
     private highlights: PIXI.Container = new PIXI.Container();
