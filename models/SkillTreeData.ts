@@ -28,6 +28,15 @@ export class SkillTreeData implements ISkillTreeData {
     scale: number;
     classStartNodes: { [id: string]: SkillNode };
     ascedancyNodes: { [id: string]: SkillNode };
+    nodesInState: { [state in SkillNodeStates]: Array<string> } = {
+        [SkillNodeStates.None]: new Array<string>(),
+        [SkillNodeStates.Active]: new Array<string>(),
+        [SkillNodeStates.Hovered]: new Array<string>(),
+        [SkillNodeStates.Pathing]: new Array<string>(),
+        [SkillNodeStates.Highlighted]: new Array<string>(),
+        [SkillNodeStates.Compared]: new Array<string>(),
+        [SkillNodeStates.Moved]: new Array<string>(),
+    }
     Build: ISkillTreeBuild;
 
     constructor(skillTree: ISkillTreeData, patch: string, options: ISkillTreeOptions | undefined) {
@@ -64,7 +73,7 @@ export class SkillTreeData implements ISkillTreeData {
             if (node.in === undefined) node.in = [];
             if (node.classStartIndex === undefined) node.classStartIndex = (node.spc && node.spc.length > 0) ? node.spc[0] : undefined;
 
-            temp[node.id || node.skill] = node;
+            temp[`${node.id || node.skill}`] = node;
         }
         skillTree.nodes = temp;
         // #endregion
@@ -196,13 +205,16 @@ export class SkillTreeData implements ISkillTreeData {
         for (const id in skillTree.nodes) {
             const groupId = skillTree.nodes[id].g || skillTree.nodes[id].group || 0;
             const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, skillTree.constants.skillsPerOrbit, this.scale);
-            if (node.classStartIndex === 3) {
-                node.add(SkillNodeStates.Active);
-            }
             this.nodes[id] = node;
+
+            if (node.classStartIndex === 3) {
+                this.addState(node, SkillNodeStates.Active);
+            }
+
             if (node.ascendancyName !== "") {
                 this.ascedancyNodes[id] = node;
             }
+
             if (node.classStartIndex !== undefined) {
                 this.classStartNodes[id] = node;
             }
@@ -244,34 +256,28 @@ export class SkillTreeData implements ISkillTreeData {
         return 0;
     }
 
-    public getSkilledNodes = (): { [id: string]: SkillNode } => {
-        const skilled: { [id: string]: SkillNode } = {};
-        for (const id in this.nodes) {
-            const node = this.nodes[id];
-            if (node.is(SkillNodeStates.Active)) {
-                skilled[id] = node;
-            }
-        }
-        return skilled;
-    }
+    public getSkilledNodes = (): { [id: string]: SkillNode } => this.getNodes(SkillNodeStates.Active);
 
     public getHoveredNodes = (): { [id: string]: SkillNode } => {
         const hovered: { [id: string]: SkillNode } = {};
-        for (const id in this.nodes) {
-            const node = this.nodes[id];
-            if (node.is(SkillNodeStates.Hovered) || node.is(SkillNodeStates.Pathing)) {
-                hovered[id] = node;
-            }
+
+        for (const id in this.getNodes(SkillNodeStates.Hovered)) {
+            hovered[id] = this.nodes[id];
         }
+
+        for (const id in this.getNodes(SkillNodeStates.Pathing)) {
+            hovered[id] = this.nodes[id];
+        }
+
         return hovered;
     }
 
     public getNodes = (state: SkillNodeStates): { [id: string]: SkillNode } => {
         const n: { [id: string]: SkillNode } = {};
-        for (const id in this.nodes) {
-            const node = this.nodes[id];
-            if (node.is(state)) {
-                n[id] = node;
+
+        for (const id of this.nodesInState[state]) {
+            if (this.nodes[id].is(state)) {
+                n[id] = this.nodes[id];
             }
         }
 
@@ -307,13 +313,35 @@ export class SkillTreeData implements ISkillTreeData {
         }
     }
 
+    public addState = (node: SkillNode, state: SkillNodeStates) => this.addStateById(node.GetId(), state);
+    public addStateById = (id: string, state: SkillNodeStates) => {
+        if (this.nodes[id].is(state)) {
+            return;
+        }
+
+        this.nodes[id]._add(state);
+        this.nodesInState[state].push(id);
+    }
+
+    public removeState = (node: SkillNode, state: SkillNodeStates) => this.removeStateById(node.GetId(), state);
+    public removeStateById = (id: string, state: SkillNodeStates) => {
+        if (!this.nodes[id].is(state)) {
+            return;
+        }
+
+        this.nodes[id]._remove(state);
+        this.nodesInState[state].splice(this.nodesInState[state].indexOf(id), 1);
+    }
+
     public clearState = (state: SkillNodeStates) => {
         for (const id in this.getNodes(state)) {
-            this.nodes[id].remove(state);
+            this.nodes[id]._remove(state);
 
             if (state === SkillNodeStates.Hovered) {
                 this.nodes[id].hoverText = null;
             }
         }
+
+        this.nodesInState[state] = new Array<string>();
     }
 }

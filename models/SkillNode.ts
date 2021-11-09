@@ -140,12 +140,16 @@ export class SkillNode implements ISkillNode {
         return (this.state & test) === test;
     }
 
-    public add = (state: SkillNodeStates) => {
+    public _add = (state: SkillNodeStates) => {
         this.state |= state;
     }
 
-    public remove = (state: SkillNodeStates) => {
+    public _remove = (state: SkillNodeStates) => {
         this.state &= ~state;
+    }
+
+    public GetId = (): string => {
+        return `${this.id}`;
     }
 
     public GetIcon = () => {

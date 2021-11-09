@@ -159,7 +159,7 @@ export class App {
             }
 
             SkillTreeEvents.fire("skilltree", "faction-node-end", {
-                nodeId: event.node.id,
+                nodeId: event.node.GetId(),
                 alteranteIds: altIds
             });
         };

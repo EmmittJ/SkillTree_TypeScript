@@ -1,5 +1,5 @@
 ﻿interface ISkillTreeAlternateJewelSettings {
-    nodeId: number;
+    nodeId: string;
     size: string;
     factionId: number;
     seed: string;

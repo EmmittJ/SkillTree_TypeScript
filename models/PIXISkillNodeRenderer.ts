@@ -32,7 +32,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private GetNodeKey = (node: SkillNode, source: "Base" | "Compare"): string => {
-        return `${node.id}_${node.alternateIds}_${node.is(SkillNodeStates.Active)}_${source}`;
+        return `${node.GetId()}_${node.alternateIds}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
     private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
@@ -90,7 +90,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             const spriteSheet = this.getSpriteSheet(node, spriteSheetKey, source);
             const coords = spriteSheet.coords[icon];
             if (coords === undefined) {
-                throw Error(`Sprite Sheet (${spriteSheetKey}) did not have coords for Node[${node.id}]: ${icon} | ${node.activeIcon} | ${node.inactiveIcon}`);
+                throw Error(`Sprite Sheet (${spriteSheetKey}) did not have coords for Node[${node.GetId()}]: ${icon} | ${node.activeIcon} | ${node.inactiveIcon}`);
             }
 
             const spriteSheetTexture = this.getSpriteSheetTexture(spriteSheet);
@@ -198,7 +198,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
     private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
         sprite.removeAllListeners();
-        sprite.name = `${node.id}`;
+        sprite.name = `${node.GetId()}`;
 
         if (SkillTreeEvents.events["node"] !== undefined) {
             sprite.interactive = true;
@@ -243,7 +243,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     public CreateTooltip = (node: SkillNode, source: "Base" | "Compare") => {
-        let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.id}_${source}`];
+        let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${source}`];
 
         if (tooltip === undefined) {
             let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
@@ -306,20 +306,20 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             tooltip.interactive = false;
             tooltip.interactiveChildren = false;
             tooltip.containerUpdateTransform = () => { };
-            this.NodeTooltips[`${node.id}_${source}`] = tooltip;
+            this.NodeTooltips[`${node.GetId()}_${source}`] = tooltip;
         }
 
         return tooltip;
     }
 
     public DestroyTooltip = (node: SkillNode, source: "Base" | "Compare") => {
-        const tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.id}_${source}`];
+        const tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${source}`];
         if (tooltip === undefined) {
             return;
         }
 
         tooltip.destroy({ children: true, texture: true, baseTexture: true });
-        this.NodeTooltips[`${node.id}_${source}`] = undefined;
+        this.NodeTooltips[`${node.GetId()}_${source}`] = undefined;
     }
 
     public CreateConnections = (node: SkillNode, others: SkillNode[]) => {

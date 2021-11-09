@@ -67,14 +67,14 @@ export class SkillTreeUtilities {
             this.changeStartClass(def.Class, false);
             this.changeAscendancyClass(def.Ascendancy, false);
             for (const node of def.Nodes) {
-                this.skillTreeData.nodes[(node.id || node.skill)].add(SkillNodeStates.Active);
+                this.skillTreeData.addStateById(`${node.id || node.skill}`, SkillNodeStates.Active)
             }
 
             for (const id in this.skillTreeData.classStartNodes) {
                 if (this.skillTreeData.nodes[id].is(SkillNodeStates.Active)) {
                     const refund = this.getRefundNodes(this.skillTreeData.nodes[id]);
                     for (const i of refund) {
-                        i.remove(SkillNodeStates.Active);
+                        this.skillTreeData.removeState(i, SkillNodeStates.Active);
                     }
                 }
             }
@@ -89,6 +89,9 @@ export class SkillTreeUtilities {
     }
 
     private encodeURL = () => {
+        SkillTreeEvents.fire("skilltree", "active-nodes-update");
+        this.broadcastSkillCounts();
+
         this.skillTreeData.Build.TreeHash = `${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
         this.skillTreeData.Build.NodeAlternateIdMap = {};
         for (const id in this.skillTreeData.nodes) {
@@ -96,12 +99,10 @@ export class SkillTreeUtilities {
             if (node.alternateIds !== undefined
                 && (node.isRegular2 || node.isNotable)
                 && node.alternateIds.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction).length > 1).length > 0) {
-                this.skillTreeData.Build.NodeAlternateIdMap[node.id] = node.alternateIds;
+                this.skillTreeData.Build.NodeAlternateIdMap[node.GetId()] = node.alternateIds;
             }
         }
         window.location.hash = `#${lzstring.compressToEncodedURIComponent(JSON.stringify(this.skillTreeData.Build, (key, value) => key === "extra_data" ? undefined : value))}`;
-        SkillTreeEvents.fire("skilltree", "active-nodes-update");
-        this.broadcastSkillCounts();
     }
 
     private broadcastSkillCounts = () => {
@@ -110,9 +111,11 @@ export class SkillTreeUtilities {
         const maximumAscendancyPoints = 8;
         let normalNodes = 0;
         let ascNodes = 0;
-        for (const id in this.skillTreeData.nodes) {
-            const node = this.skillTreeData.nodes[id];
-            if (node.is(SkillNodeStates.Active) && node.classStartIndex === undefined && !node.isAscendancyStart && !node.isMastery) {
+
+        const nodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
+        for (const id in nodes) {
+            const node = nodes[id];
+            if (node.classStartIndex === undefined && !node.isAscendancyStart) {
                 if (node.ascendancyName === "") {
                     normalNodes++;
                 } else {
@@ -136,14 +139,14 @@ export class SkillTreeUtilities {
             }
 
             if (node.classStartIndex !== start) {
-                node.remove(SkillNodeStates.Active);
+                this.skillTreeData.removeState(node, SkillNodeStates.Active);
                 continue;;
             }
 
-            node.add(SkillNodeStates.Active);
+            this.skillTreeData.addState(node, SkillNodeStates.Active);
             SkillTreeEvents.fire("skilltree", "class-change", node);
             for (const i of this.getRefundNodes(node)) {
-                i.remove(SkillNodeStates.Active);
+                this.skillTreeData.removeState(i, SkillNodeStates.Active);
             }
         }
 
@@ -170,11 +173,11 @@ export class SkillTreeUtilities {
         for (const id in this.skillTreeData.ascedancyNodes) {
             const node = this.skillTreeData.nodes[id];
             if (node.ascendancyName !== name) {
-                node.remove(SkillNodeStates.Active);
+                this.skillTreeData.removeState(node, SkillNodeStates.Active);
                 continue;
             }
             if (node.isAscendancyStart) {
-                node.add(SkillNodeStates.Active);
+                this.skillTreeData.addState(node, SkillNodeStates.Active);
                 SkillTreeEvents.fire("skilltree", "ascendancy-class-change", node);
             }
         }
@@ -195,7 +198,7 @@ export class SkillTreeUtilities {
                     continue;
                 }
                 if (node.name.match(regex) !== null || node.stats.find(stat => stat.match(regex) !== null) !== undefined) {
-                    node.add(SkillNodeStates.Highlighted);
+                    this.skillTreeData.addState(node, SkillNodeStates.Highlighted);
                 }
             }
         }
@@ -220,13 +223,13 @@ export class SkillTreeUtilities {
                 if (i.classStartIndex !== undefined) {
                     continue;
                 }
-                i.remove(SkillNodeStates.Active);
+                this.skillTreeData.removeState(i, SkillNodeStates.Active);
             }
         }
 
         for (const i of shortest) {
             if (!i.is(SkillNodeStates.Active) && refund.indexOf(i) < 0) {
-                i.add(SkillNodeStates.Active);
+                this.skillTreeData.addState(i, SkillNodeStates.Active);
             }
         }
 
@@ -253,12 +256,12 @@ export class SkillTreeUtilities {
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
 
         if (node.classStartIndex === undefined) {
-            node.add(SkillNodeStates.Hovered);
+            this.skillTreeData.addState(node, SkillNodeStates.Hovered);
         }
         const shortest = this.getShortestPath(node);
         for (const i of shortest) {
             if (!i.is(SkillNodeStates.Pathing) && !i.is(SkillNodeStates.Active)) {
-                i.add(SkillNodeStates.Pathing);
+                this.skillTreeData.addState(i, SkillNodeStates.Pathing);
             }
         }
         node.hoverText = shortest.length.toString();
@@ -266,7 +269,7 @@ export class SkillTreeUtilities {
         if (shortest.length > 0 || node.is(SkillNodeStates.Active)) {
             const refund = this.getRefundNodes(node);
             for (const i of refund) {
-                i.add(SkillNodeStates.Pathing);
+                this.skillTreeData.addState(i, SkillNodeStates.Pathing);
             }
             if (refund.length > 0) {
                 node.hoverText = refund.length.toString();
@@ -288,7 +291,7 @@ export class SkillTreeUtilities {
         }
 
         const skilled = this.skillTreeData.getSkilledNodes();
-        if (skilled[target.id]) {
+        if (skilled[target.GetId()]) {
             return new Array<SkillNode>();
         }
 
@@ -296,7 +299,7 @@ export class SkillTreeUtilities {
         const distance: { [id: string]: number } = {};
         const adjacent = this.getAdjacentNodes(skilled);
         for (const id in adjacent) {
-            if (id === target.id.toString()) {
+            if (id === target.GetId()) {
                 const path = new Array<SkillNode>();
                 path.push(target);
                 return path;
@@ -317,8 +320,8 @@ export class SkillTreeUtilities {
                 continue;
             }
 
-            explored[current.id] = current;
-            const dist = distance[current.id];
+            explored[current.GetId()] = current;
+            const dist = distance[current.GetId()];
             for (const id of current.out) {
                 const out = this.skillTreeData.nodes[id];
                 if ((current.ascendancyName === "" && out.ascendancyName !== "" && !out.is(SkillNodeStates.Active))
@@ -338,13 +341,13 @@ export class SkillTreeUtilities {
                 distance[id] = dist + 1;
                 prev[id] = current;
                 frontier.push(out);
-                if (out.id === target.id) {
+                if (out.GetId() === target.GetId()) {
                     frontier.length = 0;
                 }
             }
         }
 
-        if (distance[target.id.toString()] === undefined) {
+        if (distance[target.GetId()] === undefined) {
             return new Array<SkillNode>();
         }
 
@@ -352,7 +355,7 @@ export class SkillTreeUtilities {
         const path = new Array<SkillNode>();
         while (current !== undefined) {
             path.push(current);
-            current = prev[current.id];
+            current = prev[current.GetId()];
         }
         return path.reverse();
     }
@@ -376,7 +379,7 @@ export class SkillTreeUtilities {
             if (out.ascendancyName !== "" && source.ascendancyName !== "" && out.ascendancyName !== source.ascendancyName) {
                 continue;
             }
-            if (out.is(SkillNodeStates.Active) && out.id !== source.id) {
+            if (out.is(SkillNodeStates.Active) && out.GetId() !== source.GetId()) {
                 frontier.push(out);
                 reachable[id] = out;
             }
@@ -395,7 +398,7 @@ export class SkillTreeUtilities {
                     if (out.ascendancyName !== "" && source.ascendancyName !== "" && out.ascendancyName !== source.ascendancyName) {
                         continue;
                     }
-                    if (out.id === source.id || reachable[id] || !out.is(SkillNodeStates.Active)) {
+                    if (out.GetId() === source.GetId() || reachable[id] || !out.is(SkillNodeStates.Active)) {
                         continue;
                     }
 
@@ -429,15 +432,5 @@ export class SkillTreeUtilities {
             }
         }
         return adjacentNodes;
-    }
-
-    public isAnyActive = (nodes: Array<number>): boolean => {
-        for (const id in nodes) {
-            if (this.skillTreeData.nodes[id] && this.skillTreeData.nodes[id].is(SkillNodeStates.Active)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

@@ -1,5 +1,5 @@
 ﻿interface ISkillTreeBuild {
-    NodeAlternateIdMap: { [node_id: number]: ISkillNodeAlternateState[] };
-    JewelSettings: { [id: number]: ISkillTreeAlternateJewelSettings | undefined };
+    NodeAlternateIdMap: { [node_id: string]: ISkillNodeAlternateState[] };
+    JewelSettings: { [id: string]: ISkillTreeAlternateJewelSettings | undefined };
     TreeHash: string;
 }
