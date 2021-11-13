@@ -792,14 +792,16 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     }
                 }
 
-                if (other && other.is(SkillNodeStates.Compared)) {
-                    this.skillTreeDataCompare.addState(other, SkillNodeStates.Hovered);
-                }
+                if (other) {
+                    if (other.is(SkillNodeStates.Compared)) {
+                        this.skillTreeDataCompare.addState(other, SkillNodeStates.Hovered);
+                    }
 
-                if (node.nodeGroup !== undefined && node.is(SkillNodeStates.Moved)) {
-                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF1493)
-                    if (highlighter !== null) {
-                        this.nodeMoveCompare = highlighter;
+                    if (other.nodeGroup !== undefined && other.is(SkillNodeStates.Moved)) {
+                        const highlighter = this.SkillNodeRenderer.CreateHighlight(other, 0xFF1493)
+                        if (highlighter !== null) {
+                            this.nodeMoveCompare = highlighter;
+                        }
                     }
                 }
             }
