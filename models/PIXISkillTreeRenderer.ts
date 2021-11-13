@@ -10,47 +10,41 @@ import { SkillTreeAlternate } from "./SkillTreeAlternate";
 
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     Initialized = false;
-    SkillNodeRenderer!: PIXISkillNodeRenderer;
+    SkillNodeRenderer: PIXISkillNodeRenderer;
     private updateHover = false;
     private pixi: PIXI.Application;
-    private viewport!: Viewport.Viewport;
-    private skillTreeData!: SkillTreeData;
-    private skillTreeDataCompare!: SkillTreeData | undefined;
-    private skillTreeAlternate!: SkillTreeAlternate;
+    private viewport: Viewport.Viewport;
+    private skillTreeData: SkillTreeData;
+    private skillTreeDataCompare: SkillTreeData | undefined;
+    private skillTreeAlternate: SkillTreeAlternate;
 
-    constructor() {
+    constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeDataCompare: SkillTreeData | undefined) {
         this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio });
+        container.appendChild(this.pixi.view);
 
         PIXI.utils.destroyTextureCache();
         PIXI.Loader.shared.reset();
-    }
-
-    async Initialize(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeDataCompare: SkillTreeData | undefined): Promise<boolean> {
-        if (this.Initialized) {
-            return true;
-        }
 
         this.skillTreeData = skillTreeData;
         this.skillTreeDataCompare = skillTreeDataCompare;
         this.skillTreeAlternate = skillTreeAlternate;
-        this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, skillTreeAlternate, this.skillTreeDataCompare !== undefined ? this.skillTreeDataCompare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
+
+        this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, this.skillTreeAlternate, this.skillTreeDataCompare !== undefined ? this.skillTreeDataCompare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Base"));
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Compare"));
         SkillTreeEvents.on("skilltree", "jewel-click-end", this.CreateJewelSocketHightlights);
         SkillTreeEvents.on("skilltree", "faction-node-end", this.UpdateFactionNode);
-        container.appendChild(this.pixi.view);
 
-        // #region Setup pixi-viewport
-        const zoomPercent = skillTreeData.imageZoomLevels.length > 2 ? skillTreeData.imageZoomLevels[1] - skillTreeData.imageZoomLevels[0] : .1;
+        const zoomPercent = this.skillTreeData.imageZoomLevels.length > 2 ? this.skillTreeData.imageZoomLevels[1] - this.skillTreeData.imageZoomLevels[0] : .1;
         this.viewport = new Viewport.Viewport({
             screenWidth: this.pixi.screen.width,
             screenHeight: this.pixi.screen.height,
-            worldWidth: skillTreeData.width * (skillTreeData.scale * 1.25),
-            worldHeight: skillTreeData.height * (skillTreeData.scale * 1.25),
+            worldWidth: this.skillTreeData.width * (this.skillTreeData.scale * 1.25),
+            worldHeight: this.skillTreeData.height * (this.skillTreeData.scale * 1.25),
             interaction: this.pixi.renderer.plugins.interaction
         });
         this.viewport.drag().wheel({ percent: zoomPercent }).pinch({ percent: zoomPercent * 10 });
-        this.viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
+        this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         this.viewport.fitWorld(true);
         this.viewport.zoomPercent(1.726);
 
@@ -62,18 +56,23 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.on('click', (click) => this.HandleZoomClick(click, zoomPercent * 2));
         this.viewport.on('click', this.HandleShiftClick);
         this.viewport.on('rightclick', (click) => this.HandleZoomClick(click, -zoomPercent * 2));
+
         this.pixi.stage.addChild(this.viewport);
-        // #endregion 
 
         window.onresize = () => {
             this.pixi.renderer.resize(window.innerWidth, window.innerHeight);
-            this.viewport.resize(this.pixi.renderer.width, this.pixi.renderer.height, skillTreeData.width * (skillTreeData.scale * 1.25), skillTreeData.height * (skillTreeData.scale * 1.25));
-            this.viewport.clampZoom({ minWidth: skillTreeData.width * (zoomPercent / 8), minHeight: skillTreeData.height * (zoomPercent / 8) });
+            this.viewport.resize(this.pixi.renderer.width, this.pixi.renderer.height, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
+            this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         };
+    }
 
-        const promise = this.LoadAssets([skillTreeData, skillTreeDataCompare]);
+    async Initialize(): Promise<boolean> {
+        if (this.Initialized) {
+            return true;
+        }
+
+        const promise = this.LoadAssets([this.skillTreeData, this.skillTreeDataCompare]);
         promise.then(() => this.Initialized = true);
-        //promise.catch(_ => this.Initialized = false);
         return promise;
     }
 

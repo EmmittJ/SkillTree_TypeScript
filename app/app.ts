@@ -15,11 +15,7 @@ export class App {
     private skillTreeDataCompare: SkillTreeData | undefined;
     private skillTreeAlternate!: SkillTreeAlternate;
     private skillTreeUtilities!: SkillTreeUtilities;
-    private renderer: ISkillTreeRenderer;
-
-    constructor() {
-        this.renderer = new PIXISkillTreeRenderer();
-    }
+    private renderer!: ISkillTreeRenderer;
 
     public launch = async (version: string, versionCompare: string, versionJson: IVersions) => {
         for (const i of [version, versionCompare]) {
@@ -84,7 +80,8 @@ export class App {
 
         const container = document.getElementById("skillTreeContainer");
         if (container !== null) {
-            this.renderer.Initialize(container, this.skillTreeData, this.skillTreeAlternate, this.skillTreeDataCompare)
+            this.renderer = new PIXISkillTreeRenderer(container, this.skillTreeData, this.skillTreeAlternate, this.skillTreeDataCompare);
+            this.renderer.Initialize()
                 .then(() => {
                     this.SetupEventsAndControls();
                     this.renderer.RenderBase();

@@ -6,7 +6,7 @@ import { SkillNode } from "../SkillNode";
 interface ISkillTreeRenderer {
     SkillNodeRenderer: ISkillNodeRenderer;
     Initialized: boolean;
-    Initialize(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeData_compare: SkillTreeData | undefined): Promise<boolean>;
+    Initialize(): Promise<boolean>;
 
     RenderActive(): void;
     RenderBase(): void;
