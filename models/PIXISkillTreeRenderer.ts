@@ -530,9 +530,16 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     return this.skillTreeData.nodes[outID]
                 });
 
-            connections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes);
+            if (connection !== null) {
+                connections.addChild(connection);
+            }
 
-            skillIcons.addChild(this.SkillNodeRenderer.CreateIcon(node));
+            const icon = this.SkillNodeRenderer.CreateIcon(node);
+            if (icon !== null) {
+                skillIcons.addChild(icon);
+            }
+
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
                 skillIcons.addChild(frame);
@@ -580,7 +587,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const node = this.skillTreeDataCompare.nodes[id];
                 if (this.skillTreeData.nodes[node.GetId()] === undefined) {
                     this.skillTreeDataCompare.addState(node, SkillNodeStates.Compared);
-                    skillIcons_compare.addChild(this.SkillNodeRenderer.CreateIcon(node, "Compare"));
+                    const icon = this.SkillNodeRenderer.CreateIcon(node, "Compare")
+                    if (icon !== null) {
+                        skillIcons_compare.addChild(icon);
+                    }
                     const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (this.skillTreeDataCompare as SkillTreeData).nodes[x]));
                     if (frame !== null) {
                         skillIcons_compare.addChild(frame);
@@ -646,7 +656,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 skillIconActiveEffects.addChild(effect);
             }
 
-            connectionsActive.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes);
+            if (connection !== null) {
+                connectionsActive.addChild(connection);
+            }
             for (const out of nodes) {
                 const frame = this.SkillNodeRenderer.CreateFrame(out, node.out.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
@@ -654,7 +667,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 }
             }
 
-            skillIconsActive.addChild(this.SkillNodeRenderer.CreateIcon(node));
+            const icon = this.SkillNodeRenderer.CreateIcon(node);
+            if (icon !== null) {
+                skillIconsActive.addChild(icon);
+            }
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
                 skillIconsActive.addChild(frame);
@@ -772,7 +788,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     return this.skillTreeData.nodes[outID]
                 });
 
-            pathingConnections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes);
+            if (connection !== null) {
+                pathingConnections.addChild(connection);
+            }
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
                 pathingSkillIcons.addChild(frame);
