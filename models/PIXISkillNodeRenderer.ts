@@ -443,7 +443,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             const lineTexure = new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(0, 0, length, texture.baseTexture.height));
             line = PIXI.Sprite.from(lineTexure);
         } else {
-            line = new PIXI.TilingSprite(texture, length, texture.baseTexture.height);
+            line = PIXI.TilingSprite.from(texture.baseTexture, { width: length, height: texture.baseTexture.height });
         }
         line.anchor.set(0, 0.5);
         line.position.set(node.x, node.y);
