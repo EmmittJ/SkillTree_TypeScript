@@ -8,6 +8,28 @@ import { SkillNodeStates, SkillNode } from "./SkillNode";
 import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
 import { SkillTreeAlternate } from "./SkillTreeAlternate";
 
+export enum RenderLayers {
+    BackgroundColor = 0,
+    Background = 1,
+    BackgroundActive = 2,
+    Connections = 3,
+    SkillIconsActiveEffects = 4,
+    ConnectionsActive = 5,
+    ConnectionsPathing = 6,
+    SkillIcons = 7,
+    SkillIconsPathing = 8,
+    SkillIconsActive = 9,
+    CharacterStarts = 10,
+    CharacterStartsActive = 11,
+    JewelSocketActive = 12,
+    JewelSocketHighlights = 13,
+    SkillIconsCompare = 14,
+    Highlights = 15,
+    NodeMoveCompare = 16,
+    Tooltip = 17,
+    TooltipCompare = 18
+}
+
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     Initialized = false;
     SkillNodeRenderer: PIXISkillNodeRenderer;
@@ -17,11 +39,33 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     private skillTreeData: SkillTreeData;
     private skillTreeDataCompare: SkillTreeData | undefined;
     private skillTreeAlternate: SkillTreeAlternate;
+    LayerContainers: { [layer in RenderLayers]: PIXI.Container } = {
+        [RenderLayers.BackgroundColor]: new PIXI.Container(),
+        [RenderLayers.Background]: new PIXI.Container(),
+        [RenderLayers.BackgroundActive]: new PIXI.Container(),
+        [RenderLayers.Connections]: new PIXI.Container(),
+        [RenderLayers.SkillIconsActiveEffects]: new PIXI.Container(),
+        [RenderLayers.ConnectionsActive]: new PIXI.Container(),
+        [RenderLayers.ConnectionsPathing]: new PIXI.Container(),
+        [RenderLayers.SkillIcons]: new PIXI.Container(),
+        [RenderLayers.SkillIconsPathing]: new PIXI.Container(),
+        [RenderLayers.SkillIconsActive]: new PIXI.Container(),
+        [RenderLayers.CharacterStarts]: new PIXI.Container(),
+        [RenderLayers.CharacterStartsActive]: new PIXI.Container(),
+        [RenderLayers.JewelSocketActive]: new PIXI.Container(),
+        [RenderLayers.JewelSocketHighlights]: new PIXI.Container(),
+        [RenderLayers.SkillIconsCompare]: new PIXI.Container(),
+        [RenderLayers.Highlights]: new PIXI.Container(),
+        [RenderLayers.NodeMoveCompare]: new PIXI.Container(),
+        [RenderLayers.Tooltip]: new PIXI.Container(),
+        [RenderLayers.TooltipCompare]: new PIXI.Container(),
+    };
 
     constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeDataCompare: SkillTreeData | undefined) {
         this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio });
         container.appendChild(this.pixi.view);
 
+        PIXI.settings.SORTABLE_CHILDREN = false;
         PIXI.utils.destroyTextureCache();
         PIXI.Loader.shared.reset();
 
@@ -66,6 +110,27 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         };
     }
 
+    private SetupLayers() {
+        this.viewport.removeChildren();
+
+        for (const key in this.LayerContainers) {
+            this.viewport.addChild(this.LayerContainers[Number(key) as RenderLayers]);
+        }
+    }
+
+    private SetLayer(layer: RenderLayers, object: PIXI.Container) {
+        this.LayerContainers[layer] = object;
+
+        const current = this.viewport.getChildAt(layer);
+        this.viewport.addChild(object);
+        this.viewport.swapChildren(current, object);
+        this.viewport.removeChild(current);
+    }
+
+    private ClearLayer(layer: RenderLayers) {
+        this.SetLayer(layer, new PIXI.Container());
+    }
+
     async Initialize(): Promise<boolean> {
         if (this.Initialized) {
             return true;
@@ -84,13 +149,12 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.zoomPercent(zoom, false);
     }
 
-    private jewelSocketHighlights: PIXI.Container = new PIXI.Container();
     private HandleShiftClick = (click: PIXI.InteractionEvent) => {
         if (!click.data.originalEvent.shiftKey) {
             return;
         }
 
-        const interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.skillIcons);
+        const interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.viewport.getChildAt(RenderLayers.SkillIcons));
         if (interactiveObject === null || interactiveObject.name === undefined || interactiveObject.name === null || interactiveObject.name === "") {
             return;
         }
@@ -119,6 +183,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private CreateJewelSocketHightlights = (newSettings: ISkillTreeAlternateJewelSettings | undefined = undefined) => {
+        this.ClearLayer(RenderLayers.JewelSocketHighlights);
+        const jewelSocketHighlights: PIXI.Container = new PIXI.Container();
+
         if (newSettings !== undefined && this.skillTreeData.Build.JewelSettings[newSettings.nodeId] === undefined) {
             this.skillTreeData.Build.JewelSettings[newSettings.nodeId] = JSON.parse(JSON.stringify(newSettings));
         }
@@ -132,7 +199,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
             if (settings.extraData instanceof PIXI.Container) {
                 this.pixi.ticker.remove(this.RotateJewelHighlights, settings.extraData);
-                this.jewelSocketHighlights.removeChild(settings.extraData);
+                jewelSocketHighlights.removeChild(settings.extraData);
                 settings.extraData.destroy({ children: true });
                 settings.extraData = undefined;
             }
@@ -169,7 +236,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 container.addChild(sprite2);
                 container.addChild(sprite1);
 
-                this.jewelSocketHighlights.addChild(container);
+                jewelSocketHighlights.addChild(container);
                 settings.extraData = container;
 
                 const singleNodes: { [id: number]: ISkillNodeAlternateState[] | undefined } = {};
@@ -211,7 +278,12 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.skillTreeData.clearAlternates(usedNodes);
-        this.UpdateJewelSocketHighlightPosition();
+
+        jewelSocketHighlights.interactive = false;
+        jewelSocketHighlights.interactiveChildren = false;
+        jewelSocketHighlights.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.JewelSocketHighlights, jewelSocketHighlights);
+
         this.RenderActive();
         SkillTreeEvents.fire("skilltree", "encode-url");
     }
@@ -223,23 +295,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 sprite.rotation += rotation * delta;
                 rotation *= -1;
             }
-        }
-    }
-
-    private UpdateJewelSocketHighlightPosition = async (): Promise<void> => {
-        this.jewelSocketHighlights.interactive = false;
-        this.jewelSocketHighlights.interactiveChildren = false;
-        this.jewelSocketHighlights.containerUpdateTransform = () => { };
-
-        if (this.viewport.children.indexOf(this.jewelSocketHighlights) < 0) {
-            this.viewport.addChild(this.jewelSocketHighlights);
-        }
-
-        if (this.tooltip !== undefined && this.viewport.children.indexOf(this.tooltip) >= 0) {
-            this.viewport.setChildIndex(this.jewelSocketHighlights, this.viewport.children.indexOf(this.tooltip) - 1);
-        }
-        else if (this.viewport.children.indexOf(this.jewelSocketHighlights) !== this.viewport.children.length - 1) {
-            this.viewport.setChildIndex(this.jewelSocketHighlights, this.viewport.children.length - 1);
         }
     }
 
@@ -321,23 +376,24 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         return promise;
     }
 
-    private background: PIXI.Container = new PIXI.Container();
-    private connections: PIXI.Container = new PIXI.Container();
-    private skillIcons: PIXI.Container = new PIXI.Container();
-    private skillIcons_compare: PIXI.Container = new PIXI.Container();
-    private characterStarts: PIXI.Container = new PIXI.Container();
-
     public RenderBase = (): void => {
         if (!this.Initialized) {
             return;
         }
 
-        this.viewport.removeChildren();
-        const backgroundAsset = this.skillTreeData.assets["Background1"] ? "Background1" : "Background2";
-        const background = PIXI.Sprite.from(backgroundAsset);
-        const backgroundSprite = new PIXI.TilingSprite(background.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
+        this.SetupLayers();
+
+        const background: PIXI.Container = new PIXI.Container();
+        const characterStarts: PIXI.Container = new PIXI.Container();
+
+        const temp = PIXI.Sprite.from(this.skillTreeData.assets["Background1"] ? "Background1" : "Background2");
+        const backgroundSprite = new PIXI.TilingSprite(temp.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
+        backgroundSprite.interactive = false;
+        backgroundSprite.interactiveChildren = false;
+        backgroundSprite.updateTransform = () => { };
+        backgroundSprite.containerUpdateTransform = () => { };
         backgroundSprite.anchor.set(.5);
-        this.viewport.addChild(backgroundSprite);
+        this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
 
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
@@ -364,7 +420,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             const sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
-            this.background.addChild(sprite);
+            background.addChild(sprite);
 
             if (max === 3) {
                 sprite.anchor.set(.5, 1);
@@ -372,7 +428,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 sprite2.rotation = Math.PI;
                 sprite2.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
                 sprite2.anchor.set(.5, 1);
-                this.background.addChild(sprite2);
+                background.addChild(sprite2);
             }
         }
 
@@ -386,7 +442,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             const sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
-            this.background.addChild(sprite);
+            background.addChild(sprite);
 
             if (this.skillTreeData.classes === undefined) {
                 continue;
@@ -421,7 +477,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                         const text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
                         text.position.set(x, y);
                         text.scale.set(this.skillTreeData.scale);
-                        this.background.addChild(text);
+                        background.addChild(text);
                     }
                 }
             }
@@ -436,41 +492,27 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             const graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
             graphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
             graphic.anchor.set(.5);
-            this.characterStarts.addChild(graphic);
+            characterStarts.addChild(graphic);
         }
 
-        // Render background as a texture
-        this.background.interactive = false;
-        this.background.interactiveChildren = false;
-        this.background.containerUpdateTransform = () => { };
-        this.viewport.addChild(this.background);
+        background.interactive = false;
+        background.interactiveChildren = false;
+        background.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.Background, background);
+
+        characterStarts.interactive = false;
+        characterStarts.interactiveChildren = false;
+        characterStarts.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.CharacterStarts, characterStarts);
 
         this.RenderBaseNodes();
-
-        this.skillIcons_compare.interactive = false;
-        this.skillIcons_compare.interactiveChildren = true;
-        this.skillIcons_compare.containerUpdateTransform = () => { };
-        this.viewport.addChild(this.skillIcons_compare);
-
-        this.skillIcons.interactive = false;
-        this.skillIcons.interactiveChildren = true;
-        this.skillIcons.containerUpdateTransform = () => { };
-        this.viewport.addChild(this.skillIcons);
-
-        this.characterStarts.interactive = false;
-        this.characterStarts.interactiveChildren = false;
-        this.characterStarts.containerUpdateTransform = () => { };
-        this.viewport.addChild(this.characterStarts);
-        this.UpdateJewelSocketHighlightPosition();
     }
 
     private RenderBaseNodes = () => {
-        if (this.viewport.children.indexOf(this.connections) > 0) {
-            this.viewport.removeChild(this.connections);
-        }
-        if (this.connections.children.length > 0) {
-            this.connections = new PIXI.Container();
-        }
+
+        const connections: PIXI.Container = new PIXI.Container();
+        const skillIcons: PIXI.Container = new PIXI.Container();
+        const skillIcons_compare: PIXI.Container = new PIXI.Container();
 
         const drawnConnections: { [id: string]: boolean } = {};
         for (const id in this.skillTreeData.nodes) {
@@ -488,18 +530,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     return this.skillTreeData.nodes[outID]
                 });
 
-            this.connections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+            connections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
 
-            this.skillIcons.addChild(this.SkillNodeRenderer.CreateIcon(node));
+            skillIcons.addChild(this.SkillNodeRenderer.CreateIcon(node));
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
-                this.skillIcons.addChild(frame);
+                skillIcons.addChild(frame);
             }
 
             if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.GetId()] === undefined) {
                 const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0x00FF00);
                 if (highlighter !== null) {
-                    this.skillIcons.addChild(highlighter);
+                    skillIcons.addChild(highlighter);
                 }
             }
             const nodeSize = this.SkillNodeRenderer.GetNodeSize(node);
@@ -527,7 +569,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     if (moved) this.skillTreeDataCompare.addState(node2, SkillNodeStates.Moved);
                     const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
                     if (highlighter !== null) {
-                        this.skillIcons.addChild(highlighter);
+                        skillIcons.addChild(highlighter);
                     }
                 }
             }
@@ -538,55 +580,48 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const node = this.skillTreeDataCompare.nodes[id];
                 if (this.skillTreeData.nodes[node.GetId()] === undefined) {
                     this.skillTreeDataCompare.addState(node, SkillNodeStates.Compared);
-                    this.skillIcons_compare.addChild(this.SkillNodeRenderer.CreateIcon(node, "Compare"));
+                    skillIcons_compare.addChild(this.SkillNodeRenderer.CreateIcon(node, "Compare"));
                     const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (this.skillTreeDataCompare as SkillTreeData).nodes[x]));
                     if (frame !== null) {
-                        this.skillIcons_compare.addChild(frame);
+                        skillIcons_compare.addChild(frame);
                     }
                     const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF0000, "Compare")
                     if (highlighter !== null) {
-                        this.skillIcons_compare.addChild(highlighter);
+                        skillIcons_compare.addChild(highlighter);
                     }
                 }
             }
         }
 
-        // Render connections as a texture
-        this.connections.interactive = false;
-        this.connections.interactiveChildren = false;
-        this.connections.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.connections, this.viewport.children.indexOf(this.background) + 1);
+        skillIcons.interactive = false;
+        skillIcons.interactiveChildren = true;
+        skillIcons.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.SkillIcons, skillIcons);
+
+        skillIcons_compare.interactive = false;
+        skillIcons_compare.interactiveChildren = true;
+        skillIcons_compare.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.SkillIconsCompare, skillIcons_compare);
+
+        connections.interactive = false;
+        connections.interactiveChildren = false;
+        connections.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.Connections, connections);
     }
 
-    private skillIconActiveEffects: PIXI.Container = new PIXI.Container();
-    private connectionsActive: PIXI.Container = new PIXI.Container();
-    private skillIconsActive: PIXI.Container = new PIXI.Container();
     public RenderActive = (): void => {
         if (!this.Initialized) {
             return;
         }
-
         this.RenderHover();
 
-        if (this.viewport.children.indexOf(this.skillIconActiveEffects) > 0) {
-            this.viewport.removeChild(this.skillIconActiveEffects);
-        }
-        if (this.viewport.children.indexOf(this.connectionsActive) > 0) {
-            this.viewport.removeChild(this.connectionsActive);
-        }
-        if (this.viewport.children.indexOf(this.skillIconsActive) > 0) {
-            this.viewport.removeChild(this.skillIconsActive);
-        }
+        this.ClearLayer(RenderLayers.ConnectionsActive);
+        this.ClearLayer(RenderLayers.SkillIconsActive);
+        this.ClearLayer(RenderLayers.SkillIconsActiveEffects);
 
-        if (this.skillIconActiveEffects.children.length > 0) {
-            this.skillIconActiveEffects = new PIXI.Container();
-        }
-        if (this.connectionsActive.children.length > 0) {
-            this.connectionsActive = new PIXI.Container();
-        }
-        if (this.skillIconsActive.children.length > 0) {
-            this.skillIconsActive = new PIXI.Container();
-        }
+        const skillIconActiveEffects: PIXI.Container = new PIXI.Container();
+        const connectionsActive: PIXI.Container = new PIXI.Container();
+        const skillIconsActive: PIXI.Container = new PIXI.Container();
 
         const drawnConnections: { [id: string]: boolean } = {};
         const activeNodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
@@ -608,62 +643,50 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
             const effect = this.SkillNodeRenderer.CreateIconEffect(node);
             if (effect !== null) {
-                this.skillIconActiveEffects.addChild(effect);
+                skillIconActiveEffects.addChild(effect);
             }
 
-            this.connectionsActive.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+            connectionsActive.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
             for (const out of nodes) {
                 const frame = this.SkillNodeRenderer.CreateFrame(out, node.out.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
-                    this.skillIconsActive.addChild(frame);
+                    skillIconsActive.addChild(frame);
                 }
             }
 
-            this.skillIconsActive.addChild(this.SkillNodeRenderer.CreateIcon(node));
+            skillIconsActive.addChild(this.SkillNodeRenderer.CreateIcon(node));
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
-                this.skillIconsActive.addChild(frame);
+                skillIconsActive.addChild(frame);
             }
         }
 
-        this.skillIconActiveEffects.interactive = false;
-        this.skillIconActiveEffects.interactiveChildren = false;
-        this.skillIconActiveEffects.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.skillIconActiveEffects, this.viewport.children.indexOf(this.connections) + 1);
+        skillIconActiveEffects.interactive = false;
+        skillIconActiveEffects.interactiveChildren = false;
+        skillIconActiveEffects.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.SkillIconsActiveEffects, skillIconActiveEffects);
 
-        this.connectionsActive.interactive = false;
-        this.connectionsActive.interactiveChildren = false;
-        this.connectionsActive.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.connectionsActive, this.viewport.children.indexOf(this.skillIconActiveEffects) + 1);
+        connectionsActive.interactive = false;
+        connectionsActive.interactiveChildren = false;
+        connectionsActive.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.ConnectionsActive, connectionsActive);
 
-        this.skillIconsActive.interactive = false;
-        this.skillIconsActive.interactiveChildren = false;
-        this.skillIconsActive.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.skillIconsActive, this.viewport.children.indexOf(this.skillIcons) + 1);
-
-        this.UpdateJewelSocketHighlightPosition();
+        skillIconsActive.interactive = false;
+        skillIconsActive.interactiveChildren = false;
+        skillIconsActive.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.SkillIconsActive, skillIconsActive);
     }
 
-    private backgroundActive: PIXI.Container = new PIXI.Container();
-    private characterStartsActive: PIXI.Container = new PIXI.Container();
     public RenderCharacterStartsActive = (): void => {
         if (!this.Initialized) {
             return;
         }
 
-        if (this.viewport.children.indexOf(this.backgroundActive) > 0) {
-            this.viewport.removeChild(this.backgroundActive);
-        }
-        if (this.viewport.children.indexOf(this.characterStartsActive) > 0) {
-            this.viewport.removeChild(this.characterStartsActive);
-        }
+        this.ClearLayer(RenderLayers.BackgroundActive);
+        this.ClearLayer(RenderLayers.CharacterStartsActive);
 
-        if (this.backgroundActive.children.length > 0) {
-            this.backgroundActive = new PIXI.Container();
-        }
-        if (this.characterStartsActive.children.length > 0) {
-            this.characterStartsActive = new PIXI.Container();
-        }
+        const backgroundActive: PIXI.Container = new PIXI.Container();
+        const characterStartsActive: PIXI.Container = new PIXI.Container();
 
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
@@ -683,26 +706,24 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
                 classNodeGraphic.anchor.set(0)
                 classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
-                this.backgroundActive.addChild(classNodeGraphic);
+                backgroundActive.addChild(classNodeGraphic);
             }
 
             const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
             nodeGraphic.anchor.set(.5)
             nodeGraphic.position.set(node.x, node.y);
-            this.characterStartsActive.addChild(nodeGraphic);
+            characterStartsActive.addChild(nodeGraphic);
         }
 
-        this.backgroundActive.interactive = false;
-        this.backgroundActive.interactiveChildren = false;
-        this.backgroundActive.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.backgroundActive, this.viewport.children.indexOf(this.background));
+        backgroundActive.interactive = false;
+        backgroundActive.interactiveChildren = false;
+        backgroundActive.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.BackgroundActive, backgroundActive);
 
-        this.characterStartsActive.interactive = false;
-        this.characterStartsActive.interactiveChildren = false;
-        this.characterStartsActive.containerUpdateTransform = () => { };
-        this.viewport.addChild(this.characterStartsActive);
-
-        this.UpdateJewelSocketHighlightPosition();
+        characterStartsActive.interactive = false;
+        characterStartsActive.interactiveChildren = false;
+        characterStartsActive.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.CharacterStartsActive, characterStartsActive);
     }
 
     public StopRenderHover = (): void => {
@@ -724,35 +745,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.RenderTooltip();
     }
 
-    private nodeMoveCompare: PIXI.Graphics | undefined = undefined;
-    private pathingConnections: PIXI.Container = new PIXI.Container();
-    private pathingSkillIcons: PIXI.Container = new PIXI.Container();
     private RenderHover = async (): Promise<void> => {
-        if (this.viewport.children.indexOf(this.pathingConnections) > 0) {
-            this.viewport.removeChild(this.pathingConnections);
-        }
-
-        if (this.viewport.children.indexOf(this.pathingSkillIcons) > 0) {
-            this.viewport.removeChild(this.pathingSkillIcons);
-        }
-
-        if (this.nodeMoveCompare !== undefined && this.viewport.children.indexOf(this.nodeMoveCompare) > 0) {
-            this.viewport.removeChild(this.nodeMoveCompare);
-
-        }
-        this.nodeMoveCompare = undefined;
-
-        if (this.pathingConnections.children.length > 0) {
-            this.pathingConnections = new PIXI.Container();
-        }
-
-        if (this.pathingSkillIcons.children.length > 0) {
-            this.pathingSkillIcons = new PIXI.Container();
-        }
+        this.ClearLayer(RenderLayers.ConnectionsPathing);
+        this.ClearLayer(RenderLayers.SkillIconsPathing);
+        this.ClearLayer(RenderLayers.NodeMoveCompare);
 
         if (!this.updateHover) {
             return;
         }
+
+        let nodeMoveCompare: PIXI.Graphics | undefined = undefined;
+        const pathingConnections: PIXI.Container = new PIXI.Container();
+        const pathingSkillIcons: PIXI.Container = new PIXI.Container();
 
         const drawnConnections: { [id: string]: boolean } = {};
         const pathingNodes = this.skillTreeData.getNodes(SkillNodeStates.Pathing);
@@ -768,10 +772,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     return this.skillTreeData.nodes[outID]
                 });
 
-            this.pathingConnections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
+            pathingConnections.addChild(this.SkillNodeRenderer.CreateConnections(node, nodes));
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
-                this.pathingSkillIcons.addChild(frame);
+                pathingSkillIcons.addChild(frame);
             }
         }
 
@@ -800,46 +804,37 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     if (other.nodeGroup !== undefined && other.is(SkillNodeStates.Moved)) {
                         const highlighter = this.SkillNodeRenderer.CreateHighlight(other, 0xFF1493)
                         if (highlighter !== null) {
-                            this.nodeMoveCompare = highlighter;
+                            nodeMoveCompare = highlighter;
                         }
                     }
                 }
             }
         }
 
-        this.pathingConnections.interactive = false;
-        this.pathingConnections.interactiveChildren = false;
-        this.pathingConnections.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.pathingConnections, Math.max(this.viewport.children.indexOf(this.connections), this.viewport.children.indexOf(this.connectionsActive)) + 1);
+        pathingConnections.interactive = false;
+        pathingConnections.interactiveChildren = false;
+        pathingConnections.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.ConnectionsPathing, pathingConnections);
 
-        this.pathingSkillIcons.interactive = false;
-        this.pathingSkillIcons.interactiveChildren = false;
-        this.pathingSkillIcons.containerUpdateTransform = () => { };
-        this.viewport.addChildAt(this.pathingSkillIcons, Math.max(this.viewport.children.indexOf(this.skillIcons), this.viewport.children.indexOf(this.skillIconsActive)) + 1);
+        pathingSkillIcons.interactive = false;
+        pathingSkillIcons.interactiveChildren = false;
+        pathingSkillIcons.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.SkillIconsPathing, pathingSkillIcons);
 
-        if (this.nodeMoveCompare !== undefined) {
-            this.nodeMoveCompare.interactive = false;
-            this.nodeMoveCompare.interactiveChildren = false;
-            this.nodeMoveCompare.containerUpdateTransform = () => { };
-            this.viewport.addChild(this.nodeMoveCompare);
+        if (nodeMoveCompare !== undefined) {
+            nodeMoveCompare.interactive = false;
+            nodeMoveCompare.interactiveChildren = false;
+            nodeMoveCompare.containerUpdateTransform = () => { };
+            this.SetLayer(RenderLayers.NodeMoveCompare, nodeMoveCompare);
         }
-
-        this.UpdateJewelSocketHighlightPosition();
     }
 
-    private tooltip: PIXI.Graphics | undefined = undefined;
-    private tooltipCompare: PIXI.Graphics | undefined = undefined;
     private RenderTooltip = async (): Promise<void> => {
-        if (this.tooltip !== undefined && this.viewport.children.indexOf(this.tooltip) > 0) {
-            this.viewport.removeChild(this.tooltip);
-        }
+        this.ClearLayer(RenderLayers.Tooltip);
+        this.ClearLayer(RenderLayers.TooltipCompare);
 
-        if (this.tooltipCompare !== undefined && this.viewport.children.indexOf(this.tooltipCompare) > 0) {
-            this.viewport.removeChild(this.tooltipCompare);
-        }
-
-        this.tooltip = undefined;
-        this.tooltipCompare = undefined;
+        let tooltip: PIXI.Graphics | undefined = undefined;
+        let tooltipCompare: PIXI.Graphics | undefined = undefined;
 
         if (!this.updateHover) {
             return
@@ -855,14 +850,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
             text.position.set(padding / 2, padding / 2);
 
-            this.tooltip = new PIXI.Graphics();
-            this.tooltip.beginFill(0x000000, .75);
-            this.tooltip.lineStyle(2, 0xCBB59C)
-            this.tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
-            this.tooltip.endFill();
+            tooltip = new PIXI.Graphics();
+            tooltip.beginFill(0x000000, .75);
+            tooltip.lineStyle(2, 0xCBB59C)
+            tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
+            tooltip.endFill();
 
-            this.tooltip.addChild(text);
-
+            tooltip.addChild(text);
         }
 
         let hoveredCompareNode: SkillNode | undefined = undefined;
@@ -879,98 +873,91 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const text = this.SkillNodeRenderer.CreateTooltip(node, "Compare");
                 text.position.set(padding / 2, padding / 2);
 
-                this.tooltipCompare = new PIXI.Graphics();
-                this.tooltipCompare.beginFill(0x000000, .75);
-                this.tooltipCompare.lineStyle(2, 0xFFB000)
-                this.tooltipCompare.drawRect(0, 0, text.width + padding, text.height + padding);
-                this.tooltipCompare.endFill();
+                tooltipCompare = new PIXI.Graphics();
+                tooltipCompare.beginFill(0x000000, .75);
+                tooltipCompare.lineStyle(2, 0xFFB000)
+                tooltipCompare.drawRect(0, 0, text.width + padding, text.height + padding);
+                tooltipCompare.endFill();
 
-                this.tooltipCompare.addChild(text);
+                tooltipCompare.addChild(text);
             }
         }
 
-        if (this.tooltip === undefined && this.tooltipCompare !== undefined) {
-            this.tooltip = this.tooltipCompare;
+        if (tooltip === undefined && tooltipCompare !== undefined) {
+            tooltip = tooltipCompare;
             hoveredNode = hoveredCompareNode;
 
-            this.tooltipCompare = undefined;
+            tooltipCompare = undefined;
             hoveredCompareNode = undefined;
         }
 
-        if (this.tooltip !== undefined) {
-            this.tooltip.interactive = false;
-            this.tooltip.interactiveChildren = false;
-            this.tooltip.containerUpdateTransform = () => { };
-            this.viewport.addChild(this.tooltip);
+        if (tooltip !== undefined) {
+            tooltip.interactive = false;
+            tooltip.interactiveChildren = false;
+            tooltip.containerUpdateTransform = () => { };
+            this.SetLayer(RenderLayers.Tooltip, tooltip);
         }
 
-        if (this.tooltipCompare !== undefined) {
-            this.tooltipCompare.interactive = false;
-            this.tooltipCompare.interactiveChildren = false;
-            this.tooltipCompare.containerUpdateTransform = () => { };
-            this.viewport.addChild(this.tooltipCompare);
+        if (tooltipCompare !== undefined) {
+            tooltipCompare.interactive = false;
+            tooltipCompare.interactiveChildren = false;
+            tooltipCompare.containerUpdateTransform = () => { };
+            this.SetLayer(RenderLayers.TooltipCompare, tooltipCompare);
         }
 
-        if (this.tooltip !== undefined && hoveredNode !== undefined) {
-
-            const bounds = this.tooltip.getBounds();
+        if (tooltip !== undefined && hoveredNode !== undefined) {
+            const bounds = tooltip.getBounds();
             const size = hoveredNode.GetTargetSize();
-            const scaleX = this.tooltip.width / bounds.width / devicePixelRatio;
-            const scaleY = this.tooltip.height / bounds.height / devicePixelRatio;
+            const scaleX = tooltip.width / bounds.width / devicePixelRatio;
+            const scaleY = tooltip.height / bounds.height / devicePixelRatio;
 
-            if (this.tooltip.worldTransform.tx + bounds.width > screen.width) {
-                this.tooltip.x = hoveredNode.x - this.tooltip.width * scaleX - size.width;
+            if (tooltip.worldTransform.tx + bounds.width > screen.width) {
+                tooltip.x = hoveredNode.x - tooltip.width * scaleX - size.width;
             } else {
-                this.tooltip.x = hoveredNode.x + size.width;
+                tooltip.x = hoveredNode.x + size.width;
             }
 
-            if (this.tooltip.worldTransform.ty + bounds.height > screen.height) {
-                this.tooltip.y = hoveredNode.y - this.tooltip.height * scaleY + size.height / 2;
+            if (tooltip.worldTransform.ty + bounds.height > screen.height) {
+                tooltip.y = hoveredNode.y - tooltip.height * scaleY + size.height / 2;
             } else {
-                this.tooltip.y = hoveredNode.y - size.height / 2;
+                tooltip.y = hoveredNode.y - size.height / 2;
             }
 
-            this.tooltip.scale.set(scaleX, scaleY);
+            tooltip.scale.set(scaleX, scaleY);
 
-            if (this.tooltipCompare !== undefined && hoveredCompareNode !== undefined) {
-                const boundsCompare = this.tooltipCompare.getBounds();
+            if (tooltipCompare !== undefined && hoveredCompareNode !== undefined) {
+                const boundsCompare = tooltipCompare.getBounds();
 
-                this.tooltipCompare.y = this.tooltip.y;
-                this.tooltipCompare.x = this.tooltip.x + this.tooltip.width;
+                tooltipCompare.y = tooltip.y;
+                tooltipCompare.x = tooltip.x + tooltip.width;
 
-                this.tooltipCompare.scale.set(this.tooltipCompare.width / boundsCompare.width / devicePixelRatio, this.tooltipCompare.height / boundsCompare.height / devicePixelRatio);
+                tooltipCompare.scale.set(tooltipCompare.width / boundsCompare.width / devicePixelRatio, tooltipCompare.height / boundsCompare.height / devicePixelRatio);
             }
         }
-
-        this.UpdateJewelSocketHighlightPosition();
     }
 
-    private highlights: PIXI.Container = new PIXI.Container();
     public RenderHighlight = (): void => {
         if (!this.Initialized) {
             return;
         }
 
-        if (this.viewport.children.indexOf(this.highlights) > 0) {
-            this.viewport.removeChild(this.highlights);
-        }
-        if (this.highlights.children.length > 0) {
-            this.highlights = new PIXI.Container();
-        }
+        this.ClearLayer(RenderLayers.Highlights);
 
-        for (const id in this.skillTreeData.nodes) {
-            const node = this.skillTreeData.nodes[id];
+        const highlights = new PIXI.Container();
+
+        const nodes = this.skillTreeData.getNodes(SkillNodeStates.Highlighted);
+        for (const id in nodes) {
+            const node = nodes[id];
             const highlight = this.SkillNodeRenderer.CreateHighlight(node);
             if (highlight !== null) {
-                this.highlights.addChild(highlight)
+                highlights.addChild(highlight)
             }
         }
 
-        this.highlights.interactive = false;
-        this.highlights.interactiveChildren = false;
-        this.highlights.containerUpdateTransform = () => { };
-        this.viewport.addChild(this.highlights);
-        this.UpdateJewelSocketHighlightPosition();
+        highlights.interactive = false;
+        highlights.interactiveChildren = false;
+        highlights.containerUpdateTransform = () => { };
+        this.SetLayer(RenderLayers.Highlights, highlights);
     }
 
     public CreateScreenshot = (mimeType: 'image/jpeg' | 'image/webp'): string => {

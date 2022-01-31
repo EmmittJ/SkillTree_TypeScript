@@ -346,11 +346,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null;
         }
 
-        if ((node.is(SkillNodeStates.Pathing) || node.is(SkillNodeStates.Hovered)) && (!other.is(SkillNodeStates.Pathing) && !other.is(SkillNodeStates.Hovered) && !other.is(SkillNodeStates.Active))) {
+        if (node.isMastery || other.isMastery) {
             return null;
         }
 
-        if (node.isMastery || other.isMastery) {
+        if ((node.is(SkillNodeStates.Pathing) || node.is(SkillNodeStates.Hovered)) && !(other.is(SkillNodeStates.Pathing) || other.is(SkillNodeStates.Hovered) || other.is(SkillNodeStates.Active))) {
             return null;
         }
 
@@ -362,6 +362,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private createArcConnection = (node: SkillNode, other: SkillNode): PIXI.Container => {
+        const connectionType = node.GetConnectionType(other)
         let startAngle = node.arc < other.arc ? node.arc : other.arc;
         let endAngle = node.arc < other.arc ? other.arc : node.arc;
 
@@ -383,12 +384,8 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             if (node.nodeGroup === undefined) {
                 continue
             }
-            const mask = new PIXI.Graphics();
-            mask.lineStyle(50 * node.scale, 0x00FF00);
-            mask.arc(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale, node.orbitRadii[node.orbit] * node.scale, startAngle, endAngle, false);
-            arcContainer.addChild(mask);
 
-            const asset = `Orbit${node.orbit}${node.GetConnectionType(other)}`;
+            const asset = `Orbit${node.orbit}${connectionType}`;
             let texture: PIXI.Texture | undefined = this.NodeConnectionTextures[asset];
             if (texture === undefined) {
                 texture = PIXI.Texture.from(asset);
@@ -399,7 +396,16 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             sprite.rotation = angle + initialRotation;
             sprite.position.set(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale);
             sprite.anchor.set(1);
-            sprite.mask = mask;
+
+            if (i == arcsNeeded - 1) {
+                const mask = new PIXI.Graphics();
+                mask.lineStyle(50 * node.scale, 0x00FF00);
+                mask.arc(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale, node.orbitRadii[node.orbit] * node.scale, startAngle, endAngle, false);
+                
+                sprite.mask = mask;
+                arcContainer.addChild(mask);
+            }
+
             arcContainer.addChild(sprite);
 
             if (node.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
