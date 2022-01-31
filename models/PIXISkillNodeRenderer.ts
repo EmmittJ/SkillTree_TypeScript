@@ -61,7 +61,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             this.NodeFrameTextures[asset] = texture;
         }
 
-        const frame = new PIXI.Sprite(texture);
+        const frame = PIXI.Sprite.from(texture);
         frame.position.set(node.x, node.y);
         frame.anchor.set(.5);
         frame.hitArea = new PIXI.Circle(0, 0, Math.max(frame.texture.width, frame.texture.height) / 2);
@@ -74,7 +74,11 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return frame;
     }
 
-    public CreateIcon = (node: SkillNode, source: "Base" | "Compare" = "Base"): PIXI.Sprite => {
+    public CreateIcon = (node: SkillNode, source: "Base" | "Compare" = "Base"): PIXI.Sprite | null => {
+        if (node.isAscendancyStart) {
+            return null
+        }
+
         let texture: PIXI.Texture | undefined = this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)];
 
         if (texture === undefined) {
@@ -100,7 +104,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
         let nodeSprite: PIXI.Sprite | undefined = this.NodeSprites[this.GetNodeKey(node, source)];
         if (nodeSprite === undefined) {
-            nodeSprite = node.isAscendancyStart ? new PIXI.Sprite() : new PIXI.Sprite(texture);
+            nodeSprite = PIXI.Sprite.from(texture);
             nodeSprite.position.set(node.x, node.y);
             nodeSprite.anchor.set(.5);
             nodeSprite.hitArea = new PIXI.Circle(0, 0, Math.max(nodeSprite.texture.width, nodeSprite.texture.height) / 2);
@@ -121,7 +125,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         const effectSpriteSheetTexture = this.getSpriteSheetTexture(effectSpriteSheet);
         const effectTexture = new PIXI.Texture(effectSpriteSheetTexture.baseTexture, new PIXI.Rectangle(effectCoords.x, effectCoords.y, effectCoords.w, effectCoords.h));
 
-        const effectSprite = new PIXI.Sprite(effectTexture);
+        const effectSprite = PIXI.Sprite.from(effectTexture);
         effectSprite.position.set(node.x, node.y);
         effectSprite.anchor.set(.5);
         effectSprite.interactive = false;
@@ -322,13 +326,17 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         this.NodeTooltips[`${node.GetId()}_${source}`] = undefined;
     }
 
-    public CreateConnections = (node: SkillNode, others: SkillNode[]) => {
+    public CreateConnections = (node: SkillNode, others: SkillNode[]): PIXI.Container | null => {
         const container = new PIXI.Container();
         for (const other of others) {
             const connection = this.CreateConnection(node, other);
             if (connection !== null) {
                 container.addChild(connection);
             }
+        }
+
+        if (container.children.length == 0) {
+            return null;
         }
 
         container.interactive = false;
@@ -392,7 +400,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                 this.NodeConnectionTextures[asset] = texture;
             }
 
-            const sprite = new PIXI.Sprite(texture);
+            const sprite = PIXI.Sprite.from(texture);
             sprite.rotation = angle + initialRotation;
             sprite.position.set(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale);
             sprite.anchor.set(1);
@@ -433,7 +441,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let line: PIXI.Sprite;
         if (length <= texture.baseTexture.width) {
             const lineTexure = new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(0, 0, length, texture.baseTexture.height));
-            line = new PIXI.Sprite(lineTexure);
+            line = PIXI.Sprite.from(lineTexure);
         } else {
             line = new PIXI.TilingSprite(texture, length, texture.baseTexture.height);
         }
