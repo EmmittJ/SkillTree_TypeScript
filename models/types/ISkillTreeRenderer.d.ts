@@ -1,6 +1,4 @@
-﻿import { SkillTreeData } from "../SkillTreeData";
-import { ISkillNodeRenderer } from "./ISkillNodeRenderer";
-import { SkillTreeAlternate } from "../SkillTreeAlternate";
+﻿import { ISkillNodeRenderer } from "./ISkillNodeRenderer";
 import { SkillNode } from "../SkillNode";
 
 interface ISkillTreeRenderer {

@@ -5,7 +5,6 @@ import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import download = require("downloadjs");
-import { SkillTreeAlternate } from '../models/SkillTreeAlternate';
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
 import { SkillNode } from '../models/SkillNode';
 import { utils } from './utils';
@@ -13,7 +12,6 @@ import { utils } from './utils';
 export class App {
     private skillTreeData!: SkillTreeData;
     private skillTreeDataCompare: SkillTreeData | undefined;
-    private skillTreeAlternate!: SkillTreeAlternate;
     private skillTreeUtilities!: SkillTreeUtilities;
     private renderer!: ISkillTreeRenderer;
 
@@ -28,14 +26,13 @@ export class App {
 
             if (i === version) {
                 this.skillTreeData = data;
-                this.skillTreeAlternate = new SkillTreeAlternate(await fetch(`${utils.SKILL_TREES_URI}/${i}/SkillTreeAlternate.json`).then(response => response.ok ? response.json() : undefined));
             }
 
             if (i === versionCompare) {
                 this.skillTreeDataCompare = data;
             }
         }
-        this.skillTreeUtilities = new SkillTreeUtilities(this.skillTreeData, this.skillTreeDataCompare, this.skillTreeAlternate);
+        this.skillTreeUtilities = new SkillTreeUtilities(this.skillTreeData, this.skillTreeDataCompare);
 
         const versionSelect = document.getElementById("skillTreeControl_Version") as HTMLSelectElement;
         const compareSelect = document.getElementById("skillTreeControl_VersionCompare") as HTMLSelectElement;
@@ -80,7 +77,7 @@ export class App {
 
         const container = document.getElementById("skillTreeContainer");
         if (container !== null) {
-            this.renderer = new PIXISkillTreeRenderer(container, this.skillTreeData, this.skillTreeAlternate, this.skillTreeDataCompare);
+            this.renderer = new PIXISkillTreeRenderer(container, this.skillTreeData, this.skillTreeDataCompare);
             this.renderer.Initialize()
                 .then(() => {
                     this.SetupEventsAndControls();
@@ -112,9 +109,6 @@ export class App {
         SkillTreeEvents.on("skilltree", "ascendancy-node-count", (count: number) => { const e = document.getElementById("skillTreeAscendancyNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
         SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => { const e = document.getElementById("skillTreeAscendancyNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
 
-        SkillTreeEvents.on("skilltree", "jewel-click-start", this.showJewelPopup);
-        SkillTreeEvents.on("skilltree", "faction-node-start", this.showNodePopup);
-
         this.populateStartClasses(document.getElementById("skillTreeControl_Class") as HTMLSelectElement);
         this.bindSearchBox(document.getElementById("skillTreeControl_Search") as HTMLInputElement);
         const controls = document.getElementsByClassName("skillTreeControls") as HTMLCollectionOf<HTMLDivElement>;
@@ -130,216 +124,6 @@ export class App {
                 points[i].style.removeProperty('display');
             }
         }
-    }
-
-    private showNodePopup = (event: { node: SkillNode; choices: ISkillNodeAlternate[] }) => {
-        const popup = document.getElementById("skillTreeAlternateNodePopup") as HTMLDivElement;
-        if (event.choices.length > 1) {
-            popup.style.removeProperty('display');
-        } else {
-            popup.style.setProperty('display', 'none');
-        }
-
-        const replaceSelect = document.getElementById("skillTreeAlternateNodePopupReplace") as HTMLSelectElement;
-        const _onchange = () => {
-            const altIds: ISkillNodeAlternateState[] = [];
-            if ((replaceSelect).value !== "") {
-                altIds.push({ id: replaceSelect.value, values: [] } as ISkillNodeAlternateState);
-            }
-
-            for (const i of [1, 2, 3, 4]) {
-                const additionSelect = document.getElementById(`skillTreeAlternateNodePopupAdditional${i}`) as HTMLSelectElement;
-                if (additionSelect === null || additionSelect.value === "") {
-                    continue;
-                }
-                altIds.push({ id: additionSelect.value, values: [] } as ISkillNodeAlternateState);
-            }
-
-            SkillTreeEvents.fire("skilltree", "faction-node-end", {
-                nodeId: event.node.GetId(),
-                alteranteIds: altIds
-            });
-        };
-
-        const altIds: string[] = JSON.parse(JSON.stringify(event.node.alternateIds || []));
-        replaceSelect.onchange = _onchange;
-        if (replaceSelect !== null) {
-            while (replaceSelect.firstChild) {
-                replaceSelect.removeChild(replaceSelect.firstChild);
-            }
-
-            const o = document.createElement("option");
-            o.value = "";
-            o.text = "None";
-            replaceSelect.appendChild(o);
-
-            for (const c of event.choices) {
-                if (c.isAddition) {
-                    continue;
-                }
-
-                const o = document.createElement("option");
-                o.value = c.id;
-                o.text = c.name;
-                if (altIds.indexOf(c.id) > -1) {
-                    o.selected = true;
-                    altIds.splice(altIds.indexOf(c.id), 1);
-                }
-                replaceSelect.appendChild(o);
-            }
-        }
-
-        const vaal = document.getElementById("skillTreeAlternateNodePopupVaalRequired");
-        if (vaal !== null) {
-            if (event.node.faction === 1) {
-                vaal.style.removeProperty('display');
-            }
-            else {
-                vaal.style.setProperty('display', 'none');
-            }
-        }
-
-        for (const i of [1, 2, 3, 4]) {
-            const additionSelect = document.getElementById(`skillTreeAlternateNodePopupAdditional${i}`) as HTMLSelectElement;
-            const additionLabel = document.getElementById(`skillTreeAlternateNodePopupAdditional${i}Label`);
-            if (additionSelect === null) {
-                continue;
-            }
-            additionSelect.style.setProperty('display', 'none');
-            additionSelect.onchange = _onchange;
-
-            if (additionLabel !== null) {
-                additionLabel.style.setProperty('display', 'none');
-            }
-
-            while (additionSelect.firstChild) {
-                additionSelect.removeChild(additionSelect.firstChild);
-            }
-
-            const o = document.createElement("option");
-            o.value = "";
-            o.text = "None";
-            additionSelect.appendChild(o);
-
-            let selected = false;
-            for (const c of event.choices) {
-                if (!c.isAddition) {
-                    continue;
-                }
-
-                const o = document.createElement("option");
-                o.value = c.id;
-                o.text = c.stats.map(x => x.text).join('\n');
-                if (!selected && altIds.indexOf(c.id) > -1) {
-                    o.selected = true;
-                    selected = true;
-                    altIds.splice(altIds.indexOf(c.id), 1);
-                }
-                additionSelect.appendChild(o);
-                additionSelect.style.removeProperty('display');
-                if (additionLabel !== null) {
-                    additionLabel.style.removeProperty('display');
-                }
-            }
-        }
-
-        const button = document.getElementById("skillTreeAlternateNodePopupOk") as HTMLButtonElement;
-        button.onclick = () => {
-            popup.style.setProperty('display', 'none');
-            _onchange();
-        };
-    }
-
-    private seedTimeout: NodeJS.Timeout | null = null;
-    private showJewelPopup = (settings: ISkillTreeAlternateJewelSettings) => {
-        const sizeSelect = document.getElementById("skillTreeJewelPopupSize") as HTMLSelectElement;
-        const factionSelect = document.getElementById("skillTreeJewelPopupFaction") as HTMLSelectElement;
-        const nameSelect = document.getElementById("skillTreeJewelPopupName") as HTMLSelectElement;
-        const seedInput = document.getElementById("skillTreeJewelPopupSeed") as HTMLInputElement;
-        const factionDiv = document.getElementById('skillTreeJewelPopupFactionRequired') as HTMLDivElement;
-
-        if (factionSelect.children.length === 0) {
-            for (const i in this.skillTreeAlternate.factions) {
-                const o = document.createElement('option');
-                o.value = i;
-                o.text = this.skillTreeAlternate.factions[i].name;
-                factionSelect.appendChild(o);
-            }
-        }
-
-        if (settings.size !== undefined) {
-            sizeSelect.value = settings.size;
-        }
-
-        if (settings.factionId !== undefined) {
-            factionSelect.value = settings.factionId.toString();
-        }
-
-        if (settings.seed !== undefined) {
-            seedInput.value = settings.seed;
-        }
-
-        if (settings.name !== undefined) {
-            nameSelect.value = settings.name;
-        }
-
-        const _onchange = () => {
-            if (factionDiv !== null) {
-                if (factionSelect.value !== "0") {
-                    factionDiv.style.removeProperty('display');
-                    sizeSelect.value = "Large";
-                    sizeSelect.disabled = true;
-                } else {
-                    factionDiv.style.setProperty('display', 'none');
-                    sizeSelect.disabled = false;
-                }
-            }
-
-            if (this.skillTreeAlternate.alternate_tree_keystones[+factionSelect.value] === undefined || !(nameSelect.value in this.skillTreeAlternate.alternate_tree_keystones[+factionSelect.value])) {
-                while (nameSelect.firstChild) {
-                    nameSelect.removeChild(nameSelect.firstChild);
-                }
-            }
-
-            if (nameSelect.children.length === 0) {
-                for (const i in this.skillTreeAlternate.alternate_tree_keystones[+factionSelect.value]) {
-                    const o = document.createElement('option');
-                    o.value = i;
-                    o.text = i;
-                    nameSelect.appendChild(o);
-                }
-            }
-
-            SkillTreeEvents.fire("skilltree", "jewel-click-end",
-                {
-                    nodeId: settings.nodeId,
-                    size: sizeSelect.value,
-                    factionId: sizeSelect.value !== "None" ? +factionSelect.value : 0,
-                    seed: seedInput.value,
-                    name: nameSelect.value
-                } as ISkillTreeAlternateJewelSettings
-            );
-        };
-
-        _onchange();
-        factionSelect.onchange = _onchange;
-        sizeSelect.onchange = _onchange;
-        nameSelect.onchange = _onchange;
-        seedInput.onkeyup = () => {
-            if (this.seedTimeout !== null) {
-                clearTimeout(this.seedTimeout);
-            }
-
-            this.seedTimeout = setTimeout(_onchange, 250);
-        };
-
-        const popup = document.getElementById("skillTreeJewelPopup") as HTMLDivElement;
-        popup.style.removeProperty('display');
-        const button = document.getElementById("skillTreeJewelPopupOk") as HTMLButtonElement;
-        button.onclick = () => {
-            popup.style.setProperty('display', 'none');
-            _onchange();
-        };
     }
 
     private populateStartClasses = (classControl: HTMLSelectElement) => {

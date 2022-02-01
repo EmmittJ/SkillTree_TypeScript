@@ -4,7 +4,6 @@ import { SkillTreeEvents } from "./SkillTreeEvents";
 import * as PIXI from "pixi.js";
 import { SkillTreeCodec } from "./SkillTreeCodec";
 import * as lzstring from "lz-string";
-import { SkillTreeAlternate } from "./SkillTreeAlternate";
 
 export class SkillTreeUtilities {
     private dragStart: PIXI.Point;
@@ -14,12 +13,10 @@ export class SkillTreeUtilities {
     skillTreeData: SkillTreeData;
     skillTreeDataComapre: SkillTreeData | undefined;
     skillTreeCodec: SkillTreeCodec;
-    skillTreeAlternate!: SkillTreeAlternate;
 
-    constructor(context: SkillTreeData, contextComapre: SkillTreeData | undefined, skillTreeAlternate: SkillTreeAlternate) {
+    constructor(context: SkillTreeData, contextComapre: SkillTreeData | undefined) {
         this.skillTreeData = context;
         this.skillTreeDataComapre = contextComapre;
-        this.skillTreeAlternate = skillTreeAlternate;
         this.skillTreeCodec = new SkillTreeCodec();
 
         SkillTreeEvents.on("node", "click", this.click);
@@ -53,17 +50,13 @@ export class SkillTreeUtilities {
         this.lastHash = window.location.hash;
 
         try {
-            const data = lzstring.decompressFromEncodedURIComponent(window.location.hash.replace("#", ""));
+            const data = window.location.hash.replace("#", "");
             if (data === null) {
                 window.location.hash = "";
                 return;
             }
 
-            this.skillTreeData.Build = JSON.parse(data);
-            for (const id in this.skillTreeData.Build.NodeAlternateIdMap) {
-                this.skillTreeData.nodes[id].alternateIds = this.skillTreeData.Build.NodeAlternateIdMap[id];
-            }
-            const def = this.skillTreeCodec.decodeURL(this.skillTreeData.Build.TreeHash, this.skillTreeData);
+            const def = this.skillTreeCodec.decodeURL(data, this.skillTreeData);
             this.skillTreeData.version = def.Version;
             this.skillTreeData.fullscreen = def.Fullscreen;
             this.changeStartClass(def.Class, false);
@@ -81,7 +74,6 @@ export class SkillTreeUtilities {
                 }
             }
 
-            SkillTreeEvents.fire("skilltree", "jewel-click-end", undefined);
             this.encodeURL();
         }
         catch (ex) {
@@ -93,18 +85,7 @@ export class SkillTreeUtilities {
     private encodeURL = () => {
         SkillTreeEvents.fire("skilltree", "active-nodes-update");
         this.broadcastSkillCounts();
-
-        this.skillTreeData.Build.TreeHash = `${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
-        this.skillTreeData.Build.NodeAlternateIdMap = {};
-        for (const id in this.skillTreeData.nodes) {
-            const node = this.skillTreeData.nodes[id];
-            if (node.alternateIds !== undefined
-                && (node.isRegular2 || node.isNotable)
-                && node.alternateIds.filter(x => this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(y => y.faction === this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction).length > 1).length > 0) {
-                this.skillTreeData.Build.NodeAlternateIdMap[node.GetId()] = node.alternateIds;
-            }
-        }
-        window.location.hash = `#${lzstring.compressToEncodedURIComponent(JSON.stringify(this.skillTreeData.Build, (key, value) => key === "extra_data" ? undefined : value))}`;
+        window.location.hash = `#${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
     }
 
     private broadcastSkillCounts = () => {

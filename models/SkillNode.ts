@@ -66,8 +66,6 @@ export class SkillNode implements ISkillNode {
     y: number;
     isRegular2: boolean;
     isRegular1: boolean;
-    alternateIds: ISkillNodeAlternateState[] | undefined = undefined;
-    faction = 0;
     hoverText: string | null = null;
 
     constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {

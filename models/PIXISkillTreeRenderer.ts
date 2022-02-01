@@ -6,7 +6,6 @@ import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode } from "./SkillNode";
 import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
-import { SkillTreeAlternate } from "./SkillTreeAlternate";
 
 export enum RenderLayers {
     BackgroundColor = 0,
@@ -38,7 +37,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     private viewport: Viewport.Viewport;
     private skillTreeData: SkillTreeData;
     private skillTreeDataCompare: SkillTreeData | undefined;
-    private skillTreeAlternate: SkillTreeAlternate;
     LayerContainers: { [layer in RenderLayers]: PIXI.Container } = {
         [RenderLayers.BackgroundColor]: new PIXI.Container(),
         [RenderLayers.Background]: new PIXI.Container(),
@@ -61,7 +59,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         [RenderLayers.TooltipCompare]: new PIXI.Container(),
     };
 
-    constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeAlternate: SkillTreeAlternate, skillTreeDataCompare: SkillTreeData | undefined) {
+    constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeDataCompare: SkillTreeData | undefined) {
         this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio });
         container.appendChild(this.pixi.view);
 
@@ -71,13 +69,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.skillTreeData = skillTreeData;
         this.skillTreeDataCompare = skillTreeDataCompare;
-        this.skillTreeAlternate = skillTreeAlternate;
 
-        this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, this.skillTreeAlternate, this.skillTreeDataCompare !== undefined ? this.skillTreeDataCompare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
+        this.SkillNodeRenderer = new PIXISkillNodeRenderer(this.skillTreeData.skillSprites, this.skillTreeDataCompare !== undefined ? this.skillTreeDataCompare.skillSprites : undefined, this.skillTreeData.imageZoomLevels.length - 1);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Base"));
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.SkillNodeRenderer.DestroyTooltip(node, "Compare"));
-        SkillTreeEvents.on("skilltree", "jewel-click-end", this.CreateJewelSocketHightlights);
-        SkillTreeEvents.on("skilltree", "faction-node-end", this.UpdateFactionNode);
 
         const zoomPercent = this.skillTreeData.imageZoomLevels.length > 2 ? this.skillTreeData.imageZoomLevels[1] - this.skillTreeData.imageZoomLevels[0] : .1;
         this.viewport = new Viewport.Viewport({
@@ -164,139 +159,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         if (node.isKeystone) {
             return;
         }
-
-        if (node.isJewelSocket) {
-            let settings = this.skillTreeData.Build.JewelSettings[node.GetId()];
-            if (settings === undefined) {
-                settings = { nodeId: node.GetId() } as ISkillTreeAlternateJewelSettings;
-            }
-            SkillTreeEvents.fire("skilltree", "jewel-click-start", settings);
-        } else if (node.faction !== 0) {
-            SkillTreeEvents.fire("skilltree", "faction-node-start", { node: node, choices: this.skillTreeAlternate.nodesByPassiveType[node.GetPassiveType()].filter(x => x.faction === node.faction) });
-        }
-    }
-
-    private UpdateFactionNode = (event: { nodeId: number; alteranteIds: ISkillNodeAlternateState[] }) => {
-        const node = this.skillTreeData.nodes[event.nodeId];
-        node.alternateIds = event.alteranteIds.length > 0 ? event.alteranteIds : undefined;
-
-        this.CreateJewelSocketHightlights();
-    }
-
-    private CreateJewelSocketHightlights = (newSettings: ISkillTreeAlternateJewelSettings | undefined = undefined) => {
-        this.ClearLayer(RenderLayers.JewelSocketHighlights);
-        const jewelSocketHighlights: PIXI.Container = new PIXI.Container();
-
-        if (newSettings !== undefined && this.skillTreeData.Build.JewelSettings[newSettings.nodeId] === undefined) {
-            this.skillTreeData.Build.JewelSettings[newSettings.nodeId] = JSON.parse(JSON.stringify(newSettings));
-        }
-
-        const usedNodes: string[] = [];
-        for (const i in this.skillTreeData.Build.JewelSettings) {
-            let settings = this.skillTreeData.Build.JewelSettings[i];
-            if (settings === undefined) {
-                continue;
-            }
-
-            if (settings.extraData instanceof PIXI.Container) {
-                this.pixi.ticker.remove(this.RotateJewelHighlights, settings.extraData);
-                jewelSocketHighlights.removeChild(settings.extraData);
-                settings.extraData.destroy({ children: true });
-                settings.extraData = undefined;
-            }
-
-            if (newSettings !== undefined && settings.nodeId === newSettings.nodeId) {
-                this.skillTreeData.Build.JewelSettings[newSettings.nodeId] = JSON.parse(JSON.stringify(newSettings)) as ISkillTreeAlternateJewelSettings;
-                settings = this.skillTreeData.Build.JewelSettings[newSettings.nodeId];
-                if (settings === undefined) {
-                    continue;
-                }
-            }
-
-            if (settings.size !== "None" && settings.extraData === undefined) {
-                const node = this.skillTreeData.nodes[settings.nodeId];
-                if (node === undefined) {
-                    continue;
-                }
-                const sizes = this.skillTreeData.circles[settings.size];
-                const index = this.skillTreeData.imageZoomLevels.length - 1;
-                if (index >= sizes.length) {
-                    continue;
-                }
-                const jewelWidth = sizes[index].width;
-                const factionCircleName = this.skillTreeAlternate.getJewelCircleNameFromFaction(settings.factionId);
-                const sprite1 = PIXI.Sprite.from(`${factionCircleName}JewelCircle1`);
-                const sprite2 = PIXI.Sprite.from(`${factionCircleName}JewelCircle${factionCircleName === "" ? 1 : 2}`);
-                sprite1.width = sprite1.height = sprite2.width = sprite2.height = jewelWidth;
-                sprite1.x = sprite2.x = node.x;
-                sprite1.y = sprite2.y = node.y;
-                sprite1.anchor.set(.5);
-                sprite2.anchor.set(.5);
-
-                const container = new PIXI.Container();
-                container.addChild(sprite2);
-                container.addChild(sprite1);
-
-                jewelSocketHighlights.addChild(container);
-                settings.extraData = container;
-
-                const singleNodes: { [id: number]: ISkillNodeAlternateState[] | undefined } = {};
-                if (settings.factionId in this.skillTreeAlternate.alternate_tree_keystones) {
-                    const keystoneId = this.skillTreeAlternate.alternate_tree_keystones[settings.factionId][settings.name];
-                    singleNodes[4] = [{ id: keystoneId, values: [] } as ISkillNodeAlternateState];
-                }
-
-                for (const passiveType in this.skillTreeAlternate.passiveTypes) {
-                    if (this.skillTreeAlternate.nodesByPassiveType[+passiveType] === undefined) {
-                        continue;
-                    }
-                    const ns = this.skillTreeAlternate.nodesByPassiveType[+passiveType].filter(x => x.faction === (settings as ISkillTreeAlternateJewelSettings).factionId);
-                    if (ns.length === 1) {
-                        singleNodes[+passiveType] = [{ id: ns[0].id, values: ns[0].stats.map(x => x.min === x.max ? x.min : `${x.min}-${x.max}`) } as ISkillNodeAlternateState];
-                    }
-                }
-
-                for (const o of this.skillTreeData.getNodesInRange(node.x, node.y, jewelWidth / 2)) {
-                    if (o.isJewelSocket) {
-                        continue;
-                    }
-                    usedNodes.push(o.GetId());
-                    o.faction = settings.factionId;
-
-                    if (o.alternateIds !== undefined && o.alternateIds.filter(x => this.skillTreeAlternate.nodes[typeof x === "string" ? x : x.id].faction !== (settings as ISkillTreeAlternateJewelSettings).factionId).length > 0) {
-                        o.alternateIds = undefined;
-                    }
-
-                    if (o.alternateIds === undefined || o.GetPassiveType() === 4) {
-                        o.alternateIds = singleNodes[o.GetPassiveType()];
-                    }
-                }
-
-                if (settings.extraData instanceof PIXI.Container) {
-                    this.pixi.ticker.add(this.RotateJewelHighlights, settings.extraData);
-                }
-            }
-        }
-
-        this.skillTreeData.clearAlternates(usedNodes);
-
-        jewelSocketHighlights.interactive = false;
-        jewelSocketHighlights.interactiveChildren = false;
-        jewelSocketHighlights.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.JewelSocketHighlights, jewelSocketHighlights);
-
-        this.RenderActive();
-        SkillTreeEvents.fire("skilltree", "encode-url");
-    }
-
-    private RotateJewelHighlights(delta: number) {
-        if (this instanceof PIXI.Container) {
-            let rotation = 0.0005;
-            for (const sprite of this.children) {
-                sprite.rotation += rotation * delta;
-                rotation *= -1;
-            }
-        }
     }
 
     private LoadAssets = (data: (SkillTreeData | undefined)[]): Promise<boolean> => {
@@ -328,18 +190,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 if (sprite && addedAssets.indexOf(filename) < 0) {
                     addedAssets.push(filename);
                     PIXI.Loader.shared.add(filename.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
-                }
-            }
-        }
-
-        if (this.skillTreeAlternate.version !== "") {
-            for (const id in this.skillTreeAlternate.skillSprites) {
-                const sprites = this.skillTreeAlternate.skillSprites[id];
-                const sprite = sprites[sprites.length - 1];
-                const filename = sprite.filename.replace("https://web.poecdn.com/image/passive-skill/", "");
-                if (sprite && addedAssets.indexOf(filename) < 0) {
-                    addedAssets.push(filename);
-                    PIXI.Loader.shared.add(filename.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${this.skillTreeAlternate.version}/assets/${filename}`);
                 }
             }
         }

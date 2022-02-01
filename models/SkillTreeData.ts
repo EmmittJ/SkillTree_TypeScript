@@ -37,7 +37,6 @@ export class SkillTreeData implements ISkillTreeData {
         [SkillNodeStates.Compared]: new Array<string>(),
         [SkillNodeStates.Moved]: new Array<string>(),
     }
-    Build: ISkillTreeBuild;
 
     constructor(skillTree: ISkillTreeData, patch: string, options: ISkillTreeOptions | undefined) {
         this.tree = skillTree.tree || "Default"
@@ -62,7 +61,6 @@ export class SkillTreeData implements ISkillTreeData {
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
-        this.Build = { JewelSettings: {}, TreeHash: '' } as ISkillTreeBuild;
 
         // #region Fix for old school style nodes
         const temp: { [id: string]: ISkillNode } = {};
@@ -300,17 +298,6 @@ export class SkillTreeData implements ISkillTreeData {
         }
 
         return _nodes;
-    }
-
-    public clearAlternates = (usedNodes: string[]) => {
-        for (const id in this.nodes) {
-            if (usedNodes.indexOf(id) > -1) {
-                continue;
-            }
-
-            this.nodes[id].alternateIds = undefined;
-            this.nodes[id].faction = 0;
-        }
     }
 
     public addState = (node: SkillNode, state: SkillNodeStates) => this.addStateById(node.GetId(), state);
