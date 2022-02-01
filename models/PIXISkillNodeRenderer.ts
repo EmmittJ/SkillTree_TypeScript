@@ -4,9 +4,12 @@ import * as PIXI from "pixi.js";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillTreeAlternate } from "./SkillTreeAlternate";
 import { utils } from "../app/utils";
-import { Sprite } from "pixi.js";
+import { ISpritesheetData, Sprite } from "pixi.js";
+
+export declare type Source = "Base" | "Compare";
 
 export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
+    Initialized = false;
     private SkillSprites: { [id: string]: Array<ISpriteSheet> };
     private SkillSpritesCompare: { [id: string]: Array<ISpriteSheet> };
     private skillTreeAlternate: SkillTreeAlternate;
@@ -17,6 +20,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     private NodeFrameTextures: { [id: string]: PIXI.Texture | undefined };
     private NodeTooltips: { [id: string]: PIXI.Container | undefined };
     private NodeConnectionTextures: { [id: string]: PIXI.Texture | undefined };
+    private NodeSpritesheets: { [id: string]: PIXI.Spritesheet | undefined };
 
     constructor(skillSprites: { [id: string]: Array<ISpriteSheet> }, skillTreeAlternate: SkillTreeAlternate, skillSpritesCompare: { [id: string]: Array<ISpriteSheet> } | undefined, zoomLevel = 3) {
         this.SkillSprites = skillSprites;
@@ -29,17 +33,80 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         this.NodeFrameTextures = {};
         this.NodeTooltips = {};
         this.NodeConnectionTextures = {};
+        this.NodeSpritesheets = {};
     }
 
-    private GetNodeKey = (node: SkillNode, source: "Base" | "Compare"): string => {
+    async Initialize(): Promise<boolean> {
+        if (this.Initialized) {
+            return true;
+        }
+
+        const promise = new Promise<boolean>(resolve => {
+            this.LoadAssets([this.SkillSprites, this.SkillSpritesCompare]).then(() => resolve(true));
+        })
+        promise.then(() => this.Initialized = true);
+        return promise;
+    }
+
+    private LoadAssets = (data: ({ [id: string]: Array<ISpriteSheet> })[]): Promise<boolean[]> => {
+        for (const i in data) {
+            const dict = data[i];
+            for (const key in dict) {
+                const sheet = dict[key][this.ZoomLevel];
+                const texture = this.getSpriteSheetTexture(sheet);
+                const source: Source = i === "0" ? "Base" : "Compare";
+                const spritesheetData = this.getSpritesheetData(sheet, key, source);
+                this.NodeSpritesheets[`${source}/${key}`] = new PIXI.Spritesheet(texture.baseTexture, spritesheetData)
+            }
+        }
+
+        const promises = new Array<Promise<boolean>>();
+        for (const key in this.NodeSpritesheets) {
+            if (this.NodeSpritesheets[key] !== undefined) {
+                promises.push(new Promise<boolean>(resolve => this.NodeSpritesheets[key]!.parse(() => resolve(true))))
+            }
+        }
+        return Promise.all(promises);
+    }
+
+    private getSpritesheetData = (spriteSheet: ISpriteSheet, key: string, source: Source): PIXI.ISpritesheetData => {
+        let data: ISpritesheetData = {
+            frames: {},
+            animations: undefined,
+            meta: {
+                scale: "1"
+            }
+        };
+
+        for (const i in spriteSheet.coords) {
+            const coord = spriteSheet.coords[i];
+            data.frames[`${source}/${key}/${i}`] = {
+                frame: coord,
+                rotated: false,
+                trimmed: false,
+                spriteSourceSize: {
+                    x: 0,
+                    y: 0
+                },
+                sourceSize: {
+                    w: coord.w,
+                    h: coord.h
+                }
+            };
+        }
+
+        return data;
+    }
+
+    private GetNodeKey = (node: SkillNode, source: Source): string => {
         return `${node.GetId()}_${node.alternateIds}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
-    private GetNodeSpriteKey = (node: SkillNode, source: "Base" | "Compare"): string => {
+    private GetNodeSpriteKey = (node: SkillNode, source: Source): string => {
         return `${node.GetIcon()}_${node.alternateIds}_${node.isNotable}_${node.isMastery}_${node.isKeystone}_${node.is(SkillNodeStates.Active)}_${source}`;
     }
 
-    public GetNodeSize = (node: SkillNode, source: "Base" | "Compare" = "Base"): { width: number; height: number } | null => {
+    public GetNodeSize = (node: SkillNode, source: Source = "Base"): { width: number; height: number } | null => {
         const sprite = this.NodeSprites[this.GetNodeKey(node, source)];
         if (sprite === undefined) {
             return null;
@@ -74,7 +141,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return frame;
     }
 
-    public CreateIcon = (node: SkillNode, source: "Base" | "Compare" = "Base"): PIXI.Sprite | null => {
+    public CreateIcon = (node: SkillNode, source: Source = "Base"): PIXI.Sprite | null => {
         if (node.isAscendancyStart) {
             return null
         }
@@ -91,15 +158,20 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             }
 
             const spriteSheetKey = this.getSpriteSheetKey(node);
-            const spriteSheet = this.getSpriteSheet(node, spriteSheetKey, source);
-            const coords = spriteSheet.coords[icon];
-            if (coords === undefined) {
-                throw Error(`Sprite Sheet (${spriteSheetKey}) did not have coords for Node[${node.GetId()}]: ${icon} | ${node.activeIcon} | ${node.inactiveIcon}`);
-            }
+            const pixiSpritesheet = this.NodeSpritesheets[`${source}/${spriteSheetKey}`];
+            if (pixiSpritesheet === undefined) {
+                const spriteSheet = this.getSpriteSheet(node, spriteSheetKey, source);
+                const coords = spriteSheet.coords[icon];
+                if (coords === undefined) {
+                    throw Error(`Sprite Sheet (${spriteSheetKey}) did not have coords for Node[${node.GetId()}]: ${icon} | ${node.activeIcon} | ${node.inactiveIcon}`);
+                }
 
-            const spriteSheetTexture = this.getSpriteSheetTexture(spriteSheet);
-            texture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
-            this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)] = texture;
+                const spriteSheetTexture = this.getSpriteSheetTexture(spriteSheet);
+                texture = new PIXI.Texture(spriteSheetTexture.baseTexture, new PIXI.Rectangle(coords.x, coords.y, coords.w, coords.h));
+                this.NodeSpriteTextures[this.GetNodeSpriteKey(node, source)] = texture;
+            } else {
+                texture = pixiSpritesheet.textures[`${source}/${spriteSheetKey}/${icon}`]
+            }
         }
 
         let nodeSprite: PIXI.Sprite | undefined = this.NodeSprites[this.GetNodeKey(node, source)];
@@ -115,16 +187,17 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return nodeSprite;
     }
 
-    public CreateIconEffect = (node: SkillNode, source: "Base" | "Compare" = "Base"): PIXI.Sprite | null => {
+    public CreateIconEffect = (node: SkillNode, source: Source = "Base"): PIXI.Sprite | null => {
         if (node.activeEffectImage === "" || !node.is(SkillNodeStates.Active)) {
             return null;
         }
 
-        const effectSpriteSheet = this.getSpriteSheet(node, "masteryActiveEffect", source);
-        const effectCoords = effectSpriteSheet.coords[node.activeEffectImage];
-        const effectSpriteSheetTexture = this.getSpriteSheetTexture(effectSpriteSheet);
-        const effectTexture = new PIXI.Texture(effectSpriteSheetTexture.baseTexture, new PIXI.Rectangle(effectCoords.x, effectCoords.y, effectCoords.w, effectCoords.h));
+        const pixiSpritesheet = this.NodeSpritesheets[`${source}/masteryActiveEffect`];
+        if (pixiSpritesheet === undefined) {
+            return null;
+        }
 
+        const effectTexture = pixiSpritesheet.textures[`${source}/masteryActiveEffect/${node.activeEffectImage}`]
         const effectSprite = PIXI.Sprite.from(effectTexture);
         effectSprite.position.set(node.x, node.y);
         effectSprite.anchor.set(.5);
@@ -156,7 +229,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
     }
 
-    private getSpriteSheet = (node: SkillNode, key: string, source: "Base" | "Compare" = "Base"): ISpriteSheet => {
+    private getSpriteSheet = (node: SkillNode, key: string, source: Source = "Base"): ISpriteSheet => {
         let skillSprites = this.SkillSprites;
         if (source === "Compare") {
             skillSprites = this.SkillSpritesCompare;
@@ -192,6 +265,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         if (!spriteSheet) {
             throw Error(`Sprite Sheet (${key}) not found in SpriteSheets (${spriteSheets})`);
         }
+
         return spriteSheet;
     }
 
@@ -219,7 +293,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
     }
 
-    public CreateHighlight = (node: SkillNode, color: number | undefined = undefined, source: "Base" | "Compare" = "Base"): PIXI.Graphics | null => {
+    public CreateHighlight = (node: SkillNode, color: number | undefined = undefined, source: Source = "Base"): PIXI.Graphics | null => {
         if ((!node.is(SkillNodeStates.Highlighted)) && color === undefined) {
             return null;
         }
@@ -246,7 +320,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return graphic;
     }
 
-    public CreateTooltip = (node: SkillNode, source: "Base" | "Compare") => {
+    public CreateTooltip = (node: SkillNode, source: Source) => {
         let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${source}`];
 
         if (tooltip === undefined) {
@@ -316,7 +390,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return tooltip;
     }
 
-    public DestroyTooltip = (node: SkillNode, source: "Base" | "Compare") => {
+    public DestroyTooltip = (node: SkillNode, source: Source) => {
         const tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${source}`];
         if (tooltip === undefined) {
             return;
@@ -409,7 +483,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
                 const mask = new PIXI.Graphics();
                 mask.lineStyle(50 * node.scale, 0x00FF00);
                 mask.arc(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale, node.orbitRadii[node.orbit] * node.scale, startAngle, endAngle, false);
-                
+
                 sprite.mask = mask;
                 arcContainer.addChild(mask);
             }

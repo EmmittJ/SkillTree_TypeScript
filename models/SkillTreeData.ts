@@ -11,7 +11,7 @@ export class SkillTreeData implements ISkillTreeData {
     groups: { [id: string]: IGroup };
     root: IRootNode;
     nodes: { [id: string]: SkillNode };
-    extraImages: { [id: string]: IClassImage };
+    extraImages: { [id: string]: IClassImage } | undefined;
     min_x: number;
     min_y: number;
     max_x: number;

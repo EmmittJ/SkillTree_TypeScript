@@ -136,9 +136,10 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             return true;
         }
 
-        const promise = this.LoadAssets([this.skillTreeData, this.skillTreeDataCompare]);
-        promise.then(() => this.Initialized = true);
-        return promise;
+        await this.LoadAssets([this.skillTreeData, this.skillTreeDataCompare]);
+        this.Initialized = true;
+
+        return this.SkillNodeRenderer.Initialize();
     }
 
     private HandleZoomClick = (click: PIXI.InteractionEvent, zoom: number) => {
@@ -390,7 +391,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         const backgroundSprite = new PIXI.TilingSprite(temp.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
         backgroundSprite.interactive = false;
         backgroundSprite.interactiveChildren = false;
-        backgroundSprite.updateTransform = () => { };
         backgroundSprite.containerUpdateTransform = () => { };
         backgroundSprite.anchor.set(.5);
         this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
@@ -717,12 +717,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             const commonName = this.skillTreeData.constants.classesToName[className];
-            const extraImage = this.skillTreeData.extraImages[commonName]
-            if (extraImage) {
-                const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
-                classNodeGraphic.anchor.set(0)
-                classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
-                backgroundActive.addChild(classNodeGraphic);
+            if (this.skillTreeData.extraImages !== undefined) {
+                const extraImage = this.skillTreeData.extraImages[commonName]
+                if (extraImage) {
+                    const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
+                    classNodeGraphic.anchor.set(0)
+                    classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
+                    backgroundActive.addChild(classNodeGraphic);
+                }
             }
 
             const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
