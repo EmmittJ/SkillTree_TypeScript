@@ -128,8 +128,15 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         const nodeSprite = PIXI.Sprite.from(texture);
         nodeSprite.position.set(node.x, node.y);
         nodeSprite.anchor.set(.5);
-        nodeSprite.hitArea = new PIXI.Circle(0, 0, Math.max(nodeSprite.texture.width, nodeSprite.texture.height) / 2);
-        this.RebindNodeEvents(node, nodeSprite);
+        
+        //FIXME: This should really be anything that doesn't get a frame, but that is only Mastery nodes currently
+        if (node.isMastery) {
+            nodeSprite.hitArea = new PIXI.Circle(0, 0, Math.max(nodeSprite.texture.width, nodeSprite.texture.height) / 2);
+            this.RebindNodeEvents(node, nodeSprite);
+        } else {
+            nodeSprite.interactive = false;
+            nodeSprite.interactive = false;
+        }
 
         return nodeSprite;
     }
