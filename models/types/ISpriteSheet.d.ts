@@ -6,8 +6,8 @@
 interface ISpriteSheetOld {
     filename: string;
     coords: { [id: string]: ISprite };
-    notableCoords: { [id: string]: ISprite };
-    keystoneCoords: { [id: string]: ISprite };
+    notableCoords: { [id: string]: ISprite } | undefined;
+    keystoneCoords: { [id: string]: ISprite } | undefined;
 }
 
 interface ISprite {

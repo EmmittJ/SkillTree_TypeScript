@@ -55,13 +55,43 @@ export class SkillTreeData implements ISkillTreeData {
         this.assets = skillTree.assets;
         this.imageRoot = skillTree.imageRoot;
         this.imageZoomLevels = skillTree.imageZoomLevels;
-        this.skillSprites = skillTree.skillSprites;
         this.constants = new Constants(skillTree.constants);
         this.circles = (options && options.circles) || { "Small": [{ "level": 0.1246, "width": 199 }, { "level": 0.2109, "width": 337 }, { "level": 0.2972, "width": 476 }, { "level": 0.3835, "width": 614 }], "Medium": [{ "level": 0.1246, "width": 299 }, { "level": 0.2109, "width": 506 }, { "level": 0.2972, "width": 713 }, { "level": 0.3835, "width": 920 }], "Large": [{ "level": 0.1246, "width": 374 }, { "level": 0.2109, "width": 633 }, { "level": 0.2972, "width": 892 }, { "level": 0.3835, "width": 1151 }] };
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
 
+        // #region Fix for old school style skill sprites 
+        this.skillSprites = {};
+        for (const i in skillTree.skillSprites) {
+            const sprites = skillTree.skillSprites[i];
+            if (i === "active" || i === "inactive") {
+                const key = i.charAt(0).toUpperCase() + i.slice(1);
+                const sheets: { [id: string]: ISpriteSheet[] } = {};
+                sheets[`notable${key}`] = [];
+                sheets[`keystone${key}`] = [];
+                sheets[`normal${key}`] = [];
+
+                for (const sheet of sprites) {
+                    const old = sheet as ISpriteSheetOld;
+
+                    const notableCoords = old.notableCoords === undefined ? old.coords : old.notableCoords;
+                    const keystoneCoords = old.notableCoords === undefined ? old.coords : old.notableCoords;
+                    const normalCoords = old.coords;
+
+                    sheets[`notable${key}`].push({ filename: old.filename, coords: notableCoords });
+                    sheets[`keystone${key}`].push({ filename: old.filename, coords: keystoneCoords });
+                    sheets[`normal${key}`].push({ filename: old.filename, coords: normalCoords });
+                }
+
+                for (const j in sheets) {
+                    this.skillSprites[j] = sheets[j];
+                }
+            } else {
+                this.skillSprites[i] = sprites;
+            }
+        }
+        // #endregion
         // #region Fix for old school style nodes
         const temp: { [id: string]: ISkillNode } = {};
         for (const i in skillTree.nodes) {
