@@ -58,8 +58,8 @@ export class SkillNode implements ISkillNode {
     state: SkillNodeStates;
 
     nodeGroup: IGroup | undefined;
+    orbitAngles: { [orbit: number]: Array<number> };
     orbitRadii: Array<number>;
-    skillsPerOrbit: Array<number>;
     scale: number;
     arc: number;
     x: number;
@@ -68,7 +68,7 @@ export class SkillNode implements ISkillNode {
     isRegular1: boolean;
     hoverText: string | null = null;
 
-    constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, skillsPerOrbit: Array<number>, scale: number) {
+    constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number) {
         this.skill = node.skill || -1;
         this.id = node.id || node.skill;
         this.dn = node.dn;
@@ -116,8 +116,8 @@ export class SkillNode implements ISkillNode {
         this.state = SkillNodeStates.None;
 
         this.nodeGroup = group;
+        this.orbitAngles = orbitAngles;
         this.orbitRadii = orbitRadii;
-        this.skillsPerOrbit = skillsPerOrbit;
         this.scale = scale;
         this.arc = this.getArc(this.orbitIndex);
         this.x = this.getX(this.arc);
@@ -129,8 +129,8 @@ export class SkillNode implements ISkillNode {
             this.stats.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
         }
     }
-
-    private getArc = (oidx: number): number => this.skillsPerOrbit.length > this.orbit ? 2 * Math.PI * oidx / this.skillsPerOrbit[this.orbit] : 0;
+    
+    private getArc = (oidx: number): number => this.orbitAngles[this.orbit] !== undefined && this.orbitAngles[this.orbit].length > oidx ? this.orbitAngles[this.orbit][oidx] : 0;
     private getX = (arc: number): number => this.orbitRadii.length > this.orbit && this.nodeGroup !== undefined ? (this.nodeGroup.x * this.scale) - (this.orbitRadii[this.orbit] * this.scale) * Math.sin(-arc) : 0;
     private getY = (arc: number): number => this.orbitRadii.length > this.orbit && this.nodeGroup !== undefined ? (this.nodeGroup.y * this.scale) - (this.orbitRadii[this.orbit] * this.scale) * Math.cos(-arc) : 0;
 

@@ -230,9 +230,10 @@ export class SkillTreeData implements ISkillTreeData {
         this.nodes = {};
         this.classStartNodes = {};
         this.ascedancyNodes = {};
+        const orbitAngles = this.getOrbitAngles(skillTree.constants.skillsPerOrbit)
         for (const id in skillTree.nodes) {
             const groupId = skillTree.nodes[id].g || skillTree.nodes[id].group || 0;
-            const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, skillTree.constants.skillsPerOrbit, this.scale);
+            const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale);
             this.nodes[id] = node;
 
             if (node.classStartIndex === 3) {
@@ -247,6 +248,37 @@ export class SkillTreeData implements ISkillTreeData {
                 this.classStartNodes[id] = node;
             }
         }
+    }
+
+    private getOrbitAngles = (skillsPerOrbit: Array<number>): { [orbit: number]: Array<number> } => {
+        const degrees: { [orbit: number]: Array<number> } = {};
+
+        for (const orbit in skillsPerOrbit) {
+            const skills = skillsPerOrbit[orbit];
+            degrees[orbit] = [];
+
+            if (skills === 16) {
+                degrees[orbit] = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330]
+            } else if (skills === 40) {
+                degrees[orbit] = [0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180, 190, 200, 210, 220, 225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340, 350]
+            } else {
+                for (let i = 0; i < skills; i++) {
+                    degrees[orbit].push(360 * i / skills);
+                }
+            }
+        }
+
+        const radians: { [orbit: number]: Array<number> } = {};
+        const conversion = Math.PI / 180;
+        for (const orbit in degrees) {
+            const angles = degrees[orbit];
+            radians[orbit] = [];
+            for (const angle of angles) {
+                radians[orbit].push(angle * conversion);
+            }
+        }
+
+        return radians;
     }
 
     public getStartClass = (): number => {
