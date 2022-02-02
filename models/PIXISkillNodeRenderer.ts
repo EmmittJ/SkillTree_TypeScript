@@ -88,17 +88,13 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     public GetNodeSize = (node: SkillNode, source: Source = "Base"): { width: number; height: number } | null => {
-        let texture: PIXI.Texture | null = null;
         const icon = node.GetIcon();
         if (icon === "") {
             return null;
         }
 
-        try {
-            const spriteSheetKey = this.getSpriteSheetKey(node);
-            texture = this.getSpritesheetTexture(source, spriteSheetKey, icon);
-        } catch (ex) { }
-
+        const spriteSheetKey = this.getSpriteSheetKey(node);
+        const texture = this.getSpritesheetTexture(source, spriteSheetKey, icon);
         return texture ? { width: texture.width, height: texture.height } : null;
     }
 
@@ -134,6 +130,9 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
         const spriteSheetKey = this.getSpriteSheetKey(node);
         const texture = this.getSpritesheetTexture(source, spriteSheetKey, icon);
+        if (texture === null) {
+            return null;
+        }
 
         const nodeSprite = PIXI.Sprite.from(texture);
         nodeSprite.position.set(node.x, node.y);
@@ -157,6 +156,10 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
 
         const effectTexture = this.getSpritesheetTexture(source, "masteryActiveEffect", node.activeEffectImage);
+        if (effectTexture === null) {
+            return null;
+        }
+
         const effectSprite = PIXI.Sprite.from(effectTexture);
         effectSprite.position.set(node.x, node.y);
         effectSprite.anchor.set(.5);
@@ -188,7 +191,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
     }
 
-    private getSpritesheetTexture = (source: Source, spriteSheetKey: string, icon: string): PIXI.Texture => {
+    private getSpritesheetTexture = (source: Source, spriteSheetKey: string, icon: string): PIXI.Texture | null => {
         const pixiSpritesheet = this.NodeSpritesheets[`${source}/${spriteSheetKey}`];
         if (pixiSpritesheet !== undefined) {
             const texture = pixiSpritesheet.textures[`${source}/${spriteSheetKey}/${icon}`];
@@ -197,7 +200,8 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             }
         }
 
-        throw Error(`Texture not found for ${source}/${spriteSheetKey}/${icon}`);
+        console.warn(`Texture not found for ${source}/${spriteSheetKey}/${icon}`);
+        return null;
     }
 
     private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
@@ -325,6 +329,10 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null;
         }
 
+        if ((node.classStartIndex !== undefined && !node.is(SkillNodeStates.Active)) || (other.classStartIndex !== undefined && !other.is(SkillNodeStates.Active))) {
+            return null;
+        }
+
         if (node.isMastery || other.isMastery) {
             return null;
         }
@@ -333,7 +341,9 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null;
         }
 
-        const container = node.group === other.group && node.orbit === other.orbit ? this.createArcConnection(node, other) : this.createLineConnection(node, other);
+        const container = node.group === other.group && node.orbit === other.orbit
+            ? this.createArcConnection(node, other)
+            : this.createLineConnection(node, other);
         container.interactive = false;
         container.interactiveChildren = false;
         container.containerUpdateTransform = () => { };
@@ -341,7 +351,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private createArcConnection = (node: SkillNode, other: SkillNode): PIXI.Container => {
-        const connectionType = node.GetConnectionType(other)
+        const connectionType = node.GetConnectionType(other);
         let startAngle = node.arc < other.arc ? node.arc : other.arc;
         let endAngle = node.arc < other.arc ? other.arc : node.arc;
 
@@ -396,7 +406,8 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     }
 
     private createLineConnection = (node: SkillNode, other: SkillNode): PIXI.Sprite => {
-        const asset = `LineConnector${node.GetConnectionType(other)}`;
+        const connectionType = node.GetConnectionType(other);
+        const asset = `LineConnector${connectionType}`;
         const texture = PIXI.Texture.from(asset);
 
         const length = Math.hypot(node.x - other.x, node.y - other.y);

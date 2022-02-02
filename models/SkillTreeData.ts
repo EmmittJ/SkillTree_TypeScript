@@ -2,7 +2,7 @@
 import { Constants } from "./Constants";
 
 export class SkillTreeData implements ISkillTreeData {
-    tree: "Default" | "Royale" | undefined;
+    tree: "Default" | "Royale" | "Atlas" | undefined;
     patch: string;
     version: number;
     fullscreen: number;
@@ -23,6 +23,7 @@ export class SkillTreeData implements ISkillTreeData {
     constants: Constants;
     circles: { [id: string]: ICircleOption[] };
     uiArtOptions: IUIArtOptions;
+    points: IPoints;
 
     width: number;
     height: number;
@@ -58,6 +59,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.imageZoomLevels = skillTree.imageZoomLevels;
         this.constants = new Constants(skillTree.constants);
         this.uiArtOptions = skillTree.uiArtOptions || { largeGroupUsesHalfImage: true };
+        this.points = skillTree.points || { totalPoints: 121, ascendancyPoints: 8 };
         this.circles = (options && options.circles) || { "Small": [{ "level": 0.1246, "width": 199 }, { "level": 0.2109, "width": 337 }, { "level": 0.2972, "width": 476 }, { "level": 0.3835, "width": 614 }], "Medium": [{ "level": 0.1246, "width": 299 }, { "level": 0.2109, "width": 506 }, { "level": 0.2972, "width": 713 }, { "level": 0.3835, "width": 920 }], "Large": [{ "level": 0.1246, "width": 374 }, { "level": 0.2109, "width": 633 }, { "level": 0.2972, "width": 892 }, { "level": 0.3835, "width": 1151 }] };
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
@@ -109,7 +111,7 @@ export class SkillTreeData implements ISkillTreeData {
         // #endregion
         // #region Setup in/out properties correctly
         {
-            this.root.in = this.root.in.map(x => +x);
+            this.root.in = this.root.in === undefined ? [] : this.root.in.map(x => +x);
             this.root.out = this.root.out.map(x => +x);
 
             for (const id in skillTree.nodes) {
@@ -296,6 +298,12 @@ export class SkillTreeData implements ISkillTreeData {
                 return this.nodes[id].classStartIndex || 0;
             }
         }
+
+        for (const id in this.classStartNodes) {
+            this.addState(this.nodes[id], SkillNodeStates.Active);
+            return this.nodes[id].classStartIndex || 0;
+        }
+
         return 0;
     }
 

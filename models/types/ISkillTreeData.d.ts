@@ -1,5 +1,5 @@
 ﻿interface ISkillTreeData {
-    tree: "Default" | "Royale" | undefined;
+    tree: "Default" | "Royale" | "Atlas" | undefined;
     patch: string;
     version: number;
     fullscreen: number;
@@ -19,6 +19,7 @@
     skillSprites: { [id: string]: Array<ISpriteSheet> };
     constants: IConstants;
     uiArtOptions: IUIArtOptions | undefined;
+    points: IPoints | undefined;
 
     getStartClass(): number;
     getAscendancyClass(): number;

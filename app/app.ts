@@ -72,6 +72,7 @@ export class App {
                 search += `c=${compareSelect.value}`;
             }
 
+            window.location.hash = "";
             window.location.search = search;
         });
 

@@ -343,16 +343,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
         }
 
-        for (const id of this.skillTreeData.root.out) {
-            const node = this.skillTreeData.nodes[id];
-            if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
-                continue;
-            }
+        if (this.skillTreeData.root.out.length > 1) {
+            for (const id of this.skillTreeData.root.out) {
+                const node = this.skillTreeData.nodes[id];
+                if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
+                    continue;
+                }
 
-            const graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
-            graphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
-            graphic.anchor.set(.5);
-            characterStarts.addChild(graphic);
+                const graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
+                graphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
+                graphic.anchor.set(.5);
+                characterStarts.addChild(graphic);
+            }
         }
 
         background.interactive = false;
@@ -377,7 +379,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         const drawnConnections: { [id: string]: boolean } = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
-            if (node.nodeGroup === undefined) {
+            if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
                 continue;
             }
             const nodes = node.in
@@ -390,7 +392,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     return this.skillTreeData.nodes[outID]
                 });
 
-            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes);
+            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes.filter(x => x.classStartIndex === undefined));
             if (connection !== null) {
                 connections.addChild(connection);
             }
@@ -400,7 +402,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 skillIcons.addChild(icon);
             }
 
-            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
+            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]).filter(x => x.classStartIndex === undefined));
             if (frame !== null) {
                 skillIcons.addChild(frame);
             }
@@ -497,10 +499,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         const activeNodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
         for (const id in activeNodes) {
             const node = activeNodes[id];
-            if (node.classStartIndex !== undefined) {
-                continue;
-            }
-
             const nodes = node.in
                 .filter((outID) => {
                     return !drawnConnections[`${+id}-${outID}`] || !drawnConnections[`${outID}-${+id}`];
@@ -521,7 +519,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 connectionsActive.addChild(connection);
             }
             for (const out of nodes) {
-                const frame = this.SkillNodeRenderer.CreateFrame(out, node.out.map(x => this.skillTreeData.nodes[x]));
+                const frame = this.SkillNodeRenderer.CreateFrame(out, out.in.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
                     skillIconsActive.addChild(frame);
                 }

@@ -90,8 +90,8 @@ export class SkillTreeUtilities {
 
     private broadcastSkillCounts = () => {
         //need to add bandits here
-        let maximumNormalPoints = 121;
-        const maximumAscendancyPoints = 8;
+        let maximumNormalPoints = this.skillTreeData.points.totalPoints;
+        const maximumAscendancyPoints = this.skillTreeData.points.ascendancyPoints;
         let normalNodes = 0;
         let ascNodes = 0;
 
@@ -123,7 +123,7 @@ export class SkillTreeUtilities {
 
             if (node.classStartIndex !== start) {
                 this.skillTreeData.removeState(node, SkillNodeStates.Active);
-                continue;;
+                continue;
             }
 
             this.skillTreeData.addState(node, SkillNodeStates.Active);
