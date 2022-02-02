@@ -32,6 +32,8 @@ export enum RenderLayers {
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     Initialized = false;
     SkillNodeRenderer: PIXISkillNodeRenderer;
+    private _lastTick = Date.now();
+    private _dirty = true;
     private updateHover = false;
     private pixi: PIXI.Application;
     private viewport: Viewport.Viewport;
@@ -60,7 +62,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     };
 
     constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeDataCompare: SkillTreeData | undefined) {
-        this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio });
+        this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio, sharedTicker: true });
+        PIXI.Ticker.shared.stop();
+        PIXI.Ticker.system.stop();
         container.appendChild(this.pixi.view);
 
         PIXI.settings.SORTABLE_CHILDREN = false;
@@ -80,7 +84,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             screenHeight: this.pixi.screen.height,
             worldWidth: this.skillTreeData.width * (this.skillTreeData.scale * 1.25),
             worldHeight: this.skillTreeData.height * (this.skillTreeData.scale * 1.25),
-            interaction: this.pixi.renderer.plugins.interaction
+            interaction: this.pixi.renderer.plugins.interaction,
+            noTicker: true,
+            stopPropagation: true
         });
         this.viewport.drag().wheel({ percent: zoomPercent }).pinch({ percent: zoomPercent * 10 });
         this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
@@ -103,6 +109,22 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.viewport.resize(this.pixi.renderer.width, this.pixi.renderer.height, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
             this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         };
+
+        this.Tick();
+    }
+
+    private Tick() {
+        const tick = Date.now();;
+        const delta = this._lastTick - tick;
+        this._lastTick = tick;
+
+        this.viewport.update(delta);
+        if (this._dirty || this.viewport.dirty) {
+            this.pixi.render();
+            this._dirty = this.viewport.dirty = false;
+        }
+
+        requestAnimationFrame(() => { this.Tick() });
     }
 
     private SetupLayers() {
@@ -114,6 +136,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private SetLayer(layer: RenderLayers, object: PIXI.Container) {
+        this._dirty = true;
         this.LayerContainers[layer] = object;
 
         const current = this.viewport.getChildAt(layer);
