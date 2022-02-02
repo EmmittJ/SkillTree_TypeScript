@@ -68,6 +68,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         container.appendChild(this.pixi.view);
 
         PIXI.settings.SORTABLE_CHILDREN = false;
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+        PIXI.settings.ROUND_PIXELS = false;
+        PIXI.settings.RESOLUTION = devicePixelRatio;
         PIXI.utils.destroyTextureCache();
         PIXI.Loader.shared.reset();
 
