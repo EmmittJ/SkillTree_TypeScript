@@ -249,6 +249,21 @@ export class SkillTreeUtilities {
                 this.skillTreeDataComapre?.addState(node, SkillNodeStates.Hovered);
             } else {
                 this.skillTreeData.addState(node, SkillNodeStates.Hovered);
+
+                if (this.skillTreeData.tree === "Atlas" && node.isMastery) {
+                    for (const id in this.skillTreeData.nodes) {
+                        const other = this.skillTreeData.nodes[id];
+                        if (!other.isMastery) {
+                            continue;
+                        }
+
+                        if (other.name !== node.name) {
+                            continue;
+                        }
+
+                        this.skillTreeData.addState(other, SkillNodeStates.Hovered);
+                    }
+                }
             }
         }
         const shortest = this.getShortestPath(node);

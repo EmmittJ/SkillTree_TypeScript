@@ -640,13 +640,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.RenderTooltip();
     }
 
-    public StartRenderHover = (): void => {
+    public StartRenderHover = (hovered: SkillNode): void => {
         this.updateHover = true;
         if (!this.Initialized) {
             return;
         }
 
-        this.RenderTooltip();
+        this.RenderTooltip(hovered);
         this.RenderHover();
     }
 
@@ -664,7 +664,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         const pathingSkillIcons: PIXI.Container = new PIXI.Container();
 
         const drawnConnections: { [id: string]: boolean } = {};
-        const pathingNodes = this.skillTreeData.getNodes(SkillNodeStates.Pathing);
+        const pathingNodes = this.skillTreeData.getHoveredNodes();
         for (const id in pathingNodes) {
             const node = pathingNodes[id];
             const nodes = node.in
@@ -681,6 +681,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             if (connection !== null) {
                 pathingConnections.addChild(connection);
             }
+
+            if (node.is(SkillNodeStates.Hovered)) {
+                const icon = this.SkillNodeRenderer.CreateIcon(node);
+                if (icon !== null) {
+                    if (this.skillTreeData.tree === "Atlas" && node.isMastery) {
+                        icon.scale.set(2.5);
+                    }
+
+                    pathingSkillIcons.addChild(icon);
+                }
+            }
+
             const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
             if (frame !== null) {
                 pathingSkillIcons.addChild(frame);
@@ -737,35 +749,28 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private RenderTooltip = async (): Promise<void> => {
+    private RenderTooltip = async (hovered: SkillNode | undefined = undefined): Promise<void> => {
         this.ClearLayer(RenderLayers.Tooltip);
         this.ClearLayer(RenderLayers.TooltipCompare);
 
         let tooltip: PIXI.Graphics | undefined = undefined;
         let tooltipCompare: PIXI.Graphics | undefined = undefined;
 
-        if (!this.updateHover) {
+        if (!this.updateHover || hovered === undefined) {
             return
         }
 
-        const nodes = this.skillTreeData.getNodes(SkillNodeStates.Hovered);
-        let hoveredNode: SkillNode | undefined = undefined;
-        for (const id in nodes) {
-            const node = nodes[id];
-            hoveredNode = node;
+        const padding = 10;
+        const text = this.SkillNodeRenderer.CreateTooltip(hovered, "Base");
+        text.position.set(padding / 2, padding / 2);
 
-            const padding = 10;
-            const text = this.SkillNodeRenderer.CreateTooltip(node, "Base");
-            text.position.set(padding / 2, padding / 2);
+        tooltip = new PIXI.Graphics();
+        tooltip.beginFill(0x000000, .75);
+        tooltip.lineStyle(2, 0xCBB59C)
+        tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
+        tooltip.endFill();
 
-            tooltip = new PIXI.Graphics();
-            tooltip.beginFill(0x000000, .75);
-            tooltip.lineStyle(2, 0xCBB59C)
-            tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
-            tooltip.endFill();
-
-            tooltip.addChild(text);
-        }
+        tooltip.addChild(text);
 
         let hoveredCompareNode: SkillNode | undefined = undefined;
         if (this.skillTreeDataCompare !== undefined) {
@@ -793,7 +798,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         if (tooltip === undefined && tooltipCompare !== undefined) {
             tooltip = tooltipCompare;
-            hoveredNode = hoveredCompareNode;
+            hovered = hoveredCompareNode;
 
             tooltipCompare = undefined;
             hoveredCompareNode = undefined;
@@ -813,22 +818,22 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             this.SetLayer(RenderLayers.TooltipCompare, tooltipCompare);
         }
 
-        if (tooltip !== undefined && hoveredNode !== undefined) {
+        if (tooltip !== undefined && hovered !== undefined) {
             const bounds = tooltip.getBounds();
-            const size = hoveredNode.GetTargetSize();
+            const size = hovered.GetTargetSize();
             const scaleX = tooltip.width / bounds.width / devicePixelRatio;
             const scaleY = tooltip.height / bounds.height / devicePixelRatio;
 
             if (tooltip.worldTransform.tx + bounds.width > screen.width) {
-                tooltip.x = hoveredNode.x - tooltip.width * scaleX - size.width;
+                tooltip.x = hovered.x - tooltip.width * scaleX - size.width;
             } else {
-                tooltip.x = hoveredNode.x + size.width;
+                tooltip.x = hovered.x + size.width;
             }
 
             if (tooltip.worldTransform.ty + bounds.height > screen.height) {
-                tooltip.y = hoveredNode.y - tooltip.height * scaleY + size.height / 2;
+                tooltip.y = hovered.y - tooltip.height * scaleY + size.height / 2;
             } else {
-                tooltip.y = hoveredNode.y - size.height / 2;
+                tooltip.y = hovered.y - size.height / 2;
             }
 
             tooltip.scale.set(scaleX, scaleY);

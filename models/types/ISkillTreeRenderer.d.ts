@@ -11,6 +11,6 @@ interface ISkillTreeRenderer {
     RenderCharacterStartsActive(): void;
     RenderHighlight(): void;
     StartRenderHover(skillNode: SkillNode): void;
-    StopRenderHover(): void;
+    StopRenderHover(skillNode: SkillNode): void;
     CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
 }
