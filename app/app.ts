@@ -6,6 +6,7 @@ import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import download = require("downloadjs");
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
+import { SkillNode } from '../models/SkillNode';
 import { utils } from './utils';
 
 export class App {
@@ -73,7 +74,6 @@ export class App {
 
             window.location.hash = "";
             window.location.search = search;
-            window.location.reload();
         });
 
         const container = document.getElementById("skillTreeContainer");
