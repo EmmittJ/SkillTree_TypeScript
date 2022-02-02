@@ -6,7 +6,7 @@ import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import download = require("downloadjs");
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
-import { SkillNode } from '../models/SkillNode';
+import { SkillNode, SkillNodeStates } from '../models/SkillNode';
 import { utils } from './utils';
 
 export class App {
@@ -74,6 +74,18 @@ export class App {
 
             window.location.hash = "";
             window.location.search = search;
+        });
+
+        
+        const reset = document.getElementById("skillTreeControl_Reset") as HTMLSelectElement;
+        reset.addEventListener("click", () => {
+            const start = this.skillTreeData.getStartClass();
+            const asc = this.skillTreeData.getAscendancyClass();
+
+            this.skillTreeData.clearState(SkillNodeStates.Active);
+
+            SkillTreeEvents.fire("controls", "class-change", start);
+            SkillTreeEvents.fire("controls", "ascendancy-class-change", asc);
         });
 
         const container = document.getElementById("skillTreeContainer");
