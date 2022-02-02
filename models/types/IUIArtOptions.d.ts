@@ -1,0 +1,3 @@
+﻿interface IUIArtOptions {
+    largeGroupUsesHalfImage: boolean;
+}

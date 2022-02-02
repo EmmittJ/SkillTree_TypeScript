@@ -98,6 +98,7 @@
     <TypeScriptCompile Include="models\types\ISkillTreeRenderer.d.ts" />
     <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeCodec.d.ts" />
+    <TypeScriptCompile Include="models\types\IUIArtOptions.d.ts" />
     <TypeScriptCompile Include="models\types\IVersions.d.ts" />
   </ItemGroup>
   <ItemGroup>

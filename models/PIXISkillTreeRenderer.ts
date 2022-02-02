@@ -237,13 +237,23 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         const background: PIXI.Container = new PIXI.Container();
         const characterStarts: PIXI.Container = new PIXI.Container();
 
-        const temp = PIXI.Sprite.from(this.skillTreeData.assets["Background1"] ? "Background1" : "Background2");
-        const backgroundSprite = new PIXI.TilingSprite(temp.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
-        backgroundSprite.interactive = false;
-        backgroundSprite.interactiveChildren = false;
-        backgroundSprite.containerUpdateTransform = () => { };
-        backgroundSprite.anchor.set(.5);
-        this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
+        if (this.skillTreeData.assets["AtlasPassiveBackground"] !== undefined) {
+            const backgroundSprite = PIXI.Sprite.from("AtlasPassiveBackground");
+            backgroundSprite.interactive = false;
+            backgroundSprite.interactiveChildren = false;
+            backgroundSprite.containerUpdateTransform = () => { };
+            backgroundSprite.scale.set(2.8173)
+            backgroundSprite.anchor.set(.504, .918);
+            this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
+        } else {
+            const temp = PIXI.Sprite.from(this.skillTreeData.assets["Background1"] ? "Background1" : "Background2");
+            const backgroundSprite = new PIXI.TilingSprite(temp.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
+            backgroundSprite.interactive = false;
+            backgroundSprite.interactiveChildren = false;
+            backgroundSprite.containerUpdateTransform = () => { };
+            backgroundSprite.anchor.set(.5);
+            this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
+        }
 
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
@@ -264,15 +274,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             orbits = orbits.filter(x => x <= 3);
-            const max = Math.max(...orbits);
-            if (max <= 0) continue;
+            const max = group.backgroundOverride !== undefined && group.backgroundOverride !== 0 ? group.backgroundOverride : Math.max(...orbits);
+            if (max <= 0 || max > 3) continue;
 
             const sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
             sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
             sprite.anchor.set(.5);
             background.addChild(sprite);
 
-            if (max === 3) {
+            if (max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage) {
                 sprite.anchor.set(.5, 1);
                 const sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
                 sprite2.rotation = Math.PI;
@@ -562,25 +572,30 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             const className = utils.getKeyByValue(this.skillTreeData.constants.classes, classId);
-            if (className === undefined) {
+            if (className === undefined && Object.keys(this.skillTreeData.constants.classes).length === 0) {
+                const nodeGraphic = PIXI.Sprite.from("AtlasStart");
+                nodeGraphic.anchor.set(.5)
+                nodeGraphic.position.set(node.x, node.y);
+                characterStartsActive.addChild(nodeGraphic);
+            } else if (className === undefined) {
                 throw new Error(`Couldn't find class name from constants: ${classId}`);
-            }
-
-            const commonName = this.skillTreeData.constants.classesToName[className];
-            if (this.skillTreeData.extraImages !== undefined) {
-                const extraImage = this.skillTreeData.extraImages[commonName]
-                if (extraImage) {
-                    const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
-                    classNodeGraphic.anchor.set(0)
-                    classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
-                    backgroundActive.addChild(classNodeGraphic);
+            } else {
+                const commonName = this.skillTreeData.constants.classesToName[className];
+                if (this.skillTreeData.extraImages !== undefined) {
+                    const extraImage = this.skillTreeData.extraImages[commonName]
+                    if (extraImage) {
+                        const classNodeGraphic = PIXI.Sprite.from(`Background${className.replace("Class", "")}`);
+                        classNodeGraphic.anchor.set(0)
+                        classNodeGraphic.position.set(extraImage.x * this.skillTreeData.scale, extraImage.y * this.skillTreeData.scale);
+                        backgroundActive.addChild(classNodeGraphic);
+                    }
                 }
-            }
 
-            const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
-            nodeGraphic.anchor.set(.5)
-            nodeGraphic.position.set(node.x, node.y);
-            characterStartsActive.addChild(nodeGraphic);
+                const nodeGraphic = PIXI.Sprite.from(`center${commonName.toLocaleLowerCase()}`);
+                nodeGraphic.anchor.set(.5)
+                nodeGraphic.position.set(node.x, node.y);
+                characterStartsActive.addChild(nodeGraphic);
+            }
         }
 
         backgroundActive.interactive = false;
@@ -603,14 +618,15 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.RenderHover();
         this.RenderTooltip();
     }
+
     public StartRenderHover = (): void => {
         this.updateHover = true;
         if (!this.Initialized) {
             return;
         }
 
-        this.RenderHover();
         this.RenderTooltip();
+        this.RenderHover();
     }
 
     private RenderHover = async (): Promise<void> => {

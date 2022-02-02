@@ -18,6 +18,7 @@
     imageZoomLevels: Array<number>;
     skillSprites: { [id: string]: Array<ISpriteSheet> };
     constants: IConstants;
+    uiArtOptions: IUIArtOptions | undefined;
 
     getStartClass(): number;
     getAscendancyClass(): number;

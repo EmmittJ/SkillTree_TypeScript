@@ -19,4 +19,7 @@
 
     /** Determines if the group is a proxy (cluster jewel) */
     isProxy: boolean | undefined;
+
+    /** Determines what background to use for the group */
+    backgroundOverride: number | undefined;
 }

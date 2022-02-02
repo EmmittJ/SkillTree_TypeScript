@@ -89,9 +89,14 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
     public GetNodeSize = (node: SkillNode, source: Source = "Base"): { width: number; height: number } | null => {
         let texture: PIXI.Texture | null = null;
+        const icon = node.GetIcon();
+        if (icon === "") {
+            return null;
+        }
+
         try {
             const spriteSheetKey = this.getSpriteSheetKey(node);
-            texture = this.getSpritesheetTexture(source, spriteSheetKey, node.GetIcon());
+            texture = this.getSpritesheetTexture(source, spriteSheetKey, icon);
         } catch (ex) { }
 
         return texture ? { width: texture.width, height: texture.height } : null;
@@ -122,13 +127,18 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null
         }
 
+        const icon = node.GetIcon();
+        if (icon === "") {
+            return null;
+        }
+
         const spriteSheetKey = this.getSpriteSheetKey(node);
-        const texture = this.getSpritesheetTexture(source, spriteSheetKey, node.GetIcon());
+        const texture = this.getSpritesheetTexture(source, spriteSheetKey, icon);
 
         const nodeSprite = PIXI.Sprite.from(texture);
         nodeSprite.position.set(node.x, node.y);
         nodeSprite.anchor.set(.5);
-        
+
         //FIXME: This should really be anything that doesn't get a frame, but that is only Mastery nodes currently
         if (node.isMastery) {
             nodeSprite.hitArea = new PIXI.Circle(0, 0, Math.max(nodeSprite.texture.width, nodeSprite.texture.height) / 2);
@@ -181,10 +191,13 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
     private getSpritesheetTexture = (source: Source, spriteSheetKey: string, icon: string): PIXI.Texture => {
         const pixiSpritesheet = this.NodeSpritesheets[`${source}/${spriteSheetKey}`];
         if (pixiSpritesheet !== undefined) {
-            return pixiSpritesheet.textures[`${source}/${spriteSheetKey}/${icon}`];
-        } else {
-            throw Error(`Texture not found for ${source}/${spriteSheetKey}/${icon}`);
+            const texture = pixiSpritesheet.textures[`${source}/${spriteSheetKey}/${icon}`];
+            if (texture !== undefined) {
+                return texture
+            }
         }
+
+        throw Error(`Texture not found for ${source}/${spriteSheetKey}/${icon}`);
     }
 
     private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
@@ -309,10 +322,6 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
     public CreateConnection = (node: SkillNode, other: SkillNode): PIXI.Sprite | PIXI.Container | null => {
         if ((node.ascendancyName !== "" && other.ascendancyName === "") || (node.ascendancyName === "" && other.ascendancyName !== "")) {
-            return null;
-        }
-
-        if (node.classStartIndex !== undefined || other.classStartIndex !== undefined) {
             return null;
         }
 

@@ -92,7 +92,7 @@ export class App {
                         download(this.renderer.CreateScreenshot(mimeType), `${version.replace(/\./g, '')}_skilltree.jpg`, mimeType);
                     });
                 })
-                .catch((reason) => alert(`There was an issue initializing the renderer\n${reason}`));
+                .catch((reason) => console.error(reason));
         }
     }
 
@@ -138,7 +138,7 @@ export class App {
                 continue;
             }
             const e = document.createElement("option");
-            e.text = this.skillTreeData.constants.classIdToName[classId];
+            e.text = this.skillTreeData.root.out.length === 1 ? "Atlas" : this.skillTreeData.constants.classIdToName[classId];
             e.value = classId.toString();
 
             if (classId === this.skillTreeData.getStartClass()) {
@@ -161,6 +161,7 @@ export class App {
         }
 
         const ascControl = document.getElementById("skillTreeControl_Ascendancy") as HTMLSelectElement;
+        SkillTreeEvents.fire("controls", "class-change", +classControl.value);
         classControl.onchange = () => {
             const val = classControl.value;
             SkillTreeEvents.fire("controls", "class-change", +val);
