@@ -25,8 +25,9 @@ export enum RenderLayers {
     SkillIconsCompare = 14,
     Highlights = 15,
     NodeMoveCompare = 16,
-    Tooltip = 17,
-    TooltipCompare = 18
+    AtlasMasteryHighlight = 17,
+    Tooltip = 18,
+    TooltipCompare = 19
 }
 
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
@@ -57,6 +58,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         [RenderLayers.SkillIconsCompare]: new PIXI.Container(),
         [RenderLayers.Highlights]: new PIXI.Container(),
         [RenderLayers.NodeMoveCompare]: new PIXI.Container(),
+        [RenderLayers.AtlasMasteryHighlight]: new PIXI.Container(),
         [RenderLayers.Tooltip]: new PIXI.Container(),
         [RenderLayers.TooltipCompare]: new PIXI.Container(),
     };
@@ -657,12 +659,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.ClearLayer(RenderLayers.ConnectionsPathing);
         this.ClearLayer(RenderLayers.SkillIconsPathing);
         this.ClearLayer(RenderLayers.NodeMoveCompare);
+        this.ClearLayer(RenderLayers.AtlasMasteryHighlight);
 
         if (!this.updateHover) {
             return;
         }
 
         let nodeMoveCompare: PIXI.Graphics | undefined = undefined;
+        let atlasMasteryHighlight: PIXI.Container | undefined = undefined;
         const pathingConnections: PIXI.Container = new PIXI.Container();
         const pathingSkillIcons: PIXI.Container = new PIXI.Container();
 
@@ -689,10 +693,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 const icon = this.SkillNodeRenderer.CreateIcon(node);
                 if (icon !== null) {
                     if (this.skillTreeData.tree === "Atlas" && node.isMastery) {
+                        if (atlasMasteryHighlight === undefined) {
+                            atlasMasteryHighlight = new PIXI.Container();
+                        }
                         icon.scale.set(2.5);
+                        atlasMasteryHighlight.addChild(icon);
+                    } else {
+                        pathingSkillIcons.addChild(icon);
                     }
-
-                    pathingSkillIcons.addChild(icon);
                 }
             }
 
@@ -749,6 +757,13 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
             nodeMoveCompare.interactiveChildren = false;
             nodeMoveCompare.containerUpdateTransform = () => { };
             this.SetLayer(RenderLayers.NodeMoveCompare, nodeMoveCompare);
+        }
+
+        if (atlasMasteryHighlight !== undefined) {
+            atlasMasteryHighlight.interactive = false;
+            atlasMasteryHighlight.interactiveChildren = false;
+            atlasMasteryHighlight.containerUpdateTransform = () => { };
+            this.SetLayer(RenderLayers.AtlasMasteryHighlight, atlasMasteryHighlight);
         }
     }
 
