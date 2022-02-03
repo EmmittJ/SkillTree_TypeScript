@@ -30,6 +30,46 @@
     align-items: center;
 }
 
+.skillTreeStats {
+    position: fixed;
+    bottom: 2em;
+    left: 0;
+    height: fit-content;
+    width: 22.4em;
+    background: #333;
+    border: 1px solid #999;
+    color: #FFF;
+    margin: 0.25em;
+    padding: 0.25em;
+    display: inline-block;
+    overflow: auto;
+}
+
+    .skillTreeStats .group {
+        padding-top: 0.5em;
+    }
+
+        .skillTreeStats .group .title {
+            font-size: x-large;
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .skillTreeStats .group .stat {
+            padding: 0.2em;
+            font-size: medium;
+        }
+
+#skillTreeStats_ShowHide {
+    background: #333;
+    border: 1px solid #999;
+    color: #FFF;
+    margin: 0 0 0 10.5em;
+    width: 6em;
+    display: inline-block;
+}
+
 label {
     width: 4em;
     height: 1.5em;
@@ -83,28 +123,4 @@ input, select, button {
     font-size: larger;
     color: #FFFFFF;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-}
-
-#skillTreeJewelPopupOk,
-#skillTreeAlternateNodePopupOk {
-    float: right;
-    margin-right: .2em;
-    margin-top: .5em;
-}
-
-#skillTreeJewelPopup,
-#skillTreeAlternateNodePopup {
-    background: #333;
-    border: 1px solid #999;
-    color: #FFF;
-    width: 12em;
-    padding: 0.5em;
-    position: fixed;
-    left: 1em;
-    top: 30%;
-}
-
-#skillTreeAlternateNodePopup {
-    width: 13em;
-    margin-top: 150px;
 }

@@ -59,7 +59,7 @@ export class App {
             }
         }
 
-        const go = document.getElementById("skillTreeControl_VersionGo") as HTMLSelectElement;
+        const go = document.getElementById("skillTreeControl_VersionGo") as HTMLButtonElement;
         go.addEventListener("click", () => {
             let search = '?';
             if (versionSelect.value !== '0') {
@@ -76,8 +76,8 @@ export class App {
             window.location.search = search;
         });
 
-        
-        const reset = document.getElementById("skillTreeControl_Reset") as HTMLSelectElement;
+
+        const reset = document.getElementById("skillTreeControl_Reset") as HTMLButtonElement;
         reset.addEventListener("click", () => {
             const start = this.skillTreeData.getStartClass();
             const asc = this.skillTreeData.getAscendancyClass();
@@ -86,6 +86,17 @@ export class App {
 
             SkillTreeEvents.fire("controls", "class-change", start);
             SkillTreeEvents.fire("controls", "ascendancy-class-change", asc);
+        });
+
+        const showhide = document.getElementById("skillTreeStats_ShowHide") as HTMLButtonElement;
+        showhide.addEventListener("click", () => {
+            const content = document.getElementById("skillTreeStats_Content") as HTMLDivElement;
+            const stats = document.getElementById("skillTreeStats") as HTMLDivElement;
+            if (content.toggleAttribute('hidden')) {
+                stats.style.setProperty('height', 'fit-content');
+            } else {
+                stats.style.setProperty('height', '95vh');
+            }
         });
 
         const container = document.getElementById("skillTreeContainer");
@@ -116,6 +127,7 @@ export class App {
         SkillTreeEvents.on("skilltree", "hovered-nodes-start", this.renderer.StartRenderHover);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", this.renderer.StopRenderHover);
         SkillTreeEvents.on("skilltree", "active-nodes-update", this.renderer.RenderActive);
+        SkillTreeEvents.on("skilltree", "active-nodes-update", this.updateStats);
 
         SkillTreeEvents.on("skilltree", "normal-node-count", (count: number) => { const e = document.getElementById("skillTreeNormalNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
         SkillTreeEvents.on("skilltree", "normal-node-count-maximum", (count: number) => { const e = document.getElementById("skillTreeNormalNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
@@ -137,6 +149,101 @@ export class App {
                 points[i].style.removeProperty('display');
             }
         }
+    }
+
+    private updateStats = () => {
+        const defaultGroup = this.skillTreeData.tree === "Atlas" ? "Maps" : "Default";
+        const groups: { [group: string]: string[] } = {};
+        const stats: { [stat: string]: number } = {};
+
+        const nodes = this.skillTreeData.getSkilledNodes();
+        for (const id in nodes) {
+            const node = nodes[id];
+            for (const stat of node.stats) {
+                if (stats[stat] === undefined) {
+                    stats[stat] = 1;
+                } else {
+                    stats[stat] = stats[stat] + 1;
+                }
+
+                let set = false;
+                if (node.nodeGroup !== undefined && node.nodeGroup.nodes !== undefined) {
+                    for (const outId of node.nodeGroup.nodes) {
+                        const out = this.skillTreeData.nodes[outId];
+                        if (!out.isMastery) {
+                            continue;
+                        }
+
+                        if (groups[out.name] === undefined) {
+                            groups[out.name] = [];
+                        }
+
+                        set = true;
+                        if (groups[out.name].indexOf(stat) === -1) {
+                            groups[out.name].push(stat);
+                        }
+                        break;
+                    }
+                }
+
+                if (!set) {
+                    if (groups[defaultGroup] === undefined) {
+                        groups[defaultGroup] = [];
+                    }
+
+                    if (groups[defaultGroup].indexOf(stat) === -1) {
+                        groups[defaultGroup].push(stat);
+                    }
+                }
+
+            }
+        }
+
+        const content = document.getElementById("skillTreeStats_Content") as HTMLDivElement;
+        while (content.firstChild) {
+            content.removeChild(content.firstChild);
+        }
+
+        for (const name of Object.keys(groups).sort((a, b) => a === defaultGroup ? -1 : (b === defaultGroup ? 1 : (a < b) ? -1 : 1))) {
+            const groupStats: { [stat: string]: number } = {};
+            for (const stat of groups[name]) {
+                groupStats[stat] = stats[stat];
+            }
+            const div = this.createStatGroup(name, groupStats);
+            content.appendChild(div);
+        }
+    }
+
+    private createStatGroup = (name: string, stats: { [stat: string]: number }): HTMLDivElement => {
+        const group = document.createElement("div");
+        group.className = "group";
+
+        const title = document.createElement("span");
+        title.className = "title";
+        title.innerText = name;
+        title.addEventListener("click", () => {
+            const elements = document.querySelectorAll(`[data-group-name*="${name}"]`);
+            elements.forEach((element) => {
+                element.toggleAttribute("hidden");
+            })
+        });
+
+        group.appendChild(title);
+
+        for (const stat of Object.keys(stats).sort()) {
+            const num = stats[stat];
+            group.appendChild(this.createStat(name, `${num}x ${stat}`));
+        }
+
+        return group;
+    }
+
+    private createStat = (group: string, stat: string): HTMLDivElement => {
+        const div = document.createElement("div");
+        div.className = "stat";
+        div.innerText = stat;
+        div.setAttribute("data-group-name", group);
+        return div;
     }
 
     private populateStartClasses = (classControl: HTMLSelectElement) => {
