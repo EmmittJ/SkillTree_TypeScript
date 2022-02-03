@@ -6,6 +6,7 @@ import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode } from "./SkillNode";
 import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
+import { SpatialHash } from 'pixi-cull';
 
 export enum RenderLayers {
     BackgroundColor = 0,
@@ -33,11 +34,14 @@ export enum RenderLayers {
 export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     Initialized = false;
     SkillNodeRenderer: PIXISkillNodeRenderer;
+    
     private _lastTick = Date.now();
     private _dirty = true;
     private updateHover = false;
     private pixi: PIXI.Application;
     private viewport: Viewport.Viewport;
+    private cull: SpatialHash;
+    private DO_NOT_CULL = [RenderLayers.Tooltip, RenderLayers.TooltipCompare];
     private skillTreeData: SkillTreeData;
     private skillTreeDataCompare: SkillTreeData | undefined;
     LayerContainers: { [layer in RenderLayers]: PIXI.Container } = {
@@ -108,12 +112,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.on('rightclick', (click) => this.HandleZoomClick(click, -zoomPercent * 2));
 
         this.pixi.stage.addChild(this.viewport);
-
+        
         window.onresize = () => {
             this.pixi.renderer.resize(window.innerWidth, window.innerHeight);
             this.viewport.resize(this.pixi.renderer.width, this.pixi.renderer.height, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
             this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         };
+
+        this.cull = new SpatialHash()
 
         this.Tick();
     }
@@ -125,6 +131,7 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
 
         this.viewport.update(delta);
         if (this._dirty || this.viewport.dirty) {
+            this.cull.cull(this.viewport.getVisibleBounds());
             this.pixi.render();
             this._dirty = this.viewport.dirty = false;
         }
@@ -136,7 +143,14 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.removeChildren();
 
         for (const key in this.LayerContainers) {
-            this.viewport.addChild(this.LayerContainers[Number(key) as RenderLayers]);
+            const layer = Number(key) as RenderLayers;
+            const object = this.LayerContainers[layer];
+
+            if (this.DO_NOT_CULL.indexOf(layer) === -1) {
+                this.cull.addContainer(object);
+            }
+
+            this.viewport.addChild(object);
         }
     }
 
@@ -145,9 +159,18 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.LayerContainers[layer] = object;
 
         const current = this.viewport.getChildAt(layer);
+
+        if (this.DO_NOT_CULL.indexOf(layer) === -1) {
+            this.cull.addContainer(object);
+        }
+
         this.viewport.addChild(object);
         this.viewport.swapChildren(current, object);
         this.viewport.removeChild(current);
+
+        if (this.DO_NOT_CULL.indexOf(layer) === -1) {
+            this.cull.removeContainer(current as PIXI.Container);
+        }
     }
 
     private ClearLayer(layer: RenderLayers) {

@@ -29,6 +29,7 @@
     "css-loader": "^6.4.0",
     "downloadjs": "^1.4.7",
     "html-webpack-plugin": "^5.4.0",
+    "pixi-cull": "^2.1.0",
     "pixi-viewport": "^4.34.4",
     "pixi.js": "^6.2.2",
     "requirejs": "^2.3.6",
