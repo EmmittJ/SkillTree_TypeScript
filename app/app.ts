@@ -177,7 +177,7 @@ export class App {
                 if (mastery === null) {
                     let found = false;
                     for (const name of masteries) {
-                        if (stat.indexOf(name.replace("The", "")) >= 0) {
+                        if (stat.indexOf(name.replace("The", "").replace("Mastery", "")) >= 0) {
                             found = true
                             break;
                         }
@@ -237,7 +237,7 @@ export class App {
                 } else {
                     let group = defaultGroup;
                     for (const name of masteries) {
-                        if (stat.indexOf(name.replace("The", "")) >= 0) {
+                        if (stat.indexOf(name.replace("The", "").replace("Mastery", "")) >= 0) {
                             group = name;
                             break;
                         }
