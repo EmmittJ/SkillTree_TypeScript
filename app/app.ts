@@ -94,8 +94,10 @@ export class App {
             const stats = document.getElementById("skillTreeStats") as HTMLDivElement;
             if (content.toggleAttribute('hidden')) {
                 stats.style.setProperty('height', 'fit-content');
+                showhide.innerText = "Show";
             } else {
-                stats.style.setProperty('height', '95vh');
+                stats.style.setProperty('height', `80%`);
+                showhide.innerText = "Hide";
             }
         });
 
@@ -153,9 +155,45 @@ export class App {
 
     private updateStats = () => {
         const defaultGroup = this.skillTreeData.tree === "Atlas" ? "Maps" : "Default";
-        const groups: { [group: string]: string[] } = {};
-        const stats: { [stat: string]: number } = {};
 
+        const masteries: string[] = ["The Maven"];
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
+            if (mastery !== null && mastery.name !== defaultGroup) {
+                masteries.push(mastery.name);
+            }
+        }
+
+        const defaultStats: { [stat: string]: boolean } = {};
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            for (const stat of node.stats) {
+                if (defaultStats[stat] !== undefined) {
+                    continue
+                }
+
+                const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
+                if (mastery === null) {
+                    let found = false;
+                    for (const name of masteries) {
+                        if (stat.indexOf(name.replace("The", "")) >= 0) {
+                            found = true
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        defaultStats[stat] = true;
+                    }
+                }
+            }
+        }
+
+        
+        const groups: { [group: string]: string[] } = {};
+        const statGroup: { [stat: string]: string } = {};
+        const stats: { [stat: string]: number } = {};
         const nodes = this.skillTreeData.getSkilledNodes();
         for (const id in nodes) {
             const node = nodes[id];
@@ -166,36 +204,54 @@ export class App {
                     stats[stat] = stats[stat] + 1;
                 }
 
-                let set = false;
-                if (node.nodeGroup !== undefined && node.nodeGroup.nodes !== undefined) {
-                    for (const outId of node.nodeGroup.nodes) {
-                        const out = this.skillTreeData.nodes[outId];
-                        if (!out.isMastery) {
-                            continue;
-                        }
-
-                        if (groups[out.name] === undefined) {
-                            groups[out.name] = [];
-                        }
-
-                        set = true;
-                        if (groups[out.name].indexOf(stat) === -1) {
-                            groups[out.name].push(stat);
-                        }
-                        break;
+                if (statGroup[stat] !== undefined) {
+                    const group = statGroup[stat];
+                    if (groups[group].indexOf(stat) === -1) {
+                        groups[group].push(stat);
                     }
+                    continue;
                 }
 
-                if (!set) {
+                if (defaultStats[stat]) {
                     if (groups[defaultGroup] === undefined) {
                         groups[defaultGroup] = [];
                     }
 
                     if (groups[defaultGroup].indexOf(stat) === -1) {
+                        statGroup[stat] = defaultGroup;
                         groups[defaultGroup].push(stat);
                     }
+                    continue;
                 }
 
+                const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
+                if (mastery !== null) {
+                    if (groups[mastery.name] === undefined) {
+                        groups[mastery.name] = [];
+                    }
+
+                    if (groups[mastery.name].indexOf(stat) === -1) {
+                        statGroup[stat] = mastery.name;
+                        groups[mastery.name].push(stat);
+                    }
+                } else {
+                    let group = defaultGroup;
+                    for (const name of masteries) {
+                        if (stat.indexOf(name.replace("The", "")) >= 0) {
+                            group = name;
+                            break;
+                        }
+                    }
+
+                    if (groups[group] === undefined) {
+                        groups[group] = [];
+                    }
+
+                    if (groups[group].indexOf(stat) === -1) {
+                        statGroup[stat] = group;
+                        groups[group].push(stat);
+                    }
+                }
             }
         }
 

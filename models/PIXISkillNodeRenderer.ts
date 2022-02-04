@@ -235,7 +235,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
 
         if (color === undefined) {
-            color = 0x00FFCC;
+            color = 0xFFA500;
         }
 
         const graphic = new PIXI.Graphics();
@@ -256,7 +256,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${source}`];
 
         if (tooltip === undefined) {
-            let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name}`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
+            let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name} [${node.id}]`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
             let stats: PIXI.Text | null = node.stats.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.stats.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
             let flavour: PIXI.Text | null = node.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
             let reminder: PIXI.Text | null = node.reminderText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.reminderText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;

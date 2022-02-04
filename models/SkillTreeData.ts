@@ -333,6 +333,23 @@ export class SkillTreeData implements ISkillTreeData {
         return 0;
     }
 
+    public getMasteryForGroup = (group: IGroup | undefined): SkillNode | null => {
+        if (group === undefined || group.nodes === undefined) {
+            return null;
+        }
+
+        for (const id of group.nodes) {
+            const out = this.nodes[id];
+            if (!out.isMastery) {
+                continue;
+            }
+
+            return out;
+        }
+
+        return null;
+    }
+
     public getSkilledNodes = (): { [id: string]: SkillNode } => this.getNodes(SkillNodeStates.Active);
 
     public getHoveredNodes = (): { [id: string]: SkillNode } => {
