@@ -5,8 +5,6 @@ interface ISkillNodeRenderer {
     Initialize(): Promise<boolean>;
 
     GetNodeSize(node: SkillNode, source: "Base" | "Compare"): any;
-    CreateConnections(node: SkillNode, others: SkillNode[]): any;
-    CreateConnection(node: SkillNode, other: SkillNode): any;
     CreateFrame(node: SkillNode, others: SkillNode[]): any;
     CreateIcon(node: SkillNode, source: "Base" | "Compare"): any;
     CreateIconEffect(node: SkillNode, source: "Base" | "Compare"): any;

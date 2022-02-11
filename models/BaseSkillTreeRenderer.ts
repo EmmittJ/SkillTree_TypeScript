@@ -1,4 +1,5 @@
-﻿import { ConnectionStyle, SkillNode, SkillNodeStates } from "./SkillNode";
+﻿import { utils } from "../app/utils";
+import { ConnectionStyle, SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeData } from "./SkillTreeData";
 import { IConnnection } from "./types/IConnection";
 import { ISkillNodeRenderer } from "./types/ISkillNodeRenderer";
@@ -25,6 +26,15 @@ export enum RenderLayers {
     AtlasMasteryHighlight = 17,
     Tooltip = 18,
     TooltipCompare = 19
+}
+
+export interface IAsset {
+    name: string;
+    x: number;
+    y: number;
+    half?: boolean | undefined;
+    offsetX?: number | undefined;
+    offsetY?: number | undefined;
 }
 
 export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
@@ -63,7 +73,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     abstract Initialize(): Promise<boolean>;
     abstract CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
 
-    protected abstract DrawAsset(layer: RenderLayers, asset: string, x: number, y: number, half: boolean): { width: number, height: number };
+    protected abstract DrawAsset(layer: RenderLayers, asset: IAsset): { width: number, height: number };
     protected abstract DrawText(layer: RenderLayers, text: string, colour: string, x: number, y: number): void;
     protected abstract DrawBackground(layer: RenderLayers, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void;
 
@@ -96,7 +106,6 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
         this.ClearLayer(RenderLayers.SkillIcons);
         this.ClearLayer(RenderLayers.SkillIconsCompare);
-
         this.RenderBaseRest();
     }
 
@@ -113,11 +122,13 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             const max = group.backgroundOverride !== undefined && group.backgroundOverride !== 0 ? group.backgroundOverride : Math.max(...orbits);
             if (max <= 0 || max > 3) continue;
 
-            const asset = `PSGroupBackground${max}`;
-            const x = Math.ceil(group.x * this.skillTreeData.scale);
-            const y = Math.ceil(group.y * this.skillTreeData.scale);
-            const half = max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage;
-            this.DrawAsset(RenderLayers.Background, asset, x, y, half);
+            const asset = {
+                name: `PSGroupBackground${max}`,
+                x: Math.ceil(group.x * this.skillTreeData.scale),
+                y: Math.ceil(group.y * this.skillTreeData.scale),
+                half: max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage
+            };
+            this.DrawAsset(RenderLayers.Background, asset);
         }
     }
 
@@ -130,10 +141,12 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             const group = node.nodeGroup;
 
             const ascendancyName = node.ascendancyName;
-            const asset = `Classes${ascendancyName}`;
-            const x = Math.ceil(group.x * this.skillTreeData.scale);
-            const y = Math.ceil(group.y * this.skillTreeData.scale);
-            const sprite = this.DrawAsset(RenderLayers.Background, asset, x, y, false);
+            const asset = {
+                name: `Classes${ascendancyName}`,
+                x: Math.ceil(group.x * this.skillTreeData.scale),
+                y: Math.ceil(group.y * this.skillTreeData.scale)
+            };
+            const sprite = this.DrawAsset(RenderLayers.Background, asset);
 
             if (this.skillTreeData.classes === undefined) {
                 continue;
@@ -191,10 +204,12 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                 continue;
             }
 
-            const asset = "PSStartNodeBackgroundInactive";
-            const x = node.nodeGroup.x * this.skillTreeData.scale;
-            const y = node.nodeGroup.y * this.skillTreeData.scale;
-            this.DrawAsset(RenderLayers.CharacterStarts, asset, x, y, false);
+            const asset = {
+                name: "PSStartNodeBackgroundInactive",
+                x: node.nodeGroup.x * this.skillTreeData.scale,
+                y: node.nodeGroup.y * this.skillTreeData.scale
+            };
+            this.DrawAsset(RenderLayers.CharacterStarts, asset);
         }
     }
 
@@ -280,11 +295,85 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.RenderActiveRest();
     }
 
-    abstract RenderCharacterStartsActive(): void;
-    abstract RenderHighlight(): void;
-    abstract StartRenderHover(skillNode: SkillNode): void;
-    abstract StopRenderHover(skillNode: SkillNode): void;
+    RenderCharacterStartsActive = (): void => {
+        if (!this.Initialized) {
+            return;
+        }
 
+        this.ClearLayer(RenderLayers.BackgroundActive);
+        this.ClearLayer(RenderLayers.CharacterStartsActive);
+
+        for (const id of this.skillTreeData.root.out) {
+            const node = this.skillTreeData.nodes[id];
+            const classId = node.classStartIndex;
+            if (classId === undefined || !node.is(SkillNodeStates.Active) || node.nodeGroup === undefined) {
+                continue;
+            }
+
+            const className = utils.getKeyByValue(this.skillTreeData.constants.classes, classId);
+            if (className === undefined && Object.keys(this.skillTreeData.constants.classes).length === 0) {
+                const asset = {
+                    name: "AtlasStart",
+                    x: node.x,
+                    y: node.y
+                };
+                this.DrawAsset(RenderLayers.CharacterStartsActive, asset);
+            } else if (className !== undefined) {
+                const commonName = this.skillTreeData.constants.classesToName[className];
+                if (this.skillTreeData.extraImages !== undefined) {
+                    const extraImage = this.skillTreeData.extraImages[classId];
+                    if (extraImage) {
+                        const asset = {
+                            name: `Background${className.replace("Class", "")}`,
+                            x: extraImage.x * this.skillTreeData.scale,
+                            y: extraImage.y * this.skillTreeData.scale,
+                            offsetX: 0
+                        };
+                        this.DrawAsset(RenderLayers.BackgroundActive, asset);
+                    }
+                }
+
+                const asset = {
+                    name: `center${commonName.toLocaleLowerCase()}`,
+                    x: node.x,
+                    y: node.y
+                };
+                this.DrawAsset(RenderLayers.CharacterStartsActive, asset);
+            }
+        }
+    }
+
+    abstract RenderHighlight(): void;
+
+    protected abstract RenderHoverRest(hovered: SkillNode): void;
+    StartRenderHover = (hovered: SkillNode): void => {
+        if (!this.Initialized) {
+            return;
+        }
+
+        this.ClearLayer(RenderLayers.ConnectionsPathing);
+        this.DrawConnectionsForNodes(RenderLayers.ConnectionsPathing, this.skillTreeData.getHoveredNodes());
+
+        this.ClearLayer(RenderLayers.SkillIconsPathing);
+        this.ClearLayer(RenderLayers.NodeMoveCompare);
+        this.ClearLayer(RenderLayers.AtlasMasteryHighlight);
+
+        this.RenderHoverRest(hovered);
+    }
+
+    StopRenderHover = (_: SkillNode): void => {
+        if (!this.Initialized) {
+            return;
+        }
+
+        this.ClearLayer(RenderLayers.ConnectionsPathing);
+        this.ClearLayer(RenderLayers.SkillIconsPathing);
+        this.ClearLayer(RenderLayers.NodeMoveCompare);
+        this.ClearLayer(RenderLayers.AtlasMasteryHighlight);
+        this.ClearLayer(RenderLayers.Tooltip);
+        this.ClearLayer(RenderLayers.TooltipCompare);
+
+    }
     protected abstract SetupLayers(): void;
     protected abstract SetLayer(layer: RenderLayers, object: any): void;
     protected abstract ClearLayer(layer: RenderLayers): void;
