@@ -233,7 +233,29 @@ export class SkillTreeData implements ISkillTreeData {
             }
         }
         // #endregion
+        // #region Fix group orbits
+        {
+            for (const id in skillTree.groups) {
+                const group = skillTree.groups[id];
+                group.nodes = group.nodes || group.n;
+                if (group.nodes) {
+                    group.nodes = group.nodes.map(n => +n);
+                }
 
+                group.orbits = group.orbits || [];
+                if (group.oo) {
+                    if (Array.isArray(group.oo)) {
+                        group.oo = { "0": group.oo[0] };
+                    }
+
+                    for (const id in group.oo) {
+                        group.orbits.push(+id);
+                    }
+                }
+                this.groups[id] = group;
+            }
+        }
+        // #endregion
         this.nodes = {};
         this.classStartNodes = {};
         this.ascedancyNodes = {};
