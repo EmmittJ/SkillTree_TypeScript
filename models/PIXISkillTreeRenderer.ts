@@ -1,49 +1,23 @@
-﻿import { ISkillTreeRenderer } from "./types/ISkillTreeRenderer";
-import { SkillTreeData } from './SkillTreeData';
+﻿import { SkillTreeData } from './SkillTreeData';
 import Viewport = require("pixi-viewport");
 import PIXI = require("pixi.js");
 import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
-import { SkillNodeStates, SkillNode } from "./SkillNode";
+import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
 import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
 import { SpatialHash } from 'pixi-cull';
+import { BaseSkillTreeRenderer, RenderLayers } from "./BaseSkillTreeRenderer";
+import { IConnnection } from "./types/IConnection";
 
-export enum RenderLayers {
-    BackgroundColor = 0,
-    Background = 1,
-    BackgroundActive = 2,
-    Connections = 3,
-    SkillIconsActiveEffects = 4,
-    ConnectionsActive = 5,
-    ConnectionsPathing = 6,
-    SkillIcons = 7,
-    SkillIconsPathing = 8,
-    SkillIconsActive = 9,
-    CharacterStarts = 10,
-    CharacterStartsActive = 11,
-    JewelSocketActive = 12,
-    JewelSocketHighlights = 13,
-    SkillIconsCompare = 14,
-    Highlights = 15,
-    NodeMoveCompare = 16,
-    AtlasMasteryHighlight = 17,
-    Tooltip = 18,
-    TooltipCompare = 19
-}
-
-export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
-    Initialized = false;
+export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     SkillNodeRenderer: PIXISkillNodeRenderer;
-    
-    private _lastTick = Date.now();
+
     private _dirty = true;
     private updateHover = false;
     private pixi: PIXI.Application;
     private viewport: Viewport.Viewport;
     private cull: SpatialHash;
     private DO_NOT_CULL = [RenderLayers.Tooltip, RenderLayers.TooltipCompare];
-    private skillTreeData: SkillTreeData;
-    private skillTreeDataCompare: SkillTreeData | undefined;
     LayerContainers: { [layer in RenderLayers]: PIXI.Container } = {
         [RenderLayers.BackgroundColor]: new PIXI.Container(),
         [RenderLayers.Background]: new PIXI.Container(),
@@ -68,6 +42,8 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
     };
 
     constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeDataCompare: SkillTreeData | undefined) {
+        super(container, skillTreeData, skillTreeDataCompare);
+
         this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio, sharedTicker: true });
         PIXI.Ticker.shared.stop();
         PIXI.Ticker.system.stop();
@@ -112,34 +88,35 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         this.viewport.on('rightclick', (click) => this.HandleZoomClick(click, -zoomPercent * 2));
 
         this.pixi.stage.addChild(this.viewport);
-        
+
         window.onresize = () => {
             this.pixi.renderer.resize(window.innerWidth, window.innerHeight);
             this.viewport.resize(this.pixi.renderer.width, this.pixi.renderer.height, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
             this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         };
 
-        this.cull = new SpatialHash()
+        this.cull = new SpatialHash({ size: 512 });
 
-        this.Tick();
+        super.Tick();
     }
 
-    private Tick() {
-        const tick = Date.now();;
-        const delta = this._lastTick - tick;
-        this._lastTick = tick;
+    IsDirty(): boolean {
+        return this._dirty || this.viewport.dirty;
+    }
 
+    PreUpdate(delta: number): void {
         this.viewport.update(delta);
-        if (this._dirty || this.viewport.dirty) {
-            this.cull.cull(this.viewport.getVisibleBounds());
-            this.pixi.render();
-            this._dirty = this.viewport.dirty = false;
-        }
-
-        requestAnimationFrame(() => { this.Tick() });
     }
 
-    private SetupLayers() {
+    Update(_: number): void {
+        this.cull.cull(this.viewport.getVisibleBounds());
+        this.pixi.render();
+        this._dirty = this.viewport.dirty = false;
+    }
+
+    PostUpdate(_: number): void { }
+
+    protected SetupLayers() {
         this.viewport.removeChildren();
 
         for (const key in this.LayerContainers) {
@@ -154,26 +131,33 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private SetLayer(layer: RenderLayers, object: PIXI.Container) {
+    protected SetLayer(layer: RenderLayers, object: PIXI.Container) {
         this._dirty = true;
         this.LayerContainers[layer] = object;
 
-        const current = this.viewport.getChildAt(layer);
+        const current = this.viewport.getChildAt(layer) as PIXI.Container;
+        if (this.DO_NOT_CULL.indexOf(layer) === -1) {
+            this.cull.removeContainer(current);
+        }
 
         if (this.DO_NOT_CULL.indexOf(layer) === -1) {
             this.cull.addContainer(object);
         }
 
+        if (object === current) {
+            return;
+        }
+
         this.viewport.addChild(object);
         this.viewport.swapChildren(current, object);
         this.viewport.removeChild(current);
-
-        if (this.DO_NOT_CULL.indexOf(layer) === -1) {
-            this.cull.removeContainer(current as PIXI.Container);
-        }
     }
 
-    private ClearLayer(layer: RenderLayers) {
+    protected GetLayer(layer: RenderLayers): PIXI.Container {
+        return this.viewport.getChildAt(layer) as PIXI.Container;
+    }
+
+    protected ClearLayer(layer: RenderLayers) {
         this.SetLayer(layer, new PIXI.Container());
     }
 
@@ -278,174 +262,87 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         return promise;
     }
 
-    public RenderBase = (): void => {
-        if (!this.Initialized) {
-            return;
+    protected DrawAsset = (layer: RenderLayers, asset: string, x: number, y: number, half: boolean): { width: number, height: number } => {
+        const container = this.GetLayer(layer);
+
+        const sprite = PIXI.Sprite.from(asset);
+        sprite.position.set(x, y);
+        sprite.anchor.set(.5);
+        container.addChild(sprite);
+
+        if (half) {
+            sprite.anchor.set(.5, 1);
+            const sprite2 = PIXI.Sprite.from(asset);
+            sprite2.rotation = Math.PI;
+            sprite2.position.set(x, y);
+            sprite2.anchor.set(.5, 1);
+            container.addChild(sprite2);
         }
 
-        this.SetupLayers();
+        this.SetLayer(layer, container);
+        return { width: sprite.width, height: sprite.height * (half ? 2 : 1) };
+    }
 
-        const background: PIXI.Container = new PIXI.Container();
-        const characterStarts: PIXI.Container = new PIXI.Container();
+    protected DrawText = (layer: RenderLayers, _text: string, colour: string, x: number, y: number): void => {
+        const container = this.GetLayer(layer);
 
-        if (this.skillTreeData.assets["AtlasPassiveBackground"] !== undefined) {
-            const backgroundSprite = PIXI.Sprite.from("AtlasPassiveBackground");
-            backgroundSprite.interactive = false;
-            backgroundSprite.interactiveChildren = false;
-            backgroundSprite.containerUpdateTransform = () => { };
+        const text = new PIXI.Text(_text, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
+        text.position.set(x, y);
+        text.scale.set(this.skillTreeData.scale);
+        container.addChild(text);
+
+        this.SetLayer(layer, container);
+    }
+
+    protected DrawBackground = (layer: RenderLayers, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void => {
+        const container = this.GetLayer(layer);
+
+        let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(asset);
+        if (asset === "AtlasPassiveBackground") {
             backgroundSprite.scale.set(2.8173)
             backgroundSprite.anchor.set(.504, .918);
-            this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
         } else {
-            const temp = PIXI.Sprite.from(this.skillTreeData.assets["Background1"] ? "Background1" : "Background2");
-            const backgroundSprite = new PIXI.TilingSprite(temp.texture, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
-            backgroundSprite.interactive = false;
-            backgroundSprite.interactiveChildren = false;
-            backgroundSprite.containerUpdateTransform = () => { };
+            const texture = backgroundSprite.texture;
+            texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
+            backgroundSprite = PIXI.TilingSprite.from(texture.baseTexture, { width: this.skillTreeData.width * (this.skillTreeData.scale * 1.25), height: this.skillTreeData.height * (this.skillTreeData.scale * 1.25) });
             backgroundSprite.anchor.set(.5);
-            this.SetLayer(RenderLayers.BackgroundColor, backgroundSprite);
         }
 
-        for (const id in this.skillTreeData.groups) {
-            const group = this.skillTreeData.groups[id];
-            const nodes = (group.n || group.nodes || []);
-            if (nodes.length === 0 || nodes.find(id => this.skillTreeData.nodes[id].ascendancyName !== "") !== undefined) {
-                continue;
-            }
+        container.addChild(backgroundSprite);
+        this.SetLayer(layer, container);
+    }
 
-            let orbits = group.orbits || [];
-            if (group.oo) {
-                if (Array.isArray(group.oo)) {
-                    group.oo = { "0": group.oo[0] };
-                }
+    protected DrawConnections = (layer: RenderLayers, connections: IConnnection[]): void => {
+        const container = this.GetLayer(layer);
 
-                for (const id in group.oo) {
-                    orbits.push(+id);
-                }
-            }
-
-            orbits = orbits.filter(x => x <= 3);
-            const max = group.backgroundOverride !== undefined && group.backgroundOverride !== 0 ? group.backgroundOverride : Math.max(...orbits);
-            if (max <= 0 || max > 3) continue;
-
-            const sprite = PIXI.Sprite.from(`PSGroupBackground${max}`);
-            sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
-            sprite.anchor.set(.5);
-            background.addChild(sprite);
-
-            if (max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage) {
-                sprite.anchor.set(.5, 1);
-                const sprite2 = PIXI.Sprite.from(`PSGroupBackground${max}`);
-                sprite2.rotation = Math.PI;
-                sprite2.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
-                sprite2.anchor.set(.5, 1);
-                background.addChild(sprite2);
+        const connectionContainer = new PIXI.Container();
+        for (const connection of connections) {
+            switch (connection.style) {
+                case ConnectionStyle.Arc:
+                    connectionContainer.addChild(this.SkillNodeRenderer.CreateArcConnection(connection.asset, connection.node, connection.other, connection.removing));
+                    break;
+                case ConnectionStyle.Line:
+                    connectionContainer.addChild(this.SkillNodeRenderer.CreateLineConnection(connection.asset, connection.node, connection.other, connection.removing));
+                    break;
             }
         }
 
-        for (const id in this.skillTreeData.groups) {
-            const group = this.skillTreeData.groups[id];
-            const nodes = (group.n || group.nodes || []);
-            if (nodes.filter(id => this.skillTreeData.nodes[id].isAscendancyStart).length <= 0) {
-                continue;
-            }
-            const ascendancyName = nodes.map(id => this.skillTreeData.nodes[id].ascendancyName)[0];
-            const sprite = PIXI.Sprite.from(`Classes${ascendancyName}`);
-            sprite.position.set(Math.ceil(group.x * this.skillTreeData.scale), Math.ceil(group.y * this.skillTreeData.scale));
-            sprite.anchor.set(.5);
-            background.addChild(sprite);
+        container.addChild(connectionContainer);
+        this.SetLayer(layer, container);
+    }
 
-            if (this.skillTreeData.classes === undefined) {
-                continue;
-            }
-            for (const id in this.skillTreeData.classes) {
-                const ascClasses = this.skillTreeData.classes[id];
-                for (const classid in ascClasses.ascendancies) {
-                    const ascClass = ascClasses.ascendancies[classid];
-                    if (ascClass.name === ascendancyName && ascClass.flavourTextRect !== undefined) {
-                        const rect = typeof ascClass.flavourTextRect === "string" ? ascClass.flavourTextRect.split(",") : [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
-                        const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
-                        const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
-
-                        let r = 0;
-                        let g = 0;
-                        let b = 0;
-                        if (ascClass.flavourTextColour.indexOf(',') > 0) {
-                            const c = ascClass.flavourTextColour.split(",");
-                            r = +c[0];
-                            g = +c[1];
-                            b = +c[2];
-                        } else {
-                            const c = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec("#" + ascClass.flavourTextColour);
-                            if (c && c.length === 4) {
-                                r = parseInt(c[1], 16);
-                                g = parseInt(c[2], 16);
-                                b = parseInt(c[3], 16);
-                            }
-                        }
-
-                        const colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                        const text = new PIXI.Text(ascClass.flavourText, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
-                        text.position.set(x, y);
-                        text.scale.set(this.skillTreeData.scale);
-                        background.addChild(text);
-                    }
-                }
-            }
-        }
-
-        if (this.skillTreeData.root.out.length > 1) {
-            for (const id of this.skillTreeData.root.out) {
-                const node = this.skillTreeData.nodes[id];
-                if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
-                    continue;
-                }
-
-                const graphic = PIXI.Sprite.from("PSStartNodeBackgroundInactive");
-                graphic.position.set(node.nodeGroup.x * this.skillTreeData.scale, node.nodeGroup.y * this.skillTreeData.scale);
-                graphic.anchor.set(.5);
-                characterStarts.addChild(graphic);
-            }
-        }
-
-        background.interactive = false;
-        background.interactiveChildren = false;
-        background.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.Background, background);
-
-        characterStarts.interactive = false;
-        characterStarts.interactiveChildren = false;
-        characterStarts.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.CharacterStarts, characterStarts);
-
+    protected RenderBaseRest = (): void => {
         this.RenderBaseNodes();
     }
 
     private RenderBaseNodes = () => {
+        const skillIcons: PIXI.Container = this.GetLayer(RenderLayers.SkillIcons);
+        const skillIcons_compare: PIXI.Container = this.GetLayer(RenderLayers.SkillIconsCompare);
 
-        const connections: PIXI.Container = new PIXI.Container();
-        const skillIcons: PIXI.Container = new PIXI.Container();
-        const skillIcons_compare: PIXI.Container = new PIXI.Container();
-
-        const drawnConnections: { [id: string]: boolean } = {};
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
             if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
                 continue;
-            }
-            const nodes = node.in
-                .filter((outID) => {
-                    return !drawnConnections[`${+id}-${outID}`] || !drawnConnections[`${outID}-${+id}`];
-                })
-                .map((outID) => {
-                    drawnConnections[`${+id}-${outID}`] = true;
-                    drawnConnections[`${outID}-${+id}`] = true;
-                    return this.skillTreeData.nodes[outID]
-                });
-
-            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes.filter(x => x.classStartIndex === undefined));
-            if (connection !== null) {
-                connections.addChild(connection);
             }
 
             const icon = this.SkillNodeRenderer.CreateIcon(node);
@@ -464,8 +361,9 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                     skillIcons.addChild(highlighter);
                 }
             }
-            const nodeSize = this.SkillNodeRenderer.GetNodeSize(node);
+            
             if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.GetId()] !== undefined) {
+                const nodeSize = this.SkillNodeRenderer.GetNodeSize(node);
                 const node2 = this.skillTreeDataCompare.nodes[node.GetId()];
                 let sDiff = node.stats.length !== node2.stats.length;
                 const moved = nodeSize && (Math.abs(node.x - node2.x) > nodeSize.width || Math.abs(node.y - node2.y) > nodeSize.height);
@@ -515,60 +413,24 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
                 }
             }
         }
-
-        skillIcons.interactive = false;
-        skillIcons.interactiveChildren = true;
-        skillIcons.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.SkillIcons, skillIcons);
-
-        skillIcons_compare.interactive = false;
-        skillIcons_compare.interactiveChildren = true;
-        skillIcons_compare.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.SkillIconsCompare, skillIcons_compare);
-
-        connections.interactive = false;
-        connections.interactiveChildren = false;
-        connections.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.Connections, connections);
     }
 
-    public RenderActive = (): void => {
-        if (!this.Initialized) {
-            return;
-        }
+    protected RenderActiveRest = (): void => {
         this.RenderHover();
 
-        this.ClearLayer(RenderLayers.ConnectionsActive);
-        this.ClearLayer(RenderLayers.SkillIconsActive);
-        this.ClearLayer(RenderLayers.SkillIconsActiveEffects);
+        const skillIconActiveEffects: PIXI.Container = this.GetLayer(RenderLayers.SkillIconsActiveEffects);
+        const skillIconsActive: PIXI.Container = this.GetLayer(RenderLayers.SkillIconsActive);
 
-        const skillIconActiveEffects: PIXI.Container = new PIXI.Container();
-        const connectionsActive: PIXI.Container = new PIXI.Container();
-        const skillIconsActive: PIXI.Container = new PIXI.Container();
-
-        const drawnConnections: { [id: string]: boolean } = {};
         const activeNodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
         for (const id in activeNodes) {
             const node = activeNodes[id];
-            const nodes = node.in
-                .filter((outID) => {
-                    return !drawnConnections[`${+id}-${outID}`] || !drawnConnections[`${outID}-${+id}`];
-                })
-                .map((outID) => {
-                    drawnConnections[`${+id}-${outID}`] = true;
-                    drawnConnections[`${outID}-${+id}`] = true;
-                    return this.skillTreeData.nodes[outID]
-                });
+            const nodes = node.out.map(x => this.skillTreeData.nodes[x]);
 
             const effect = this.SkillNodeRenderer.CreateIconEffect(node);
             if (effect !== null) {
                 skillIconActiveEffects.addChild(effect);
             }
 
-            const connection = this.SkillNodeRenderer.CreateConnections(node, nodes);
-            if (connection !== null) {
-                connectionsActive.addChild(connection);
-            }
             for (const out of nodes) {
                 const frame = this.SkillNodeRenderer.CreateFrame(out, out.in.map(x => this.skillTreeData.nodes[x]));
                 if (frame !== null) {
@@ -590,11 +452,6 @@ export class PIXISkillTreeRenderer implements ISkillTreeRenderer {
         skillIconActiveEffects.interactiveChildren = false;
         skillIconActiveEffects.containerUpdateTransform = () => { };
         this.SetLayer(RenderLayers.SkillIconsActiveEffects, skillIconActiveEffects);
-
-        connectionsActive.interactive = false;
-        connectionsActive.interactiveChildren = false;
-        connectionsActive.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.ConnectionsActive, connectionsActive);
 
         skillIconsActive.interactive = false;
         skillIconsActive.interactiveChildren = false;

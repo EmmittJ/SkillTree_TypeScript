@@ -10,6 +10,11 @@ export enum SkillNodeStates {
     Moved = 1 << 5,
 }
 
+export enum ConnectionStyle {
+    Line,
+    Arc
+}
+
 export class SkillNode implements ISkillNode {
     skill: number;
     id: number;

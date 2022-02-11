@@ -343,17 +343,18 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
             return null;
         }
 
+        const connectionType = node.GetConnectionType(other);
+        const removing = node.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing);
         const container = node.group === other.group && node.orbit === other.orbit
-            ? this.createArcConnection(node, other)
-            : this.createLineConnection(node, other);
+            ? this.CreateArcConnection(`Orbit${node.orbit}${connectionType}`, node, other, removing)
+            : this.CreateLineConnection(`LineConnector${connectionType}`, node, other, removing);
         container.interactive = false;
         container.interactiveChildren = false;
         container.containerUpdateTransform = () => { };
         return container;
     }
 
-    private createArcConnection = (node: SkillNode, other: SkillNode): PIXI.Container => {
-        const connectionType = node.GetConnectionType(other);
+    public CreateArcConnection = (asset: string, node: SkillNode, other: SkillNode, removing: boolean): PIXI.Container => {
         let startAngle = node.arc < other.arc ? node.arc : other.arc;
         let endAngle = node.arc < other.arc ? other.arc : node.arc;
 
@@ -369,15 +370,14 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         let angle = endAngle - startAngle;
         const arcsNeeded = Math.ceil(angle / (Math.PI / 2));
         const initialRotation = Math.PI / 2 + startAngle;
-        const arcContainer = new PIXI.Container();
 
+        const arcContainer = new PIXI.Container();
+        const texture = PIXI.Texture.from(asset);
         for (let i = 0; i < arcsNeeded; ++i) {
             if (node.nodeGroup === undefined) {
                 continue
             }
-
-            const asset = `Orbit${node.orbit}${connectionType}`;
-            const texture = PIXI.Texture.from(asset)
+            
             const sprite = PIXI.Sprite.from(texture);
             sprite.rotation = angle + initialRotation;
             sprite.position.set(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale);
@@ -394,7 +394,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
 
             arcContainer.addChild(sprite);
 
-            if (node.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
+            if (removing) {
                 sprite.tint = 0xFF0000;
             }
 
@@ -407,10 +407,9 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return arcContainer;
     }
 
-    private createLineConnection = (node: SkillNode, other: SkillNode): PIXI.Sprite => {
-        const connectionType = node.GetConnectionType(other);
-        const asset = `LineConnector${connectionType}`;
+    public CreateLineConnection = (asset: string, node: SkillNode, other: SkillNode, removing: boolean): PIXI.Sprite => {
         const texture = PIXI.Texture.from(asset);
+        texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
 
         const length = Math.hypot(node.x - other.x, node.y - other.y);
         let line: PIXI.Sprite;
@@ -424,7 +423,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         line.position.set(node.x, node.y);
         line.rotation = Math.atan2(other.y - node.y, other.x - node.x);
 
-        if (node.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing)) {
+        if (removing) {
             line.tint = 0xFF0000;
         }
         return line;

@@ -76,6 +76,7 @@
   <ItemGroup>
     <TypeScriptCompile Include="app\app.ts" />
     <TypeScriptCompile Include="app\utils.ts" />
+    <TypeScriptCompile Include="models\BaseSkillTreeRenderer.ts" />
     <TypeScriptCompile Include="models\PIXISkillNodeRenderer.ts" />
     <TypeScriptCompile Include="models\PIXISkillTreeRenderer.ts" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
@@ -87,6 +88,7 @@
     <TypeScriptCompile Include="models\types\IAscendancyClasses.d.ts" />
     <TypeScriptCompile Include="models\types\ICharacter.d.ts" />
     <TypeScriptCompile Include="models\types\IClassImage.d.ts" />
+    <TypeScriptCompile Include="models\types\IConnection.d.ts" />
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
     <TypeScriptCompile Include="models\types\IExpansionJewel.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
