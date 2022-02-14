@@ -84,6 +84,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         this.SetupLayers();
+        this.GenerateCompare();
 
         this.ClearLayer(RenderLayers.BackgroundColor);
         if (this.skillTreeData.assets["AtlasPassiveBackground"] !== undefined) {
@@ -109,6 +110,48 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.RenderBaseRest();
     }
 
+    private GenerateCompare = (): void => {
+        if (this.skillTreeDataCompare === undefined) {
+            return;
+        }
+
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
+                continue;
+            }
+
+            if (this.skillTreeDataCompare.nodes[node.GetId()] === undefined) {
+                continue;
+            }
+
+            const other = this.skillTreeDataCompare.nodes[node.GetId()];
+
+            let diff = node.stats.length !== other.stats.length;
+            for (const s of node.stats) {
+                let found = false;
+                for (const s2 of other.stats) {
+                    if (s.toUpperCase() === s2.toUpperCase()) {
+                        found = true;
+                    }
+                }
+
+                if (!found) {
+                    diff = true;
+                    break;
+                }
+            }
+            if (diff) {
+                this.skillTreeDataCompare.addState(other, SkillNodeStates.Compared);
+            }
+
+            const nodeSize = node.GetTargetSize();
+            const moved = nodeSize.width !== 0 && nodeSize.height !== 0 && (Math.abs(node.x - other.x) > nodeSize.width || Math.abs(node.y - other.y) > nodeSize.height);
+            if (moved) {
+                this.skillTreeDataCompare.addState(other, SkillNodeStates.Moved);
+            }
+        }
+    }
     private DrawGroupBackgrounds = (): void => {
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
@@ -343,7 +386,20 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    abstract RenderHighlight(): void;
+    protected abstract DrawHighlight(layer: RenderLayers, node: SkillNode, color: number): void;
+    RenderHighlight = (): void => {
+        if (!this.Initialized) {
+            return;
+        }
+
+        this.ClearLayer(RenderLayers.Highlights);
+
+        const nodes = this.skillTreeData.getNodes(SkillNodeStates.Highlighted);
+        for (const id in nodes) {
+            const node = nodes[id];
+            this.DrawHighlight(RenderLayers.Highlights, node, 0x7F00FF);
+        }
+    }
 
     protected abstract RenderHoverRest(hovered: SkillNode): void;
     StartRenderHover = (hovered: SkillNode): void => {

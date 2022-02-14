@@ -87,17 +87,6 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return data;
     }
 
-    public GetNodeSize = (node: SkillNode, source: Source = "Base"): { width: number; height: number } | null => {
-        const icon = node.GetIcon();
-        if (icon === "") {
-            return null;
-        }
-
-        const spriteSheetKey = this.getSpriteSheetKey(node);
-        const texture = this.getSpritesheetTexture(source, spriteSheetKey, icon);
-        return texture ? { width: texture.width, height: texture.height } : null;
-    }
-
     public CreateFrame = (node: SkillNode, others: SkillNode[]): PIXI.Sprite | null => {
         const asset = node.GetFrameAssetKey(others);
         if (asset === null) {
@@ -225,23 +214,16 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
     }
 
-    public CreateHighlight = (node: SkillNode, color: number | undefined = undefined, source: Source = "Base"): PIXI.Graphics | null => {
-        if ((!node.is(SkillNodeStates.Highlighted)) && color === undefined) {
+    public CreateHighlight = (node: SkillNode, color: number): PIXI.Graphics | null => {
+        const size = node.GetTargetSize();
+        if (size.width === 0 || size.height === 0) {
             return null;
-        }
-        const size = this.GetNodeSize(node, source);
-        if (size === null) {
-            return null;
-        }
-
-        if (color === undefined) {
-            color = 0xFFA500;
         }
 
         const graphic = new PIXI.Graphics();
         graphic.beginFill(0x000000, 0);
         graphic.lineStyle(5, color);
-        graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .85 * (node.isMastery ? .5 : 1));
+        graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .85);
         graphic.endFill();
         graphic.position.set(node.x, node.y);
 

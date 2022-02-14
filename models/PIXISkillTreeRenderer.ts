@@ -446,32 +446,14 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             }
 
             if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.GetId()] !== undefined) {
-                const nodeSize = this.SkillNodeRenderer.GetNodeSize(node);
                 const node2 = this.skillTreeDataCompare.nodes[node.GetId()];
-                let sDiff = node.stats.length !== node2.stats.length;
-                const moved = nodeSize && (Math.abs(node.x - node2.x) > nodeSize.width || Math.abs(node.y - node2.y) > nodeSize.height);
-
-                for (const s of node.stats) {
-                    let found = false;
-                    for (const s2 of node2.stats) {
-                        if (s.toUpperCase() === s2.toUpperCase()) {
-                            found = true;
-                        }
-                    }
-
-                    if (!found) {
-                        sDiff = true;
-                        break;
-                    }
+                if (!(node2.is(SkillNodeStates.Compared) || node2.is(SkillNodeStates.Moved))) {
+                    continue;
                 }
 
-                if (sDiff || moved) {
-                    this.skillTreeDataCompare.addState(node2, SkillNodeStates.Compared);
-                    if (moved) this.skillTreeDataCompare.addState(node2, SkillNodeStates.Moved);
-                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
-                    if (highlighter !== null) {
-                        skillIcons.addChild(highlighter);
-                    }
+                const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
+                if (highlighter !== null) {
+                    skillIcons.addChild(highlighter);
                 }
             }
         }
@@ -489,13 +471,16 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                     if (frame !== null) {
                         skillIcons_compare.addChild(frame);
                     }
-                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF0000, "Compare")
+                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF0000)
                     if (highlighter !== null) {
                         skillIcons_compare.addChild(highlighter);
                     }
                 }
             }
         }
+
+        this.SetLayer(RenderLayers.SkillIcons, skillIcons);
+        this.SetLayer(RenderLayers.SkillIconsCompare, skillIcons_compare);
     }
 
     protected RenderActiveRest = (): void => {
@@ -541,8 +526,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     protected RenderHoverRest = async (hovered: SkillNode): Promise<void> => {
-        this.RenderTooltip(hovered);
-
         let nodeMoveCompare: PIXI.Graphics | undefined = undefined;
         let atlasMasteryHighlight: PIXI.Container | undefined = undefined;
         const pathingSkillIcons: PIXI.Container = new PIXI.Container();
@@ -550,7 +533,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         const pathingNodes = this.skillTreeData.getHoveredNodes();
         for (const id in pathingNodes) {
             const node = pathingNodes[id];
-            
+
             if (node.is(SkillNodeStates.Hovered)) {
                 const icon = this.SkillNodeRenderer.CreateIcon(node);
                 if (icon !== null) {
@@ -622,6 +605,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             atlasMasteryHighlight.containerUpdateTransform = () => { };
             this.SetLayer(RenderLayers.AtlasMasteryHighlight, atlasMasteryHighlight);
         }
+
+        this.RenderTooltip(hovered);
     }
 
     private RenderTooltip = async (hovered: SkillNode): Promise<void> => {
@@ -717,28 +702,20 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         }
     }
 
-    public RenderHighlight = (): void => {
-        if (!this.Initialized) {
+    protected DrawHighlight = (layer: RenderLayers, node: SkillNode, color: number): void => {
+        const container = this.GetLayer(layer);
+
+        const size = node.GetTargetSize();
+        if (size.width === 0 || size.height === 0) {
             return;
         }
 
-        this.ClearLayer(RenderLayers.Highlights);
-
-        const highlights = new PIXI.Container();
-
-        const nodes = this.skillTreeData.getNodes(SkillNodeStates.Highlighted);
-        for (const id in nodes) {
-            const node = nodes[id];
-            const highlight = this.SkillNodeRenderer.CreateHighlight(node);
-            if (highlight !== null) {
-                highlights.addChild(highlight)
-            }
+        const highlight = this.SkillNodeRenderer.CreateHighlight(node, color);
+        if (highlight) {
+            container.addChild(highlight);
         }
 
-        highlights.interactive = false;
-        highlights.interactiveChildren = false;
-        highlights.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.Highlights, highlights);
+        this.SetLayer(layer, container);
     }
 
     public CreateScreenshot = (mimeType: 'image/jpeg' | 'image/webp'): string => {
