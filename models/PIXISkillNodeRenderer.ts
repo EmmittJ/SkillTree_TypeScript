@@ -214,26 +214,6 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         }
     }
 
-    public CreateHighlight = (node: SkillNode, color: number): PIXI.Graphics | null => {
-        const size = node.GetTargetSize();
-        if (size.width === 0 || size.height === 0) {
-            return null;
-        }
-
-        const graphic = new PIXI.Graphics();
-        graphic.beginFill(0x000000, 0);
-        graphic.lineStyle(5, color);
-        graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .85);
-        graphic.endFill();
-        graphic.position.set(node.x, node.y);
-
-        graphic.interactive = false;
-        graphic.interactiveChildren = false;
-        graphic.containerUpdateTransform = () => { };
-
-        return graphic;
-    }
-
     public CreateTooltip = (node: SkillNode, source: Source) => {
         let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${source}`];
 

@@ -6,7 +6,7 @@ import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
 import { PIXISkillNodeRenderer } from "./PIXISkillNodeRenderer";
 import { SpatialHash } from 'pixi-cull';
-import { BaseSkillTreeRenderer, RenderLayers, IAsset } from "./BaseSkillTreeRenderer";
+import { BaseSkillTreeRenderer, RenderLayer, IAsset, IHighlight } from "./BaseSkillTreeRenderer";
 import { IConnnection } from "./types/IConnection";
 
 export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
@@ -16,28 +16,28 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     private pixi: PIXI.Application;
     private viewport: Viewport.Viewport;
     private cull: SpatialHash;
-    private DO_NOT_CULL = [RenderLayers.Tooltip, RenderLayers.TooltipCompare];
-    LayerContainers: { [layer in RenderLayers]: PIXI.Container } = {
-        [RenderLayers.BackgroundColor]: new PIXI.Container(),
-        [RenderLayers.Background]: new PIXI.Container(),
-        [RenderLayers.BackgroundActive]: new PIXI.Container(),
-        [RenderLayers.Connections]: new PIXI.Container(),
-        [RenderLayers.SkillIconsActiveEffects]: new PIXI.Container(),
-        [RenderLayers.ConnectionsActive]: new PIXI.Container(),
-        [RenderLayers.ConnectionsPathing]: new PIXI.Container(),
-        [RenderLayers.SkillIcons]: new PIXI.Container(),
-        [RenderLayers.SkillIconsPathing]: new PIXI.Container(),
-        [RenderLayers.SkillIconsActive]: new PIXI.Container(),
-        [RenderLayers.CharacterStarts]: new PIXI.Container(),
-        [RenderLayers.CharacterStartsActive]: new PIXI.Container(),
-        [RenderLayers.JewelSocketActive]: new PIXI.Container(),
-        [RenderLayers.JewelSocketHighlights]: new PIXI.Container(),
-        [RenderLayers.SkillIconsCompare]: new PIXI.Container(),
-        [RenderLayers.Highlights]: new PIXI.Container(),
-        [RenderLayers.NodeMoveCompare]: new PIXI.Container(),
-        [RenderLayers.AtlasMasteryHighlight]: new PIXI.Container(),
-        [RenderLayers.Tooltip]: new PIXI.Container(),
-        [RenderLayers.TooltipCompare]: new PIXI.Container(),
+    private DO_NOT_CULL = [RenderLayer.Tooltip, RenderLayer.TooltipCompare];
+    LayerContainers: { [layer in RenderLayer]: PIXI.Container } = {
+        [RenderLayer.BackgroundColor]: new PIXI.Container(),
+        [RenderLayer.Background]: new PIXI.Container(),
+        [RenderLayer.BackgroundActive]: new PIXI.Container(),
+        [RenderLayer.Connections]: new PIXI.Container(),
+        [RenderLayer.SkillIconsActiveEffects]: new PIXI.Container(),
+        [RenderLayer.ConnectionsActive]: new PIXI.Container(),
+        [RenderLayer.ConnectionsPathing]: new PIXI.Container(),
+        [RenderLayer.SkillIcons]: new PIXI.Container(),
+        [RenderLayer.SkillIconsPathing]: new PIXI.Container(),
+        [RenderLayer.SkillIconsActive]: new PIXI.Container(),
+        [RenderLayer.CharacterStarts]: new PIXI.Container(),
+        [RenderLayer.CharacterStartsActive]: new PIXI.Container(),
+        [RenderLayer.JewelSocketActive]: new PIXI.Container(),
+        [RenderLayer.JewelSocketHighlights]: new PIXI.Container(),
+        [RenderLayer.SkillIconsCompare]: new PIXI.Container(),
+        [RenderLayer.Highlights]: new PIXI.Container(),
+        [RenderLayer.NodeMoveCompare]: new PIXI.Container(),
+        [RenderLayer.AtlasMasteryHighlight]: new PIXI.Container(),
+        [RenderLayer.Tooltip]: new PIXI.Container(),
+        [RenderLayer.TooltipCompare]: new PIXI.Container(),
     };
 
     constructor(container: HTMLElement, skillTreeData: SkillTreeData, skillTreeDataCompare: SkillTreeData | undefined) {
@@ -119,7 +119,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.viewport.removeChildren();
 
         for (const key in this.LayerContainers) {
-            const layer = Number(key) as RenderLayers;
+            const layer = Number(key) as RenderLayer;
             const object = this.LayerContainers[layer];
 
             if (this.DO_NOT_CULL.indexOf(layer) === -1) {
@@ -130,7 +130,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         }
     }
 
-    protected SetLayer(layer: RenderLayers, object: PIXI.Container) {
+    protected SetLayer(layer: RenderLayer, object: PIXI.Container) {
         this._dirty = true;
         this.LayerContainers[layer] = object;
 
@@ -152,11 +152,11 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.viewport.removeChild(current);
     }
 
-    protected GetLayer(layer: RenderLayers): PIXI.Container {
+    protected GetLayer(layer: RenderLayer): PIXI.Container {
         return this.viewport.getChildAt(layer) as PIXI.Container;
     }
 
-    protected ClearLayer(layer: RenderLayers) {
+    protected ClearLayer(layer: RenderLayer) {
         this.SetLayer(layer, new PIXI.Container());
     }
 
@@ -184,7 +184,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             return;
         }
 
-        const interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.viewport.getChildAt(RenderLayers.SkillIcons));
+        const interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.viewport.getChildAt(RenderLayer.SkillIcons));
         if (interactiveObject === null || interactiveObject.name === undefined || interactiveObject.name === null || interactiveObject.name === "") {
             return;
         }
@@ -261,7 +261,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return promise;
     }
 
-    protected DrawAsset = (layer: RenderLayers, asset: IAsset): { width: number, height: number } => {
+    protected DrawAsset = (layer: RenderLayer, asset: IAsset): { width: number, height: number } => {
         const container = this.GetLayer(layer);
 
         const sprite = PIXI.Sprite.from(asset.name);
@@ -283,7 +283,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return { width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) };
     }
 
-    protected DrawText = (layer: RenderLayers, _text: string, colour: string, x: number, y: number): void => {
+    protected DrawText = (layer: RenderLayer, _text: string, colour: string, x: number, y: number): void => {
         const container = this.GetLayer(layer);
 
         const text = new PIXI.Text(_text, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
@@ -294,7 +294,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.SetLayer(layer, container);
     }
 
-    protected DrawBackground = (layer: RenderLayers, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void => {
+    protected DrawBackground = (layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void => {
         const container = this.GetLayer(layer);
 
         let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(asset);
@@ -312,7 +312,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.SetLayer(layer, container);
     }
 
-    protected DrawConnections = (layer: RenderLayers, connections: IConnnection[]): void => {
+    protected DrawConnections = (layer: RenderLayer, connections: IConnnection[]): void => {
         const container = this.GetLayer(layer);
 
         const connectionContainer = new PIXI.Container();
@@ -419,8 +419,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     private RenderBaseNodes = () => {
-        const skillIcons: PIXI.Container = this.GetLayer(RenderLayers.SkillIcons);
-        const skillIcons_compare: PIXI.Container = this.GetLayer(RenderLayers.SkillIconsCompare);
+        const skillIcons: PIXI.Container = this.GetLayer(RenderLayer.SkillIcons);
+        const skillIcons_compare: PIXI.Container = this.GetLayer(RenderLayer.SkillIconsCompare);
 
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
@@ -437,25 +437,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             if (frame !== null) {
                 skillIcons.addChild(frame);
             }
-
-            if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.GetId()] === undefined) {
-                const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0x00FF00);
-                if (highlighter !== null) {
-                    skillIcons.addChild(highlighter);
-                }
-            }
-
-            if (this.skillTreeDataCompare !== undefined && this.skillTreeDataCompare.nodes[node.GetId()] !== undefined) {
-                const node2 = this.skillTreeDataCompare.nodes[node.GetId()];
-                if (!(node2.is(SkillNodeStates.Compared) || node2.is(SkillNodeStates.Moved))) {
-                    continue;
-                }
-
-                const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFFB000);
-                if (highlighter !== null) {
-                    skillIcons.addChild(highlighter);
-                }
-            }
         }
 
         if (this.skillTreeDataCompare !== undefined) {
@@ -471,21 +452,17 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                     if (frame !== null) {
                         skillIcons_compare.addChild(frame);
                     }
-                    const highlighter = this.SkillNodeRenderer.CreateHighlight(node, 0xFF0000)
-                    if (highlighter !== null) {
-                        skillIcons_compare.addChild(highlighter);
-                    }
                 }
             }
         }
 
-        this.SetLayer(RenderLayers.SkillIcons, skillIcons);
-        this.SetLayer(RenderLayers.SkillIconsCompare, skillIcons_compare);
+        this.SetLayer(RenderLayer.SkillIcons, skillIcons);
+        this.SetLayer(RenderLayer.SkillIconsCompare, skillIcons_compare);
     }
 
     protected RenderActiveRest = (): void => {
-        const skillIconActiveEffects: PIXI.Container = this.GetLayer(RenderLayers.SkillIconsActiveEffects);
-        const skillIconsActive: PIXI.Container = this.GetLayer(RenderLayers.SkillIconsActive);
+        const skillIconActiveEffects: PIXI.Container = this.GetLayer(RenderLayer.SkillIconsActiveEffects);
+        const skillIconsActive: PIXI.Container = this.GetLayer(RenderLayer.SkillIconsActive);
 
         const activeNodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
         for (const id in activeNodes) {
@@ -517,16 +494,15 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         skillIconActiveEffects.interactive = false;
         skillIconActiveEffects.interactiveChildren = false;
         skillIconActiveEffects.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.SkillIconsActiveEffects, skillIconActiveEffects);
+        this.SetLayer(RenderLayer.SkillIconsActiveEffects, skillIconActiveEffects);
 
         skillIconsActive.interactive = false;
         skillIconsActive.interactiveChildren = false;
         skillIconsActive.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.SkillIconsActive, skillIconsActive);
+        this.SetLayer(RenderLayer.SkillIconsActive, skillIconsActive);
     }
 
     protected RenderHoverRest = async (hovered: SkillNode): Promise<void> => {
-        let nodeMoveCompare: PIXI.Graphics | undefined = undefined;
         let atlasMasteryHighlight: PIXI.Container | undefined = undefined;
         const pathingSkillIcons: PIXI.Container = new PIXI.Container();
 
@@ -555,55 +531,16 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             }
         }
 
-        if (this.skillTreeDataCompare !== undefined) {
-            const hoveredNodes = this.skillTreeData.getNodes(SkillNodeStates.Hovered);
-            for (const id in hoveredNodes) {
-                const node = hoveredNodes[id];
-
-                this.skillTreeDataCompare.clearState(SkillNodeStates.Hovered);
-
-                let other = this.skillTreeDataCompare.nodes[node.GetId()];
-                if (other === undefined) {
-                    for (const idc in this.skillTreeDataCompare.nodes) {
-                        const n = this.skillTreeDataCompare.nodes[idc];
-                        if ((Math.abs(n.x - node.x) < 5 && Math.abs(n.y - node.y) < 5)) {
-                            other = n;
-                        }
-                    }
-                }
-
-                if (other) {
-                    if (other.is(SkillNodeStates.Compared)) {
-                        this.skillTreeDataCompare.addState(other, SkillNodeStates.Hovered);
-                    }
-
-                    if (other.nodeGroup !== undefined && other.is(SkillNodeStates.Moved)) {
-                        const highlighter = this.SkillNodeRenderer.CreateHighlight(other, 0xFF1493)
-                        if (highlighter !== null) {
-                            nodeMoveCompare = highlighter;
-                        }
-                    }
-                }
-            }
-        }
-
         pathingSkillIcons.interactive = false;
         pathingSkillIcons.interactiveChildren = false;
         pathingSkillIcons.containerUpdateTransform = () => { };
-        this.SetLayer(RenderLayers.SkillIconsPathing, pathingSkillIcons);
-
-        if (nodeMoveCompare !== undefined) {
-            nodeMoveCompare.interactive = false;
-            nodeMoveCompare.interactiveChildren = false;
-            nodeMoveCompare.containerUpdateTransform = () => { };
-            this.SetLayer(RenderLayers.NodeMoveCompare, nodeMoveCompare);
-        }
+        this.SetLayer(RenderLayer.SkillIconsPathing, pathingSkillIcons);
 
         if (atlasMasteryHighlight !== undefined) {
             atlasMasteryHighlight.interactive = false;
             atlasMasteryHighlight.interactiveChildren = false;
             atlasMasteryHighlight.containerUpdateTransform = () => { };
-            this.SetLayer(RenderLayers.AtlasMasteryHighlight, atlasMasteryHighlight);
+            this.SetLayer(RenderLayer.AtlasMasteryHighlight, atlasMasteryHighlight);
         }
 
         this.RenderTooltip(hovered);
@@ -661,14 +598,14 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             tooltip.interactive = false;
             tooltip.interactiveChildren = false;
             tooltip.containerUpdateTransform = () => { };
-            this.SetLayer(RenderLayers.Tooltip, tooltip);
+            this.SetLayer(RenderLayer.Tooltip, tooltip);
         }
 
         if (tooltipCompare !== undefined) {
             tooltipCompare.interactive = false;
             tooltipCompare.interactiveChildren = false;
             tooltipCompare.containerUpdateTransform = () => { };
-            this.SetLayer(RenderLayers.TooltipCompare, tooltipCompare);
+            this.SetLayer(RenderLayer.TooltipCompare, tooltipCompare);
         }
 
         if (tooltip !== undefined && hovered !== undefined) {
@@ -702,17 +639,22 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         }
     }
 
-    protected DrawHighlight = (layer: RenderLayers, node: SkillNode, color: number): void => {
+    protected DrawHighlights = (layer: RenderLayer, highlights: IHighlight[]): void => {
         const container = this.GetLayer(layer);
 
-        const size = node.GetTargetSize();
-        if (size.width === 0 || size.height === 0) {
-            return;
-        }
+        for (var highlight of highlights) {
+            const size = highlight.node.GetTargetSize();
+            if (size.width === 0 || size.height === 0) {
+                continue;
+            }
 
-        const highlight = this.SkillNodeRenderer.CreateHighlight(node, color);
-        if (highlight) {
-            container.addChild(highlight);
+            const graphic = new PIXI.Graphics();
+            graphic.beginFill(0x000000, 0);
+            graphic.lineStyle(5, highlight.color);
+            graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .85);
+            graphic.endFill();
+            graphic.position.set(highlight.node.x, highlight.node.y);
+            container.addChild(graphic);
         }
 
         this.SetLayer(layer, container);
