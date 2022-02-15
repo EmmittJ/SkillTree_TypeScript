@@ -87,26 +87,6 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return data;
     }
 
-    public CreateFrame = (node: SkillNode, others: SkillNode[]): PIXI.Sprite | null => {
-        const asset = node.GetFrameAssetKey(others);
-        if (asset === null) {
-            return null;
-        }
-
-        const texture = PIXI.Texture.from(asset)
-        const frame = PIXI.Sprite.from(texture);
-        frame.position.set(node.x, node.y);
-        frame.anchor.set(.5);
-        frame.hitArea = new PIXI.Circle(0, 0, Math.max(frame.texture.width, frame.texture.height) / 2);
-        if (node.is(SkillNodeStates.Active | SkillNodeStates.Hovered)
-            || (node.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && (node.isMultipleChoice || node.isMultipleChoiceOption))) {
-            frame.tint = 0xFF0000;
-        }
-
-        this.RebindNodeEvents(node, frame);
-        return frame;
-    }
-
     public CreateIcon = (node: SkillNode, source: Source = "Base"): PIXI.Sprite | null => {
         if (node.isAscendancyStart) {
             return null
@@ -195,7 +175,7 @@ export class PIXISkillNodeRenderer implements ISkillNodeRenderer {
         return null;
     }
 
-    private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
+    public RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
         sprite.removeAllListeners();
         sprite.name = `${node.GetId()}`;
 

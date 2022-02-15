@@ -5,51 +5,6 @@ import { IConnnection } from "./types/IConnection";
 import { ISkillNodeRenderer } from "./types/ISkillNodeRenderer";
 import { ISkillTreeRenderer } from "./types/ISkillTreeRenderer";
 
-export enum RenderLayer {
-    BackgroundColor = 0,
-    Background = 1,
-    BackgroundActive = 2,
-    Connections = 3,
-    SkillIconsActiveEffects = 4,
-    ConnectionsActive = 5,
-    ConnectionsPathing = 6,
-    SkillIcons = 7,
-    SkillIconsPathing = 8,
-    SkillIconsActive = 9,
-    CharacterStarts = 10,
-    CharacterStartsActive = 11,
-    JewelSocketActive = 12,
-    JewelSocketHighlights = 13,
-    SkillIconsCompare = 14,
-    Highlights = 15,
-    NodeMoveCompare = 16,
-    AtlasMasteryHighlight = 17,
-    Tooltip = 18,
-    TooltipCompare = 19
-};
-
-export enum HighlightColor {
-    Added = 0x00FF00,
-    Changed = 0xFFB000,
-    Removed = 0xFF0000,
-    Moved = 0xFF0000,
-    Searched = 0x7F00FF
-};
-
-export interface IAsset {
-    name: string;
-    x: number;
-    y: number;
-    half?: boolean | undefined;
-    offsetX?: number | undefined;
-    offsetY?: number | undefined;
-};
-
-export interface IHighlight {
-    node: SkillNode,
-    color: number
-};
-
 export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     Initialized: boolean = false;
     abstract SkillNodeRenderer: ISkillNodeRenderer;
@@ -87,8 +42,9 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     abstract CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
 
     protected abstract DrawAsset(layer: RenderLayer, asset: IAsset): { width: number, height: number };
+    protected abstract DrawAssets(layer: RenderLayer, assets: IAsset[]): void;
     protected abstract DrawText(layer: RenderLayer, text: string, colour: string, x: number, y: number): void;
-    protected abstract DrawBackground(layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void;
+    protected abstract DrawBackgroundAsset(layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void;
 
     protected abstract RenderBaseRest(): void;
     public RenderBase = (): void => {
@@ -100,13 +56,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.GenerateCompare();
 
         this.ClearLayer(RenderLayer.BackgroundColor);
-        if (this.skillTreeData.assets["AtlasPassiveBackground"] !== undefined) {
-            this.DrawBackground(RenderLayer.BackgroundColor, "AtlasPassiveBackground");
-        } else if (this.skillTreeData.assets["Background2"] !== undefined) {
-            this.DrawBackground(RenderLayer.BackgroundColor, "Background2");
-        } else {
-            this.DrawBackground(RenderLayer.BackgroundColor, "Background1");
-        }
+        this.DrawBackground();
 
         this.ClearLayer(RenderLayer.Background);
         this.DrawGroupBackgrounds();
@@ -121,8 +71,18 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.ClearLayer(RenderLayer.SkillIcons);
         this.ClearLayer(RenderLayer.SkillIconsCompare);
         this.RenderBaseRest();
-
+        this.DrawInactiveNodes();
         this.DrawCompareHighlights();
+    }
+
+    private DrawBackground = (): void => {
+        if (this.skillTreeData.assets["AtlasPassiveBackground"] !== undefined) {
+            this.DrawBackgroundAsset(RenderLayer.BackgroundColor, "AtlasPassiveBackground");
+        } else if (this.skillTreeData.assets["Background2"] !== undefined) {
+            this.DrawBackgroundAsset(RenderLayer.BackgroundColor, "Background2");
+        } else {
+            this.DrawBackgroundAsset(RenderLayer.BackgroundColor, "Background1");
+        }
     }
 
     private GenerateCompare = (): void => {
@@ -168,45 +128,8 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private DrawCompareHighlights = (): void => {
-        if (this.skillTreeDataCompare === undefined) {
-            return;
-        }
-
-        const highlights: Array<IHighlight> = [];
-        for (const id in this.skillTreeData.nodes) {
-            const node = this.skillTreeData.nodes[id];
-            if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
-                continue;
-            }
-
-            const other = this.skillTreeDataCompare.nodes[node.GetId()];
-            if (other === undefined) {
-                highlights.push({ node: node, color: HighlightColor.Added });
-            } else {
-                if (!(other.is(SkillNodeStates.Compared) || other.is(SkillNodeStates.Moved))) {
-                    continue;
-                }
-
-                highlights.push({ node: node, color: HighlightColor.Changed });
-            }
-        }
-        this.DrawHighlights(RenderLayer.SkillIcons, highlights);
-
-        const compareHighlights: Array<IHighlight> = [];
-        for (const id in this.skillTreeDataCompare.nodes) {
-            const node = this.skillTreeDataCompare.nodes[id];
-            if (this.skillTreeData.nodes[node.GetId()] !== undefined) {
-                continue;
-            }
-
-            this.skillTreeDataCompare.addState(node, SkillNodeStates.Compared);
-            compareHighlights.push({ node: node, color: HighlightColor.Removed });
-        }
-        this.DrawHighlights(RenderLayer.SkillIconsCompare, compareHighlights);
-    }
-
     private DrawGroupBackgrounds = (): void => {
+        const assets: Array<IAsset> = [];
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
             const nodes = group.nodes || [];
@@ -219,14 +142,14 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             const max = group.backgroundOverride !== undefined && group.backgroundOverride !== 0 ? group.backgroundOverride : Math.max(...orbits);
             if (max <= 0 || max > 3) continue;
 
-            const asset = {
+            assets.push({
                 name: `PSGroupBackground${max}`,
                 x: Math.ceil(group.x * this.skillTreeData.scale),
                 y: Math.ceil(group.y * this.skillTreeData.scale),
                 half: max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage
-            };
-            this.DrawAsset(RenderLayer.Background, asset);
+            });
         }
+        this.DrawAssets(RenderLayer.Background, assets);
     }
 
     private DrawAscendacyBackgrounds = (): void => {
@@ -295,19 +218,77 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             return;
         }
 
+        const assets: Array<IAsset> = [];
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
             if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
                 continue;
             }
 
-            const asset = {
+            assets.push({
                 name: "PSStartNodeBackgroundInactive",
                 x: node.nodeGroup.x * this.skillTreeData.scale,
                 y: node.nodeGroup.y * this.skillTreeData.scale
-            };
-            this.DrawAsset(RenderLayer.CharacterStarts, asset);
+            });
         }
+        this.DrawAssets(RenderLayer.CharacterStarts, assets);
+    }
+
+    private DrawInactiveNodes = (): void => {
+        this.DrawNodes(RenderLayer.SkillIcons, this.skillTreeData.nodes, this.skillTreeData.nodes, { filterClassIndex: true });
+
+        if (this.skillTreeDataCompare === undefined) {
+            return;
+        }
+
+        const nodes: { [id: string]: SkillNode } = {};
+        for (const id in this.skillTreeDataCompare.nodes) {
+            const node = this.skillTreeDataCompare.nodes[id];
+            if (this.skillTreeData.nodes[node.GetId()] !== undefined) {
+                continue;
+            }
+            nodes[id] = node;
+        }
+
+        this.DrawNodes(RenderLayer.SkillIconsCompare, nodes, this.skillTreeDataCompare.nodes, { filterClassIndex: true });
+    }
+
+    private DrawCompareHighlights = (): void => {
+        if (this.skillTreeDataCompare === undefined) {
+            return;
+        }
+
+        const highlights: Array<IHighlight> = [];
+        for (const id in this.skillTreeData.nodes) {
+            const node = this.skillTreeData.nodes[id];
+            if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
+                continue;
+            }
+
+            const other = this.skillTreeDataCompare.nodes[node.GetId()];
+            if (other === undefined) {
+                highlights.push({ node: node, color: HighlightColor.Added });
+            } else {
+                if (!(other.is(SkillNodeStates.Compared) || other.is(SkillNodeStates.Moved))) {
+                    continue;
+                }
+
+                highlights.push({ node: node, color: HighlightColor.Changed });
+            }
+        }
+        this.DrawHighlights(RenderLayer.SkillIcons, highlights);
+
+        const compareHighlights: Array<IHighlight> = [];
+        for (const id in this.skillTreeDataCompare.nodes) {
+            const node = this.skillTreeDataCompare.nodes[id];
+            if (this.skillTreeData.nodes[node.GetId()] !== undefined) {
+                continue;
+            }
+
+            this.skillTreeDataCompare.addState(node, SkillNodeStates.Compared);
+            compareHighlights.push({ node: node, color: HighlightColor.Removed });
+        }
+        this.DrawHighlights(RenderLayer.SkillIconsCompare, compareHighlights);
     }
 
     protected abstract DrawConnections(layer: RenderLayer, connections: IConnnection[]): void;
@@ -378,6 +359,50 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         return true;
     }
 
+    private DrawNodes = (layer: RenderLayer, nodes: { [id: string]: SkillNode }, all: { [id: string]: SkillNode }, options: DrawNodeOptions): void => {
+        const frames: Array<IAsset> = [];
+        for (const id in nodes) {
+            const node = nodes[id];
+            if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
+                continue;
+            }
+
+            let others = node.out.map(x => all[x]).filter(x => x);
+            if (options.filterClassIndex) {
+                others = others.filter(x => x.classStartIndex === undefined)
+            }
+
+            if (options.outFrames) {
+                for (const out of others) {
+                    const ins = out.in.map(x => all[x]);
+                    const asset = out.GetFrameAssetKey(ins);
+                    if (asset === null) {
+                        continue;
+                    }
+
+                    frames.push({
+                        name: asset,
+                        x: out.x,
+                        y: out.y
+                    });
+                }
+            }
+
+            const asset = node.GetFrameAssetKey(others);
+            if (asset === null) {
+                continue;
+            }
+
+            frames.push({
+                name: asset,
+                x: node.x,
+                y: node.y,
+                node: node
+            });
+        }
+        this.DrawAssets(layer, frames);
+    }
+
     protected abstract RenderActiveRest(): void;
     public RenderActive = (): void => {
         if (!this.Initialized) {
@@ -390,6 +415,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.ClearLayer(RenderLayer.SkillIconsActive);
         this.ClearLayer(RenderLayer.SkillIconsActiveEffects);
         this.RenderActiveRest();
+        this.DrawNodes(RenderLayer.SkillIconsActive, this.skillTreeData.getNodes(SkillNodeStates.Active), this.skillTreeData.nodes, { outFrames: true });
     }
 
     RenderCharacterStartsActive = (): void => {
@@ -400,6 +426,8 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.ClearLayer(RenderLayer.BackgroundActive);
         this.ClearLayer(RenderLayer.CharacterStartsActive);
 
+        const backgroundAssets: Array<IAsset> = [];
+        const startAssets: Array<IAsset> = [];
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
             const classId = node.classStartIndex;
@@ -409,35 +437,35 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
             const className = utils.getKeyByValue(this.skillTreeData.constants.classes, classId);
             if (className === undefined && Object.keys(this.skillTreeData.constants.classes).length === 0) {
-                const asset = {
+                startAssets.push({
                     name: "AtlasStart",
                     x: node.x,
                     y: node.y
-                };
-                this.DrawAsset(RenderLayer.CharacterStartsActive, asset);
+                });
             } else if (className !== undefined) {
                 const commonName = this.skillTreeData.constants.classesToName[className];
                 if (this.skillTreeData.extraImages !== undefined) {
                     const extraImage = this.skillTreeData.extraImages[classId];
                     if (extraImage) {
-                        const asset = {
+                        backgroundAssets.push({
                             name: `Background${className.replace("Class", "")}`,
                             x: extraImage.x * this.skillTreeData.scale,
                             y: extraImage.y * this.skillTreeData.scale,
                             offsetX: 0
-                        };
-                        this.DrawAsset(RenderLayer.BackgroundActive, asset);
+                        });
                     }
                 }
 
-                const asset = {
+                startAssets.push({
                     name: `center${commonName.toLocaleLowerCase()}`,
                     x: node.x,
                     y: node.y
-                };
-                this.DrawAsset(RenderLayer.CharacterStartsActive, asset);
+                });
+
             }
         }
+        this.DrawAssets(RenderLayer.BackgroundActive, backgroundAssets);
+        this.DrawAssets(RenderLayer.CharacterStartsActive, startAssets);
     }
 
     protected abstract DrawHighlights(layer: RenderLayer, highlights: IHighlight[]): void;
@@ -467,11 +495,11 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawConnectionsForNodes(RenderLayer.ConnectionsPathing, this.skillTreeData.getHoveredNodes());
 
         this.ClearLayer(RenderLayer.SkillIconsPathing);
-        this.ClearLayer(RenderLayer.NodeMoveCompare);
         this.ClearLayer(RenderLayer.AtlasMasteryHighlight);
-
         this.RenderHoverRest(hovered);
+        this.DrawNodes(RenderLayer.SkillIconsPathing, this.skillTreeData.getHoveredNodes(), this.skillTreeData.nodes, {});
 
+        this.ClearLayer(RenderLayer.NodeMoveCompare);
         this.DrawCompareMovedHighlights();
     }
 
@@ -526,3 +554,54 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     protected abstract SetLayer(layer: RenderLayer, object: any): void;
     protected abstract ClearLayer(layer: RenderLayer): void;
 }
+
+interface DrawNodeOptions {
+    filterClassIndex?: boolean;
+    outFrames?: boolean;
+}
+
+export enum RenderLayer {
+    BackgroundColor = 0,
+    Background = 1,
+    BackgroundActive = 2,
+    Connections = 3,
+    SkillIconsActiveEffects = 4,
+    ConnectionsActive = 5,
+    ConnectionsPathing = 6,
+    SkillIcons = 7,
+    SkillIconsPathing = 8,
+    SkillIconsActive = 9,
+    CharacterStarts = 10,
+    CharacterStartsActive = 11,
+    JewelSocketActive = 12,
+    JewelSocketHighlights = 13,
+    SkillIconsCompare = 14,
+    Highlights = 15,
+    NodeMoveCompare = 16,
+    AtlasMasteryHighlight = 17,
+    Tooltip = 18,
+    TooltipCompare = 19
+};
+
+export enum HighlightColor {
+    Added = 0x00FF00,
+    Changed = 0xFFB000,
+    Removed = 0xFF0000,
+    Moved = 0xFF1493,
+    Searched = 0x7F00FF
+};
+
+export interface IAsset {
+    name: string;
+    x: number;
+    y: number;
+    half?: boolean | undefined;
+    offsetX?: number | undefined;
+    offsetY?: number | undefined;
+    node?: SkillNode | undefined;
+};
+
+export interface IHighlight {
+    node: SkillNode,
+    color: number
+};

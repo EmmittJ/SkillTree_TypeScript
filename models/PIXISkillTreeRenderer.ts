@@ -262,25 +262,38 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     protected DrawAsset = (layer: RenderLayer, asset: IAsset): { width: number, height: number } => {
-        const container = this.GetLayer(layer);
+        this.DrawAssets(layer, [asset]);
 
         const sprite = PIXI.Sprite.from(asset.name);
-        sprite.position.set(asset.x, asset.y);
-        const offset = asset.offsetX === undefined ? .5 : asset.offsetX;
-        sprite.anchor.set(offset, asset.offsetY);
-        container.addChild(sprite);
+        return { width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) };
+    }
 
-        if (asset.half) {
-            sprite.anchor.set(offset, 1);
-            const sprite2 = PIXI.Sprite.from(asset.name);
-            sprite2.rotation = Math.PI;
-            sprite2.position.set(asset.x, asset.y);
-            sprite2.anchor.set(offset, 1);
-            container.addChild(sprite2);
+    protected DrawAssets = (layer: RenderLayer, assets: IAsset[]): void => {
+        const container = this.GetLayer(layer);
+
+        for (var asset of assets) {
+            const sprite = PIXI.Sprite.from(asset.name);
+            sprite.position.set(asset.x, asset.y);
+            const offset = asset.offsetX === undefined ? .5 : asset.offsetX;
+            sprite.anchor.set(offset, asset.offsetY);
+            container.addChild(sprite);
+
+            if (asset.half) {
+                sprite.anchor.set(offset, 1);
+                const sprite2 = PIXI.Sprite.from(asset.name);
+                sprite2.rotation = Math.PI;
+                sprite2.position.set(asset.x, asset.y);
+                sprite2.anchor.set(offset, 1);
+                container.addChild(sprite2);
+            }
+
+            if (asset.node) {
+                sprite.hitArea = new PIXI.Circle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) / 2);
+                this.SkillNodeRenderer.RebindNodeEvents(asset.node, sprite);
+            }
         }
 
         this.SetLayer(layer, container);
-        return { width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) };
     }
 
     protected DrawText = (layer: RenderLayer, _text: string, colour: string, x: number, y: number): void => {
@@ -294,7 +307,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.SetLayer(layer, container);
     }
 
-    protected DrawBackground = (layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void => {
+    protected DrawBackgroundAsset = (layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void => {
         const container = this.GetLayer(layer);
 
         let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(asset);
@@ -432,11 +445,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             if (icon !== null) {
                 skillIcons.addChild(icon);
             }
-
-            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]).filter(x => x.classStartIndex === undefined));
-            if (frame !== null) {
-                skillIcons.addChild(frame);
-            }
         }
 
         if (this.skillTreeDataCompare !== undefined) {
@@ -447,10 +455,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                     const icon = this.SkillNodeRenderer.CreateIcon(node, "Compare")
                     if (icon !== null) {
                         skillIcons_compare.addChild(icon);
-                    }
-                    const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => (this.skillTreeDataCompare as SkillTreeData).nodes[x]));
-                    if (frame !== null) {
-                        skillIcons_compare.addChild(frame);
                     }
                 }
             }
@@ -467,27 +471,15 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         const activeNodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
         for (const id in activeNodes) {
             const node = activeNodes[id];
-            const nodes = node.out.map(x => this.skillTreeData.nodes[x]);
 
             const effect = this.SkillNodeRenderer.CreateIconEffect(node);
             if (effect !== null) {
                 skillIconActiveEffects.addChild(effect);
             }
 
-            for (const out of nodes) {
-                const frame = this.SkillNodeRenderer.CreateFrame(out, out.in.map(x => this.skillTreeData.nodes[x]));
-                if (frame !== null) {
-                    skillIconsActive.addChild(frame);
-                }
-            }
-
             const icon = this.SkillNodeRenderer.CreateIcon(node);
             if (icon !== null) {
                 skillIconsActive.addChild(icon);
-            }
-            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
-            if (frame !== null) {
-                skillIconsActive.addChild(frame);
             }
         }
 
@@ -523,11 +515,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                         pathingSkillIcons.addChild(icon);
                     }
                 }
-            }
-
-            const frame = this.SkillNodeRenderer.CreateFrame(node, node.out.map(x => this.skillTreeData.nodes[x]));
-            if (frame !== null) {
-                pathingSkillIcons.addChild(frame);
             }
         }
 
