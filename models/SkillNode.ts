@@ -72,8 +72,9 @@ export class SkillNode implements ISkillNode {
     isRegular2: boolean;
     isRegular1: boolean;
     hoverText: string | null = null;
+    patch: string;
 
-    constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number) {
+    constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number, patch: string) {
         this.skill = node.skill || -1;
         this.id = node.id || node.skill;
         this.dn = node.dn;
@@ -129,6 +130,7 @@ export class SkillNode implements ISkillNode {
         this.y = this.getY(this.arc);
         this.isRegular2 = !this.isKeystone && !this.isNotable && !this.isJewelSocket && !this.isMastery;
         this.isRegular1 = this.isRegular2 && (this.grantedStrength > 0 || this.grantedDexterity > 0 || this.grantedIntelligence > 0) && this.stats.filter(utils.NotNullOrWhiteSpace).length === 1;
+        this.patch = patch;
 
         if (this.passivePointsGranted > 0) {
             this.stats.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
@@ -219,6 +221,31 @@ export class SkillNode implements ISkillNode {
             case "Allocated":
                 return "PSSkillFrameActive";
         }
+    }
+
+    public GetSpriteSheetKey = (): string => {
+        const drawType = this.is(SkillNodeStates.Active) ? "Active" : "Inactive";
+        if (this.isKeystone) {
+            return `keystone${drawType}`;
+        } else if (this.isNotable) {
+            return `notable${drawType}`;
+        } else if (this.isMastery) {
+            if (this.activeEffectImage !== "") {
+                if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
+                    return "masteryActiveSelected";
+                } else if (this.is(SkillNodeStates.Hovered) || this.is(SkillNodeStates.Pathing)) {
+                    return "masteryConnected";
+                } else {
+                    return "masteryInactive";
+                }
+            } else if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
+                return "masteryActive";
+            } else {
+                return "mastery";
+            }
+        }
+
+        return `normal${drawType}`;
     }
 
     public GetConnectionType = (other: SkillNode): "Active" | "Intermediate" | "Normal" => {

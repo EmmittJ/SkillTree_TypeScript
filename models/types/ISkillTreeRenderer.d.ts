@@ -2,7 +2,6 @@
 import { SkillNode } from "../SkillNode";
 
 interface ISkillTreeRenderer {
-    SkillNodeRenderer: ISkillNodeRenderer;
     Initialized: boolean;
     Initialize(): Promise<boolean>;
 

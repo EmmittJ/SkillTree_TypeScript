@@ -27,6 +27,7 @@ export class SkillTreeData implements ISkillTreeData {
 
     width: number;
     height: number;
+    maxZoomLevel: number;
     scale: number;
     classStartNodes: { [id: string]: SkillNode };
     ascedancyNodes: { [id: string]: SkillNode };
@@ -63,7 +64,8 @@ export class SkillTreeData implements ISkillTreeData {
         this.circles = (options && options.circles) || { "Small": [{ "level": 0.1246, "width": 199 }, { "level": 0.2109, "width": 337 }, { "level": 0.2972, "width": 476 }, { "level": 0.3835, "width": 614 }], "Medium": [{ "level": 0.1246, "width": 299 }, { "level": 0.2109, "width": 506 }, { "level": 0.2972, "width": 713 }, { "level": 0.3835, "width": 920 }], "Large": [{ "level": 0.1246, "width": 374 }, { "level": 0.2109, "width": 633 }, { "level": 0.2972, "width": 892 }, { "level": 0.3835, "width": 1151 }] };
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
-        this.scale = skillTree.imageZoomLevels[skillTree.imageZoomLevels.length - 1];
+        this.maxZoomLevel = skillTree.imageZoomLevels.length - 1
+        this.scale = skillTree.imageZoomLevels[this.maxZoomLevel];
 
         // #region Fix for old school style skill sprites 
         this.skillSprites = {};
@@ -262,7 +264,7 @@ export class SkillTreeData implements ISkillTreeData {
         const orbitAngles = this.getOrbitAngles(skillTree.constants.skillsPerOrbit)
         for (const id in skillTree.nodes) {
             const groupId = skillTree.nodes[id].g || skillTree.nodes[id].group || 0;
-            const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale);
+            const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale, this.patch);
             if (this.root.out.indexOf(+id) >= 0 && node.classStartIndex === undefined) {
                 node.classStartIndex = this.root.out.indexOf(+id);
             }

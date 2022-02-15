@@ -77,7 +77,6 @@
     <TypeScriptCompile Include="app\app.ts" />
     <TypeScriptCompile Include="app\utils.ts" />
     <TypeScriptCompile Include="models\BaseSkillTreeRenderer.ts" />
-    <TypeScriptCompile Include="models\PIXISkillNodeRenderer.ts" />
     <TypeScriptCompile Include="models\PIXISkillTreeRenderer.ts" />
     <TypeScriptCompile Include="models\SkillNode.ts" />
     <TypeScriptCompile Include="models\SkillTreeCodec.ts" />
@@ -95,7 +94,6 @@
     <TypeScriptCompile Include="models\types\IMasteryEffect.d.ts" />
     <TypeScriptCompile Include="models\types\IPoints.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillNode.d.ts" />
-    <TypeScriptCompile Include="models\types\ISkillNodeRenderer.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeData.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeOptions.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeRenderer.d.ts" />
