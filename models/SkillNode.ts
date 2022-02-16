@@ -1,5 +1,7 @@
 ﻿import { utils } from "../app/utils";
 
+export declare type DrawType = "Allocated" | "Active" | "CanAllocate" | "Unallocated" | "Normal";
+
 export enum SkillNodeStates {
     None = 0,
     Active = 1 << 0,
@@ -171,7 +173,7 @@ export class SkillNode implements ISkillNode {
         return this.icon;
     }
 
-    public GetDrawType = (others: SkillNode[]): "Allocated" | "Active" | "CanAllocate" | "Unallocated" | "Normal" => {
+    public GetDrawType = (others: SkillNode[]): DrawType => {
         if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
             if (this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
                 return "Active";

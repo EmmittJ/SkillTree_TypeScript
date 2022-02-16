@@ -1,5 +1,5 @@
 ﻿import { utils } from "../app/utils";
-import { ConnectionStyle, SkillNode, SkillNodeStates } from "./SkillNode";
+import { ConnectionStyle, DrawType, SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeData } from "./SkillTreeData";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { IConnnection } from "./types/IConnection";
@@ -368,7 +368,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         const frames: Array<IAsset> = [];
         for (const id in nodes) {
             const node = nodes[id];
-            if (node.nodeGroup === undefined || node.classStartIndex !== undefined) {
+            if (node.nodeGroup === undefined || (options.filterClassIndex && node.classStartIndex !== undefined)) {
                 continue;
             }
 
@@ -412,25 +412,31 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
             if (options.outFrames) {
                 for (const out of others) {
+                    if (out.classStartIndex !== undefined) continue;
                     const ins = out.in.map(x => all[x]);
+                    const drawType = out.GetDrawType(ins);
                     const frame = out.GetFrameAssetKey(ins);
                     if (frame !== null) {
                         frames.push({
                             name: frame,
                             x: out.x,
-                            y: out.y
+                            y: out.y,
+                            node: out,
+                            drawType: drawType
                         });
                     }
                 }
             }
 
+            const drawType = node.GetDrawType(others);
             const frame = node.GetFrameAssetKey(others);
             if (frame !== null) {
                 frames.push({
                     name: frame,
                     x: node.x,
                     y: node.y,
-                    node: node
+                    node: node,
+                    drawType: drawType
                 });
             }
         }
@@ -627,7 +633,7 @@ export enum HighlightColor {
     Changed = 0xFFB000,
     Removed = 0xFF0000,
     Moved = 0xFF1493,
-    Searched = 0x7F00FF
+    Searched = 0xB452FF
 };
 
 export interface IAsset {
@@ -638,6 +644,7 @@ export interface IAsset {
     offsetX?: number | undefined;
     offsetY?: number | undefined;
     node?: SkillNode | undefined;
+    drawType?: DrawType | undefined;
 };
 
 export interface ISpriteSheetAsset {
