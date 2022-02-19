@@ -713,7 +713,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         for (const id in this.NodeTooltips) {
             const tooltip = this.NodeTooltips[id];
             if (tooltip === undefined) {
-                continue; 
+                continue;
             }
 
             tooltip.destroy({ children: true, texture: true, baseTexture: true });

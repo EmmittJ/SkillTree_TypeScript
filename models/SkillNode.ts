@@ -138,7 +138,7 @@ export class SkillNode implements ISkillNode {
             this.stats.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
         }
     }
-    
+
     private getArc = (oidx: number): number => this.orbitAngles[this.orbit] !== undefined && this.orbitAngles[this.orbit].length > oidx ? this.orbitAngles[this.orbit][oidx] : 0;
     private getX = (arc: number): number => this.orbitRadii.length > this.orbit && this.nodeGroup !== undefined ? (this.nodeGroup.x * this.scale) - (this.orbitRadii[this.orbit] * this.scale) * Math.sin(-arc) : 0;
     private getY = (arc: number): number => this.orbitRadii.length > this.orbit && this.nodeGroup !== undefined ? (this.nodeGroup.y * this.scale) - (this.orbitRadii[this.orbit] * this.scale) * Math.cos(-arc) : 0;
