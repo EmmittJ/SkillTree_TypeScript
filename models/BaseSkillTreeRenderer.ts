@@ -533,9 +533,12 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.StopRenderHover(hovered);
 
         this.DrawConnectionsForNodes(RenderLayer.ConnectionsPathing, this.skillTreeData.getHoveredNodes());
-        this.RenderTooltip(hovered);
         this.DrawNodes(RenderLayer.SkillIconsPathing, this.skillTreeData.getHoveredNodes(), this.skillTreeData.nodes, {});
         this.DrawCompareMovedHighlights();
+        if (this.skillTreeDataCompare !== undefined && hovered.is(SkillNodeStates.Compared)) {
+            this.skillTreeDataCompare.addState(hovered, SkillNodeStates.Hovered);
+        }
+        this.RenderTooltip(hovered);
     }
 
     StopRenderHover = (hovered: SkillNode): void => {

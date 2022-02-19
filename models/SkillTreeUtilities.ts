@@ -10,12 +10,12 @@ export class SkillTreeUtilities {
     private DRAG_THRESHOLD_SQUARED = 5 * 5;
     private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
-    skillTreeDataComapre: SkillTreeData | undefined;
+    skillTreeDataCompare: SkillTreeData | undefined;
     skillTreeCodec: SkillTreeCodec;
 
     constructor(context: SkillTreeData, contextComapre: SkillTreeData | undefined) {
         this.skillTreeData = context;
-        this.skillTreeDataComapre = contextComapre;
+        this.skillTreeDataCompare = contextComapre;
         this.skillTreeCodec = new SkillTreeCodec();
 
         SkillTreeEvents.on("node", "click", this.click);
@@ -221,7 +221,7 @@ export class SkillTreeUtilities {
 
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
-        this.skillTreeDataComapre?.clearState(SkillNodeStates.Hovered);
+        this.skillTreeDataCompare?.clearState(SkillNodeStates.Hovered);
         this.encodeURL();
     }
 
@@ -241,11 +241,11 @@ export class SkillTreeUtilities {
     private mouseover = (node: SkillNode) => {
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
-        this.skillTreeDataComapre?.clearState(SkillNodeStates.Hovered);
+        this.skillTreeDataCompare?.clearState(SkillNodeStates.Hovered);
 
         if (node.classStartIndex === undefined) {
             if (node.is(SkillNodeStates.Compared)) {
-                this.skillTreeDataComapre?.addState(node, SkillNodeStates.Hovered);
+                this.skillTreeDataCompare?.addState(node, SkillNodeStates.Hovered);
             } else {
                 this.skillTreeData.addState(node, SkillNodeStates.Hovered);
 
@@ -289,7 +289,7 @@ export class SkillTreeUtilities {
     private mouseout = (node: SkillNode) => {
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
-        this.skillTreeDataComapre?.clearState(SkillNodeStates.Hovered);
+        this.skillTreeDataCompare?.clearState(SkillNodeStates.Hovered);
         SkillTreeEvents.fire("skilltree", "hovered-nodes-end", node);
     }
 

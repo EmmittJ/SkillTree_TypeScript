@@ -582,13 +582,15 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         const text = this.CreateTooltip(hovered);
         text.position.set(padding / 2, padding / 2);
 
-        tooltip = new PIXI.Graphics();
-        tooltip.beginFill(0x000000, .75);
-        tooltip.lineStyle(2, 0xCBB59C)
-        tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
-        tooltip.endFill();
+        if (this.skillTreeData.patch === hovered.patch) {
+            tooltip = new PIXI.Graphics();
+            tooltip.beginFill(0x000000, .75);
+            tooltip.lineStyle(2, 0xCBB59C)
+            tooltip.drawRect(0, 0, text.width + padding, text.height + padding);
+            tooltip.endFill();
 
-        tooltip.addChild(text);
+            tooltip.addChild(text);
+        }
 
         let hoveredCompareNode: SkillNode | undefined = undefined;
         if (this.skillTreeDataCompare !== undefined) {
