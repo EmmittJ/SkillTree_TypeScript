@@ -267,7 +267,6 @@ export class SkillNode implements ISkillNode {
             return { width: Math.floor(138 * this.scale), height: Math.floor(140 * this.scale) };
         }
 
-        console.log(this);
         return { width: 0, height: 0 };
     }
 }

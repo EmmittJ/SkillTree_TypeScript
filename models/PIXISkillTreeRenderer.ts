@@ -327,6 +327,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
         for (var asset of assets) {
             const sprite = PIXI.Sprite.from(asset.name);
+            sprite.name = asset.name;
             sprite.position.set(asset.x, asset.y);
             const offset = asset.offsetX === undefined ? .5 : asset.offsetX;
             sprite.anchor.set(offset, asset.offsetY);
@@ -335,14 +336,14 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             if (asset.half) {
                 sprite.anchor.set(offset, 1);
                 const sprite2 = PIXI.Sprite.from(asset.name);
+                sprite2.name = asset.name;
                 sprite2.rotation = Math.PI;
                 sprite2.position.set(asset.x, asset.y);
                 sprite2.anchor.set(offset, 1);
                 container.addChild(sprite2);
             }
 
-            if (asset.node) {
-                sprite.hitArea = new PIXI.Circle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) / 2);
+            if (asset.node && asset.node.classStartIndex === undefined) {
                 this.RebindNodeEvents(asset.node, sprite);
             } else {
                 sprite.interactive = false;
@@ -363,6 +364,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             }
 
             const sprite = PIXI.Sprite.from(texture);
+            sprite.name = `${asset.patch}/${asset.key}/${asset.icon}`;
             sprite.position.set(asset.x, asset.y);
             sprite.anchor.set(.5);
             if (asset.scale !== undefined) sprite.scale.set(asset.scale);
@@ -370,7 +372,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
             //FIXME: This should really be anything that doesn't get a frame, but that is only Mastery nodes currently
             if (asset.node && asset.node.isMastery) {
-                sprite.hitArea = new PIXI.Circle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) / 2);
                 this.RebindNodeEvents(asset.node, sprite);
             } else {
                 sprite.interactive = false;
@@ -552,7 +553,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
     private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
         sprite.removeAllListeners();
-        sprite.name = `${node.GetId()}`;
+        sprite.hitArea = new PIXI.Circle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) / 2);
+        sprite.name = `${sprite.name}-${node.GetId()}`;
 
         if (SkillTreeEvents.events["node"] !== undefined) {
             sprite.interactive = true;
@@ -570,6 +572,9 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     protected RenderTooltip = (hovered: SkillNode): void => {
+        const container = this.GetLayer(RenderLayer.Tooltip);
+        const containerCompare = this.GetLayer(RenderLayer.TooltipCompare);
+
         let tooltip: PIXI.Graphics | undefined = undefined;
         let tooltipCompare: PIXI.Graphics | undefined = undefined;
 
@@ -618,17 +623,11 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         }
 
         if (tooltip !== undefined) {
-            tooltip.interactive = false;
-            tooltip.interactiveChildren = false;
-            tooltip.containerUpdateTransform = () => { };
-            this.SetLayer(RenderLayer.Tooltip, tooltip);
+            container.addChild(tooltip);
         }
 
         if (tooltipCompare !== undefined) {
-            tooltipCompare.interactive = false;
-            tooltipCompare.interactiveChildren = false;
-            tooltipCompare.containerUpdateTransform = () => { };
-            this.SetLayer(RenderLayer.TooltipCompare, tooltipCompare);
+            containerCompare.addChild(tooltipCompare);
         }
 
         if (tooltip !== undefined && hovered !== undefined) {
@@ -660,6 +659,9 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                 tooltipCompare.scale.set(tooltipCompare.width / boundsCompare.width / devicePixelRatio, tooltipCompare.height / boundsCompare.height / devicePixelRatio);
             }
         }
+
+        this.SetLayer(RenderLayer.Tooltip, container);
+        this.SetLayer(RenderLayer.TooltipCompare, containerCompare);
     }
 
     private CreateTooltip = (node: SkillNode) => {
@@ -707,13 +709,15 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return tooltip;
     }
 
-    protected DestroyTooltip = (node: SkillNode) => {
-        const tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${node.patch}`];
-        if (tooltip === undefined) {
-            return;
-        }
+    protected DestroyTooltips = () => {
+        for (const id in this.NodeTooltips) {
+            const tooltip = this.NodeTooltips[id];
+            if (tooltip === undefined) {
+                continue; 
+            }
 
-        tooltip.destroy({ children: true, texture: true, baseTexture: true });
-        this.NodeTooltips[`${node.GetId()}_${node.patch}`] = undefined;
+            tooltip.destroy({ children: true, texture: true, baseTexture: true });
+            delete this.NodeTooltips[id];
+        }
     }
 }

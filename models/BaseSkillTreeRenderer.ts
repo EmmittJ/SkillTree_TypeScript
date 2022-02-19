@@ -17,10 +17,6 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.container = container;
         this.skillTreeData = skillTreeData;
         this.skillTreeDataCompare = skillTreeDataCompare;
-
-        SkillTreeEvents.on("skilltree", "active-nodes-update", this.RenderActive);
-        SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.DestroyTooltip(node));
-        SkillTreeEvents.on("skilltree", "hovered-nodes-end", (node: SkillNode) => this.DestroyTooltip(node));
     }
 
     abstract IsDirty(): boolean;
@@ -237,7 +233,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private DrawInactiveNodes = (): void => {
-        this.DrawNodes(RenderLayer.SkillIcons, this.skillTreeData.nodes, this.skillTreeData.nodes, { filterClassIndex: true });
+        this.DrawNodes(RenderLayer.SkillIcons, this.skillTreeData.nodes, this.skillTreeData.nodes, { filterClassIndex: true, bindEvents: true });
 
         if (this.skillTreeDataCompare === undefined) {
             return;
@@ -252,7 +248,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             nodes[id] = node;
         }
 
-        this.DrawNodes(RenderLayer.SkillIconsCompare, nodes, this.skillTreeDataCompare.nodes, { filterClassIndex: true });
+        this.DrawNodes(RenderLayer.SkillIconsCompare, nodes, this.skillTreeDataCompare.nodes, { filterClassIndex: true, bindEvents: true });
     }
 
     private DrawCompareHighlights = (): void => {
@@ -400,7 +396,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                         icon: icon,
                         x: node.x,
                         y: node.y,
-                        node: node
+                        node: options.bindEvents ? node : undefined
                     });
                 }
             }
@@ -421,7 +417,6 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                             name: frame,
                             x: out.x,
                             y: out.y,
-                            node: out,
                             drawType: drawType
                         });
                     }
@@ -435,7 +430,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                     name: frame,
                     x: node.x,
                     y: node.y,
-                    node: node,
+                    node: options.bindEvents ? node : undefined,
                     drawType: drawType
                 });
             }
@@ -530,35 +525,31 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     protected abstract RenderTooltip(hovered: SkillNode): void;
-    protected abstract DestroyTooltip(node: SkillNode): void;
+    protected abstract DestroyTooltips(): void;
     StartRenderHover = (hovered: SkillNode): void => {
         if (!this.Initialized) {
             return;
         }
+        this.StopRenderHover(hovered);
 
-        this.ClearLayer(RenderLayer.ConnectionsPathing);
         this.DrawConnectionsForNodes(RenderLayer.ConnectionsPathing, this.skillTreeData.getHoveredNodes());
-
-        this.ClearLayer(RenderLayer.SkillIconsPathing);
-        this.ClearLayer(RenderLayer.AtlasMasteryHighlight);
         this.RenderTooltip(hovered);
         this.DrawNodes(RenderLayer.SkillIconsPathing, this.skillTreeData.getHoveredNodes(), this.skillTreeData.nodes, {});
-
-        this.ClearLayer(RenderLayer.NodeMoveCompare);
         this.DrawCompareMovedHighlights();
     }
 
-    StopRenderHover = (_: SkillNode): void => {
+    StopRenderHover = (hovered: SkillNode): void => {
         if (!this.Initialized) {
             return;
         }
 
         this.ClearLayer(RenderLayer.ConnectionsPathing);
         this.ClearLayer(RenderLayer.SkillIconsPathing);
-        this.ClearLayer(RenderLayer.NodeMoveCompare);
         this.ClearLayer(RenderLayer.AtlasMasteryHighlight);
+        this.ClearLayer(RenderLayer.NodeMoveCompare);
         this.ClearLayer(RenderLayer.Tooltip);
         this.ClearLayer(RenderLayer.TooltipCompare);
+        this.DestroyTooltips();
     }
 
     private DrawCompareMovedHighlights = (): void => {
@@ -601,6 +592,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 }
 
 interface DrawNodeOptions {
+    bindEvents?: boolean;
     filterClassIndex?: boolean;
     outFrames?: boolean;
 }

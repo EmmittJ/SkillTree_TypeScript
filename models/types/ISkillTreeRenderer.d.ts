@@ -1,5 +1,4 @@
-﻿import { ISkillNodeRenderer } from "./ISkillNodeRenderer";
-import { SkillNode } from "../SkillNode";
+﻿import { SkillNode } from "../SkillNode";
 
 interface ISkillTreeRenderer {
     Initialized: boolean;

@@ -3,7 +3,6 @@ import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import * as PIXI from "pixi.js";
 import { SkillTreeCodec } from "./SkillTreeCodec";
-import * as lzstring from "lz-string";
 
 export class SkillTreeUtilities {
     private dragStart: PIXI.Point;
