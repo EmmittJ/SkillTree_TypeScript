@@ -6,7 +6,7 @@ import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
 import download = require("downloadjs");
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
-import { SkillNode, SkillNodeStates } from '../models/SkillNode';
+import { SkillNodeStates } from '../models/SkillNode';
 import { utils } from './utils';
 
 export class App {
@@ -190,7 +190,7 @@ export class App {
             }
         }
 
-        
+
         const groups: { [group: string]: string[] } = {};
         const statGroup: { [stat: string]: string } = {};
         const stats: { [stat: string]: number } = {};
