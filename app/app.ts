@@ -61,19 +61,9 @@ export class App {
 
         const go = document.getElementById("skillTreeControl_VersionGo") as HTMLButtonElement;
         go.addEventListener("click", () => {
-            let search = '?';
-            if (versionSelect.value !== '0') {
-                search += `v=${versionSelect.value}`;
-            }
-
-            if (!search.endsWith('?') && compareSelect.value !== '0') search += '&';
-
-            if (compareSelect.value !== '0') {
-                search += `c=${compareSelect.value}`;
-            }
-
-            window.location.hash = "";
-            window.location.search = search;
+            const version = versionSelect.value !== '0' ? versionSelect.value : '';
+            const compare = compareSelect.value !== '0' ? compareSelect.value : '';
+            App.ChangeSkillTreeVersion(version, compare, "");
         });
 
 
@@ -424,6 +414,22 @@ export class App {
             return Object.assign(params, { [key]: decodeURIComponent(val) });
         }, {});
     };
+
+    public static ChangeSkillTreeVersion = (version: string, compare: string, hash: string) => {
+        let search = '?';
+        if (version !== '') {
+            search += `v=${version}`;
+        }
+
+        if (!search.endsWith('?') && compare !== '') search += '&';
+
+        if (compare !== '') {
+            search += `c=${compare}`;
+        }
+
+        window.location.hash = hash;
+        window.location.search = search;
+    }
 }
 
 window.onload = async () => {
@@ -435,7 +441,7 @@ window.onload = async () => {
         return;
     }
 
-    if (!query['v']) {
+    if (versionsJson.versions.indexOf(query['v']) === -1) {
         query['v'] = versionsJson.versions[versionsJson.versions.length - 1];
     }
 
@@ -443,5 +449,6 @@ window.onload = async () => {
         query['c'] = '';
     }
 
+    App.ChangeSkillTreeVersion(query['v'], query['c'], window.location.hash);
     new App().launch(query['v'], query['c'], versionsJson);
 };
