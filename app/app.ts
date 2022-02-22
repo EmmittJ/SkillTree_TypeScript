@@ -427,8 +427,13 @@ export class App {
             search += `c=${compare}`;
         }
 
-        window.location.hash = hash;
-        window.location.search = search;
+        if (window.location.hash !== hash) {
+            window.location.hash = hash;
+        }
+
+        if (window.location.search !== search) {
+            window.location.search = search;
+        }
     }
 }
 
