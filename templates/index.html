@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <!-- %SCRIPT_REPLACE_MARKER% -->
 </head>
 <body style="background-color: black;">
     <div id="skillTreeContainer">
@@ -34,6 +35,14 @@
             <button id="skillTreeControl_VersionGo">Go</button>
             <button id="skillTreeControl_Reset">Reset</button>
             <button id="skillTreeControl_Screenshot" style="display: none">Screenshot</button>
+        </div>
+
+        <div id="ad-container" class="ad-container">
+            <div class="ad-consent">
+                <div id="ncmp-consent-link"></div>
+                <span data-ccpa-link="1"></span>
+            </div>
+            <div id="standard-banner"></div>
         </div>
     </div>
 </body>

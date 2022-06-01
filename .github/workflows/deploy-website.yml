@@ -22,6 +22,14 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    - name: Add Scripts
+      uses: jacobtomlinson/gha-find-replace@v2
+      with:
+        find: "<!-- %SCRIPT_REPLACE_MARKER% -->"
+        replace: ${{ secrets.SCRIPTS }}
+        regex: false
+        include: templates/**
+
     - name: Build
       run: |
         npm install

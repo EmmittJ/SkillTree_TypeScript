@@ -70,32 +70,34 @@
     display: inline-block;
 }
 
-label {
+#skillTreeContainer label {
     width: 4em;
     height: 1.5em;
     display: inline-block;
 }
 
-select {
+#skillTreeContainer select {
     width: 8em;
     height: 1.5em;
 }
 
-input {
+#skillTreeContainer input {
     width: 7.7em;
     height: 1.2em;
 }
 
-button {
+#skillTreeContainer button {
     height: 1.5em;
+    cursor: pointer;
 }
 
-input, select, button {
+#skillTreeContainer input, #skillTreeContainer select, #skillTreeContainer button {
     background: #333;
     border: 1px solid #999;
     color: #FFF;
     margin: 0 0 0.25em 0.25em;
     display: inline-block;
+    text-decoration-line: none;
 }
 
 .skillTreePoints {
@@ -123,4 +125,54 @@ input, select, button {
     font-size: larger;
     color: #FFFFFF;
     text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+.ad-container {
+    position: fixed;
+    bottom: 0.25em;
+    right: 0;
+    height: 50px;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: center;
+    align-items: end;
+}
+
+#standard-banner {
+    background: #333;
+    border: 1px solid #999;
+    color: #FFF;
+    margin: 0.25em;
+    padding: 0.25em;
+    display: inline-block;
+    width: 320px;
+    height: fit-content;
+}
+
+span[data-ccpa-link="1"] span {
+    height: 1.5em;
+    line-height: 1.5em;
+    cursor: pointer;
+    background: #333;
+    border: 1px solid #999;
+    color: #FFF;
+    margin: 0.125em 0.25em;
+    padding: 0.25em;
+    display: inline-block;
+    text-decoration-line: none;
+    font-size: 0.75em;
+}
+
+#ncmp-consent-link > button {
+    height: 1.5em;
+    line-height: 0.75em;
+    cursor: pointer;
+    background: #333;
+    border: 1px solid #999;
+    color: #FFF;
+    margin: 0.125em 0.25em;
+    padding: 0.25em;
+    display: inline-block;
+    text-decoration-line: none;
+    font-size: 0.75em;
 }
