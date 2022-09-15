@@ -18,6 +18,7 @@ export enum ConnectionStyle {
 }
 
 export class SkillNode implements ISkillNode {
+    id: string;
     activeEffectImage: string;
     activeIcon: string;
     ascendancyName: string;
@@ -65,7 +66,8 @@ export class SkillNode implements ISkillNode {
     hoverText: string | null = null;
     patch: string;
 
-    constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number, patch: string) {
+    constructor(id: string, node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number, patch: string) {
+        this.id = id;
         this.activeEffectImage = node.activeEffectImage || "";
         this.activeIcon = node.activeIcon || "";
         this.ascendancyName = node.ascendancyName || "";
@@ -134,7 +136,7 @@ export class SkillNode implements ISkillNode {
     }
 
     public GetId = (): string => {
-        return `${this.skill}`;
+        return `${this.id}`;
     }
 
     public GetIcon = () => {

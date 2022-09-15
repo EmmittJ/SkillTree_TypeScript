@@ -8,7 +8,7 @@ export class SkillTreeData implements ISkillTreeData {
     fullscreen: number;
     classes: IAscendancyClasses[];
     groups: { [id: string]: IGroup };
-    root: ISkillNodeV9;
+    root: ISkillNode;
     nodes: { [id: string]: SkillNode };
     min_x: number;
     min_y: number;
@@ -63,6 +63,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.sprites = skillTree.sprites;
         this.classes = skillTree.classes || [];
 
+        this.root.id = 'root';
         delete skillTree.nodes["root"];
 
         // #region Fix ascendancy groups
@@ -152,7 +153,7 @@ export class SkillTreeData implements ISkillTreeData {
         const orbitAngles = this.getOrbitAngles(skillTree.constants.skillsPerOrbit)
         for (const id in skillTree.nodes) {
             const groupId = skillTree.nodes[id].group || 0;
-            const node = new SkillNode(skillTree.nodes[id], this.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale, this.patch);
+            const node = new SkillNode(id, skillTree.nodes[id], this.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale, this.patch);
             if (this.root.out.indexOf(id) >= 0 && node.classStartIndex === undefined) {
                 node.classStartIndex = this.root.out.indexOf(id);
             }

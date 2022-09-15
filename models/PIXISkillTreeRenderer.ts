@@ -553,8 +553,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     private DrawLineConnection = (connection: IConnnection): PIXI.Container | null => {
-        const node = connection.node;
-        const other = connection.other;
+        const node = connection.node.skill > connection.other.skill ? connection.node : connection.other;
+        const other = connection.node.skill > connection.other.skill ? connection.other : connection.node;
 
         const texture = this.GetSpritesheetTexture(connection.patch, connection.key, connection.icon);
         if (texture === null || !texture.valid) {
@@ -752,7 +752,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${node.patch}`];
 
         if (tooltip === undefined) {
-            let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name} [${node.skill}]`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
+            let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name} [${node.id}]`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
             let stats: PIXI.Text | null = node.stats.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.stats.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
             let flavour: PIXI.Text | null = node.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
             let reminder: PIXI.Text | null = node.reminderText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.reminderText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;

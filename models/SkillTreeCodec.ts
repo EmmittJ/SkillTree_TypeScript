@@ -16,14 +16,14 @@
         for (const id in skilledNodes) {
             nodes.push(skilledNodes[id]);
         }
-        nodes.sort((a, b) => { return a.skill - b.skill });
+        nodes.sort((a, b) => { return +(a.id || a.skill) - +(b.id || a.skill) });
 
         for (const node of nodes) {
             if (node.classStartIndex !== undefined || node.isAscendancyStart) {
                 continue;
             }
-            bytes.push(node.skill >> 8 & 0xFF);
-            bytes.push(node.skill & 0xFF);
+            bytes.push(+(node.id || node.skill) >> 8 & 0xFF);
+            bytes.push(+(node.id || node.skill) & 0xFF);
         }
 
         return this.Uint8ArryToBase64(new Uint8Array(bytes));
@@ -41,7 +41,7 @@
         }
         for (let i = (skillTreeDefinition.Version > 3 ? 7 : 6); i < bytes.length; i += 2) {
             const id = bytes[i] << 8 | bytes[i + 1];
-            const node = skillTreeData.nodes[id];
+            const node = skillTreeData.nodes[id.toString()];
             if (node !== undefined) {
                 skillTreeDefinition.Nodes.push(node);
             }
