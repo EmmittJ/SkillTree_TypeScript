@@ -1,18 +1,4 @@
-﻿interface ISpriteSheet {
-    filename: string;
-    coords: { [id: string]: ISprite };
-}
+﻿type SpriteSheetKey = SpriteSheetKeyV11;
 
-interface ISpriteSheetOld {
-    filename: string;
-    coords: { [id: string]: ISprite };
-    notableCoords: { [id: string]: ISprite } | undefined;
-    keystoneCoords: { [id: string]: ISprite } | undefined;
-}
-
-interface ISprite {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
+interface ISpriteSheet extends ISpriteSheetV11 {
 }

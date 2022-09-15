@@ -16,14 +16,14 @@
         for (const id in skilledNodes) {
             nodes.push(skilledNodes[id]);
         }
-        nodes.sort((a, b) => { return (a.id || a.skill) - (b.id || b.skill) });
+        nodes.sort((a, b) => { return a.skill - b.skill });
 
         for (const node of nodes) {
             if (node.classStartIndex !== undefined || node.isAscendancyStart) {
                 continue;
             }
-            bytes.push((node.id || node.skill) >> 8 & 0xFF);
-            bytes.push((node.id || node.skill) & 0xFF);
+            bytes.push(node.skill >> 8 & 0xFF);
+            bytes.push(node.skill & 0xFF);
         }
 
         return this.Uint8ArryToBase64(new Uint8Array(bytes));

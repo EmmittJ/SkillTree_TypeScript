@@ -21,7 +21,7 @@
     <UseGlobalApplicationHostFile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
-    <TypeScriptToolsVersion>4.3</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>3.9</TypeScriptToolsVersion>
     <Use64BitIISExpress />
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -57,16 +57,43 @@
     <TypeScriptSourceRoot />
   </PropertyGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="models\skill-tree\options-preprocessors\SkillTreeOptionsV1Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeOptionsPreprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreePreprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV10Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV9Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV8Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV7Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV6Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV5Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV4Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV3Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV2Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV1Preprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\SkillTreePreprocessors.ts" />
     <Content Include="package.json" />
     <Content Include="webpack.config.js" />
     <Content Include="tsconfig.json" />
     <Content Include="tslint.json" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\ISkillTreeRectV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v10\IGroupV10.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v10\IUIArtOptionsV10.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\ISkillTreeOptionsBase.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\ISkillTreeOptionsPreprocessor.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\ISkillTreePreprocessor.d.ts" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\v02\ICircleOptionV2.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\v02\ISkillTreeOptionsV2.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\v01\IAscendancyClassesV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\v01\IAscendancyClassV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-options-json\v01\ISkillTreeOptionsV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v11\ISpriteSheetKeyV11.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v11\ISpriteSheetV11.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="content\app.css" />
@@ -87,7 +114,6 @@
     <TypeScriptCompile Include="models\types\IAscendancyClasses.d.ts" />
     <TypeScriptCompile Include="models\types\ICharacter.d.ts" />
     <TypeScriptCompile Include="models\types\IClassImage.d.ts" />
-    <TypeScriptCompile Include="models\types\IConnection.d.ts" />
     <TypeScriptCompile Include="models\types\IConstants.d.ts" />
     <TypeScriptCompile Include="models\types\IExpansionJewel.d.ts" />
     <TypeScriptCompile Include="models\types\IGroup.d.ts" />
@@ -101,6 +127,38 @@
     <TypeScriptCompile Include="models\types\ISkillTreeCodec.d.ts" />
     <TypeScriptCompile Include="models\types\IUIArtOptions.d.ts" />
     <TypeScriptCompile Include="models\types\IVersions.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\ISkillTreeBase.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\IRootNodeV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\ISpriteV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v11\ISkillTreeV11.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v10\IPointsV10.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v10\ISkillTreeV10.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v09\ISkillNodeV9.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v09\ISkillTreeV9.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v08\ISkillTreeV8.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\IAscendancyClassV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\IAscendancyClassesV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\IExpansionJewelV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\IGroupV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\ISkillNodeV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v07\ISkillTreeV7.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v06\ISkillNodeV6.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v06\ISkillTreeV6.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v05\IRootNodeV5.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v05\ISkillNodeV5.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v05\ISkillTreeV5.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v04\IClassImageV4.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v04\ISkillTreeV4.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v03\ISkillNodeV3.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v03\ISkillTreeV3.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v02\ISkillTreeV2.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v02\ISpriteSheetV2.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\ICharacterV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\IConstantsV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\IGroupV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\ISkillNodeV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\ISkillTreeV1.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v01\ISpriteSheetV1.d.ts" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />

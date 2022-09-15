@@ -61,7 +61,7 @@ export class SkillTreeUtilities {
             this.changeStartClass(def.Class, false);
             this.changeAscendancyClass(def.Ascendancy, false);
             for (const node of def.Nodes) {
-                this.skillTreeData.addStateById(`${node.id || node.skill}`, SkillNodeStates.Active)
+                this.skillTreeData.addStateById(`${node.skill}`, SkillNodeStates.Active)
             }
 
             for (const id in this.skillTreeData.classStartNodes) {
@@ -103,7 +103,7 @@ export class SkillTreeUtilities {
                 } else {
                     ascNodes++;
                 }
-                maximumNormalPoints += node.passivePointsGranted;
+                maximumNormalPoints += node.grantedPassivePoints;
             }
         }
 

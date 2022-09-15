@@ -18,50 +18,39 @@ export enum ConnectionStyle {
 }
 
 export class SkillNode implements ISkillNode {
-    skill: number;
-    id: number;
-    dn: string | undefined;
-    name: string;
-    icon: string;
-    inactiveIcon: string;
-    activeIcon: string;
     activeEffectImage: string;
-    masteryEffects: IMasteryEffect[];
-    ks: boolean | undefined;
-    isKeystone: boolean;
-    not: boolean | undefined;
-    isNotable: boolean;
-    m: boolean | undefined;
-    isMastery: boolean;
+    activeIcon: string;
+    ascendancyName: string;
+    classStartIndex: number | undefined;
+    expansionJewel: IExpansionJewel | undefined;
+    flavourText: string[];
+    grantedDexterity: number;
+    grantedIntelligence: number;
+    grantedPassivePoints: number;
+    grantedStrength: number;
+    group: number | undefined;
+    icon: string;
+    in: string[];
+    inactiveIcon: string;
+    isAscendancyStart: boolean;
     isBlighted: boolean;
     isJewelSocket: boolean;
-    expansionJewel: IExpansionJewel | undefined;
+    isKeystone: boolean;
+    isMastery: boolean;
     isMultipleChoice: boolean;
     isMultipleChoiceOption: boolean;
+    isNotable: boolean;
     isProxy: boolean;
-    passivePointsGranted: number;
-    ascendancyName: string;
-    isAscendancyStart: boolean;
-    spc: number[] | undefined;
-    classStartIndex: number | undefined;
-    sd: string[] | undefined;
-    stats: string[];
-    reminderText: string[];
-    flavourText: string[];
-    g: number | undefined;
-    group: number | undefined;
-    o: number | undefined;
+    masteryEffects: IMasteryEffect[];
+    name: string;
     orbit: number;
-    oidx: number | undefined;
     orbitIndex: number;
-    da: number | undefined;
-    grantedDexterity: number;
-    ia: number | undefined;
-    grantedIntelligence: number;
-    sa: number | undefined;
-    grantedStrength: number;
-    out: number[];
-    in: number[];
+    out: string[];
+    recipe: string[];
+    reminderText: string[];
+    skill: number;
+    stats: string[];
+    
     state: SkillNodeStates;
 
     nodeGroup: IGroup | undefined;
@@ -77,50 +66,39 @@ export class SkillNode implements ISkillNode {
     patch: string;
 
     constructor(node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number, patch: string) {
-        this.skill = node.skill || -1;
-        this.id = node.id || node.skill;
-        this.dn = node.dn;
-        this.name = node.name || node.dn || "";
-        this.icon = node.icon || "";
-        this.activeIcon = node.activeIcon || "";
-        this.inactiveIcon = node.inactiveIcon || "";
         this.activeEffectImage = node.activeEffectImage || "";
-        this.masteryEffects = node.masteryEffects || [];
-        this.ks = node.ks;
-        this.isKeystone = node.isKeystone || node.ks || false;
-        this.not = node.not;
-        this.isNotable = node.isNotable || node.not || false;
-        this.m = node.m;
-        this.isMastery = node.isMastery || node.m || false;
-        this.isBlighted = node.isBlighted || false;
-        this.isJewelSocket = node.isJewelSocket || false;
+        this.activeIcon = node.activeIcon || "";
+        this.ascendancyName = node.ascendancyName || "";
+        this.classStartIndex = node.classStartIndex;
         this.expansionJewel = node.expansionJewel;
+        this.flavourText = node.flavourText || [];
+        this.grantedDexterity = node.grantedDexterity || 0;
+        this.grantedIntelligence = node.grantedIntelligence || 0;
+        this.grantedPassivePoints = node.grantedPassivePoints || 0;
+        this.grantedStrength = node.grantedStrength || 0;
+        this.group = node.group;
+        this.icon = node.icon;
+        this.in = node.in;
+        this.inactiveIcon = node.inactiveIcon || "";
+        this.isAscendancyStart = node.isAscendancyStart || false;
+        this.isBlighted = node.isBlighted;
+        this.isJewelSocket = node.isJewelSocket;
+        this.isKeystone = node.isKeystone || false;
+        this.isMastery = node.isMastery || false;
         this.isMultipleChoice = node.isMultipleChoice || false;
         this.isMultipleChoiceOption = node.isMultipleChoiceOption || false;
+        this.isNotable = node.isNotable || false;
         this.isProxy = node.isProxy || false;
-        this.passivePointsGranted = node.passivePointsGranted || 0;
-        this.ascendancyName = node.ascendancyName || "";
-        this.isAscendancyStart = node.isAscendancyStart || false;
-        this.spc = node.spc;
-        this.classStartIndex = node.classStartIndex !== undefined ? node.classStartIndex : (this.spc && this.spc.length > 0 ? this.spc[0] : undefined);
-        this.sd = node.sd;
-        this.stats = node.stats || node.sd || [];
-        this.reminderText = node.reminderText || [];
-        this.flavourText = node.flavourText || [];
-        this.g = node.g;
-        this.group = node.group || node.g;
-        this.o = node.o;
-        this.orbit = node.orbit || node.o || 0;
-        this.oidx = node.oidx;
-        this.orbitIndex = node.orbitIndex || node.oidx || 0;
-        this.da = node.da;
-        this.grantedDexterity = node.grantedDexterity || node.da || 0;
-        this.ia = node.ia;
-        this.grantedIntelligence = node.grantedIntelligence || node.ia || 0;
-        this.sa = node.sa;
-        this.grantedStrength = node.grantedStrength || node.sa || 0;
-        this.out = node.out || [];
-        this.in = node.in || [];
+        this.masteryEffects = node.masteryEffects || [];
+        this.name = node.name;
+        this.orbit = node.orbit;
+        this.orbitIndex = node.orbitIndex;
+        this.out = node.out;
+        this.recipe = node.recipe || [];
+        this.reminderText = node.recipe || [];
+        this.skill = node.skill;
+        this.stats = node.stats;
+
         this.state = SkillNodeStates.None;
 
         this.nodeGroup = group;
@@ -134,8 +112,8 @@ export class SkillNode implements ISkillNode {
         this.isRegular1 = this.isRegular2 && (this.grantedStrength > 0 || this.grantedDexterity > 0 || this.grantedIntelligence > 0) && this.stats.filter(utils.NotNullOrWhiteSpace).length === 1;
         this.patch = patch;
 
-        if (this.passivePointsGranted > 0) {
-            this.stats.push(`Grants ${this.passivePointsGranted} Passive Skill Point${this.passivePointsGranted > 1 ? 's' : ''}`);
+        if (this.grantedPassivePoints > 0) {
+            this.stats.push(`Grants ${this.grantedPassivePoints} Passive Skill Point${this.grantedPassivePoints > 1 ? 's' : ''}`);
         }
     }
 
@@ -156,7 +134,7 @@ export class SkillNode implements ISkillNode {
     }
 
     public GetId = (): string => {
-        return `${this.id}`;
+        return `${this.skill}`;
     }
 
     public GetIcon = () => {
@@ -225,7 +203,7 @@ export class SkillNode implements ISkillNode {
         }
     }
 
-    public GetSpriteSheetKey = (): string => {
+    public GetSpriteSheetKey = (): SpriteSheetKey => {
         const drawType = this.is(SkillNodeStates.Active) ? "Active" : "Inactive";
         if (this.isKeystone) {
             return `keystone${drawType}`;
@@ -233,7 +211,7 @@ export class SkillNode implements ISkillNode {
             return `notable${drawType}`;
         } else if (this.isMastery) {
             if (this.activeEffectImage !== "") {
-                if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
+                if (this.is(SkillNodeStates.Active)) {
                     return "masteryActiveSelected";
                 } else if (this.is(SkillNodeStates.Hovered) || this.is(SkillNodeStates.Pathing)) {
                     return "masteryConnected";
@@ -241,7 +219,7 @@ export class SkillNode implements ISkillNode {
                     return "masteryInactive";
                 }
             } else if (this.is(SkillNodeStates.Active) || this.is(SkillNodeStates.Hovered)) {
-                return "masteryActive";
+                return "masteryConnected";
             } else {
                 return "mastery";
             }

@@ -5,13 +5,12 @@ import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
 import { SpatialHash } from 'pixi-cull';
-import { BaseSkillTreeRenderer, RenderLayer, IAsset, IHighlight, ISpriteSheetAsset } from "./BaseSkillTreeRenderer";
-import { IConnnection } from "./types/IConnection";
+import { BaseSkillTreeRenderer, RenderLayer, IHighlight, ISpriteSheetAsset, IConnnection } from "./BaseSkillTreeRenderer";
 import { ISpritesheetData } from 'pixi.js';
 
 export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     private NodeTooltips: { [id: string]: PIXI.Container | undefined };
-    private NodeSpritesheets: { [id: string]: PIXI.Spritesheet | undefined };
+    private NodeSpritesheets: { [id: string]: PIXI.Spritesheet[] | undefined };
     private _dirty = true;
     private pixi: PIXI.Application;
     private viewport: Viewport.Viewport;
@@ -112,7 +111,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             return;
         }
 
-        const node = this.skillTreeData.nodes[+interactiveObject.name];
+        const node = this.skillTreeData.nodes[interactiveObject.name];
         if (node.isKeystone) {
             return;
         }
@@ -200,21 +199,25 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         // #region Load Assets
         const addedAssets = new Array<string>();
         for (const i of filteredData) {
-            for (const id in i.assets) {
-                const asset = i.assets[id];
-                if ((asset[i.scale] || asset["1"]) && addedAssets.indexOf(id) < 0) {
-                    addedAssets.push(id);
-                    PIXI.Loader.shared.add(id.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${i.patch}/assets/${id}.png`);
-                }
-            }
+            for (const id in i.sprites) {
+                const sprites = i.sprites[id];
+                const sheet = sprites[i.scale.toString()] || sprites['1'];
+                if (sheet === undefined)
+                    continue;
 
-            for (const id in i.skillSprites) {
-                const sprites = i.skillSprites[id];
-                const sprite = sprites[i.maxZoomLevel];
-                const filename = sprite.filename.replace("https://web.poecdn.com/image/passive-skill/", "");
-                if (sprite && addedAssets.indexOf(filename) < 0) {
-                    addedAssets.push(filename);
-                    PIXI.Loader.shared.add(filename.replace("PassiveSkillScreen", ""), `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
+                const filename = sheet.filename;
+                if (filename === 'LOAD_COORDS') {
+                    for (const coord in sheet.coords) {
+                        if (addedAssets.indexOf(coord) < 0) {
+                            addedAssets.push(coord);
+                            PIXI.Loader.shared.add(coord, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${coord}.png`);
+                        }
+                    }
+                } else {
+                    if (addedAssets.indexOf(filename) < 0) {
+                        addedAssets.push(filename);
+                        PIXI.Loader.shared.add(filename, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
+                    }
                 }
             }
         }
@@ -239,7 +242,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                 loadbar.lineStyle(2, 0xCBB59C)
                 loadbar.drawRect(0, 0, (loadedAssets / addedAssets.length) * loadbarWidth, 50);
                 loadbar.endFill();
-                loadbar.position.set(-loadbarWidth / 2, screen.height / 2);
+                //loadbar.position.set(screen.width - (loadbarWidth / 2), screen.height / 2);
                 this.viewport.addChild(loadbar);
 
                 const text = new PIXI.Text(progressText, { fontSize: 250, fill: 0xFFFFFF });
@@ -268,25 +271,47 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         for (const tree of data) {
             if (tree === undefined) continue;
 
-            const dict = tree.skillSprites
-            for (const key in dict) {
-                const sheet = dict[key][tree.maxZoomLevel];
-                const texture = PIXI.Texture.from(sheet.filename.replace("PassiveSkillScreen", "").replace("https://web.poecdn.com/image/passive-skill/", ""));
-                const spritesheetData = this.GetSpritesheetData(sheet, tree.patch, key);
-                this.NodeSpritesheets[`${tree.patch}/${key}`] = new PIXI.Spritesheet(texture.baseTexture, spritesheetData)
+            const dict = tree.sprites
+            for (const id in dict) {
+                const key = this.GetSpritesheetKey(tree.patch, id);
+                if (this.NodeSpritesheets[key] === undefined) {
+                    this.NodeSpritesheets[key] = []
+                }
+
+                const sheet = dict[id][tree.scale.toString()] || dict[id]['1'];
+                if (sheet === undefined)
+                    continue;
+
+                const filename = sheet.filename;
+                if (filename === 'LOAD_COORDS') {
+                    for (const coord in sheet.coords) {
+                        const texture = PIXI.Texture.from(coord);
+                        const spritesheetData = this.GetCoordSpritesheetData(sheet, key, coord, texture);
+                        this.NodeSpritesheets[key]?.push(new PIXI.Spritesheet(texture.baseTexture, spritesheetData));
+                    }
+                } else {
+                    const texture = PIXI.Texture.from(filename);
+                    const spritesheetData = this.GetSpritesheetData(sheet, key);
+                    this.NodeSpritesheets[key]?.push(new PIXI.Spritesheet(texture.baseTexture, spritesheetData));
+                }
             }
         }
 
         const promises = new Array<Promise<boolean>>();
         for (const key in this.NodeSpritesheets) {
-            if (this.NodeSpritesheets[key] !== undefined) {
-                promises.push(new Promise<boolean>(resolve => this.NodeSpritesheets[key]!.parse(() => resolve(true))))
+            const sheets = this.NodeSpritesheets[key];
+            if (sheets !== undefined) {
+                for (const i in sheets) {
+                    const promise = new Promise<boolean>(resolve => this.NodeSpritesheets[key]![i].parse(() => resolve(true)));
+                    promises.push(promise);
+                }
+
             }
         }
         return Promise.all(promises);
     }
 
-    private GetSpritesheetData = (spriteSheet: ISpriteSheet, patch: string, key: string): PIXI.ISpritesheetData => {
+    private GetSpritesheetData = (spriteSheet: ISpriteSheet, key: string): PIXI.ISpritesheetData => {
         let data: ISpritesheetData = {
             frames: {},
             animations: undefined,
@@ -295,9 +320,10 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             }
         };
 
-        for (const i in spriteSheet.coords) {
-            const coord = spriteSheet.coords[i];
-            data.frames[`${patch}/${key}/${i}`] = {
+        for (const id in spriteSheet.coords) {
+            const coord = spriteSheet.coords[id];
+            const frame = this.GetSpritesheetFrameKey(key, id);
+            data.frames[frame] = {
                 frame: coord,
                 rotated: false,
                 trimmed: false,
@@ -315,46 +341,53 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return data;
     }
 
-    protected DrawAsset = (layer: RenderLayer, asset: IAsset): { width: number, height: number } => {
-        this.DrawAssets(layer, [asset]);
-
-        const sprite = PIXI.Sprite.from(asset.name);
-        return { width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) };
-    }
-
-    protected DrawAssets = (layer: RenderLayer, assets: IAsset[]): void => {
-        const container = this.GetLayer(layer);
-
-        for (var asset of assets) {
-            const sprite = PIXI.Sprite.from(asset.name);
-            sprite.name = asset.name;
-            sprite.position.set(asset.x, asset.y);
-            const offset = asset.offsetX === undefined ? .5 : asset.offsetX;
-            sprite.anchor.set(offset, asset.offsetY);
-            container.addChild(sprite);
-
-            if (asset.half) {
-                sprite.anchor.set(offset, 1);
-                const sprite2 = PIXI.Sprite.from(asset.name);
-                sprite2.name = asset.name;
-                sprite2.rotation = Math.PI;
-                sprite2.position.set(asset.x, asset.y);
-                sprite2.anchor.set(offset, 1);
-                container.addChild(sprite2);
+    private GetCoordSpritesheetData = (spriteSheet: ISpriteSheet, key: string, id: string, texture: PIXI.Texture): PIXI.ISpritesheetData => {
+        let data: ISpritesheetData = {
+            frames: {},
+            animations: undefined,
+            meta: {
+                scale: "1"
             }
+        };
 
-            if (asset.node && asset.node.classStartIndex === undefined) {
-                this.RebindNodeEvents(asset.node, sprite);
-            } else {
-                sprite.interactive = false;
-                sprite.interactiveChildren = false;
-            }
+        const coord = spriteSheet.coords[id];
+        const frame = this.GetSpritesheetFrameKey(key, id);
+        if (coord.w === -1 && coord.h === -1) {
+            coord.w = texture.width;
+            coord.h = texture.height;
         }
 
-        this.SetLayer(layer, container);
+        data.frames[frame] = {
+            frame: coord,
+            rotated: false,
+            trimmed: false,
+            spriteSourceSize: {
+                x: 0,
+                y: 0
+            },
+            sourceSize: {
+                w: coord.w,
+                h: coord.h
+            }
+        };
+
+        return data;
     }
 
-    protected DrawSpriteSheetAssets = (layer: RenderLayer, assets: ISpriteSheetAsset[]): void => {
+    private GetSpritesheetKey = (patch: string, id: string): string => {
+        return `${patch}/${id}`;
+    }
+
+    private GetSpritesheetFrameKey = (key: string, id: string): string => {
+        return `${key}/${id.startsWith('PassiveSkillScreen') ? id.replace('PassiveSkillScreen', '') : id}`
+
+    }
+    protected DrawSpriteSheetAsset = (layer: RenderLayer, asset: ISpriteSheetAsset): { width: number, height: number } => {
+        return this.DrawSpriteSheetAssets(layer, [asset])[0];
+    }
+
+    protected DrawSpriteSheetAssets = (layer: RenderLayer, assets: ISpriteSheetAsset[]): { width: number, height: number }[] => {
+        const sizes: { width: number, height: number }[] = [];
         const container = this.GetLayer(layer);
 
         for (var asset of assets) {
@@ -366,20 +399,44 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             const sprite = PIXI.Sprite.from(texture);
             sprite.name = `${asset.patch}/${asset.key}/${asset.icon}`;
             sprite.position.set(asset.x, asset.y);
-            sprite.anchor.set(.5);
+            const offset = asset.offsetX === undefined ? .5 : asset.offsetX;
+            sprite.anchor.set(offset, asset.offsetY);
             if (asset.scale !== undefined) sprite.scale.set(asset.scale);
             container.addChild(sprite);
 
-            //FIXME: This should really be anything that doesn't get a frame, but that is only Mastery nodes currently
-            if (asset.node && asset.node.isMastery) {
+            if (asset.half) {
+                sprite.anchor.set(offset, 1);
+                const sprite2 = PIXI.Sprite.from(texture);
+                sprite2.name = sprite.name;
+                sprite2.rotation = Math.PI;
+                sprite2.position.set(asset.x, asset.y);
+                sprite2.anchor.set(offset, 1);
+                sprite2.scale = sprite.scale;
+                container.addChild(sprite2);
+            }
+
+            if (asset.mask == 'circle') {
+                const mask = new PIXI.Graphics();
+                mask.beginFill(0x00FF00);
+                mask.drawCircle(sprite.x, sprite.y, sprite.height / 2);
+                mask.endFill();
+
+                sprite.mask = mask;
+                container.addChild(mask);
+            }
+
+            if (asset.node && (asset.key === "frame" || asset.key === "ascendancy" || asset.node.isMastery)) {
                 this.RebindNodeEvents(asset.node, sprite);
             } else {
                 sprite.interactive = false;
                 sprite.interactiveChildren = false;
             }
+
+            sizes.push({ width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) });
         }
 
         this.SetLayer(layer, container);
+        return sizes;
     }
 
     protected DrawText = (layer: RenderLayer, _text: string, colour: string, x: number, y: number): void => {
@@ -393,15 +450,19 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.SetLayer(layer, container);
     }
 
-    protected DrawBackgroundAsset = (layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void => {
+    protected DrawBackgroundAsset = (layer: RenderLayer, asset: ISpriteSheetAsset): void => {
         const container = this.GetLayer(layer);
 
-        let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(asset);
-        if (asset === "AtlasPassiveBackground") {
+        const texture = this.GetSpritesheetTexture(asset.patch, asset.key, asset.icon);
+        if (texture === null || !texture.valid) {
+            return;
+        }
+
+        let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(texture);
+        if (asset.icon === "AtlasPassiveBackground") {
             backgroundSprite.scale.set(2.8173)
             backgroundSprite.anchor.set(.504, .918);
         } else {
-            const texture = backgroundSprite.texture;
             texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
             backgroundSprite = PIXI.TilingSprite.from(texture.baseTexture, { width: this.skillTreeData.width * (this.skillTreeData.scale * 1.25), height: this.skillTreeData.height * (this.skillTreeData.scale * 1.25) });
             backgroundSprite.anchor.set(.5);
@@ -416,14 +477,17 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
         const connectionContainer = new PIXI.Container();
         for (const connection of connections) {
-            connectionContainer.addChild(this.DrawConnection(connection));
+            const drawn = this.DrawConnection(connection)
+            if (drawn) {
+                connectionContainer.addChild(drawn);
+            }
         }
 
         container.addChild(connectionContainer);
         this.SetLayer(layer, container);
     }
 
-    private DrawConnection = (connection: IConnnection): PIXI.Container => {
+    private DrawConnection = (connection: IConnnection): PIXI.Container | null => {
         switch (connection.style) {
             case ConnectionStyle.Arc:
                 return this.DrawArcConnection(connection);
@@ -432,9 +496,17 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         }
     }
 
-    private DrawArcConnection = (connection: IConnnection): PIXI.Container => {
+    private DrawArcConnection = (connection: IConnnection): PIXI.Container | null => {
+        const texture = this.GetSpritesheetTexture(connection.patch, connection.key, connection.icon);
+        if (texture === null || !texture.valid) {
+            return null;
+        }
+
         const node = connection.node;
         const other = connection.other;
+
+        if (node.nodeGroup === undefined)
+            return null;
 
         let startAngle = node.arc < other.arc ? node.arc : other.arc;
         let endAngle = node.arc < other.arc ? other.arc : node.arc;
@@ -453,31 +525,23 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         const initialRotation = Math.PI / 2 + startAngle;
 
         const arcContainer = new PIXI.Container();
-        const texture = PIXI.Texture.from(connection.asset);
-        for (let i = 0; i < arcsNeeded; ++i) {
-            if (node.nodeGroup === undefined) {
-                continue
-            }
+        const mask = new PIXI.Graphics();
+        mask.lineStyle(50 * node.scale, 0xFFC0CB);
+        mask.arc(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale, node.orbitRadii[node.orbit] * node.scale, startAngle, endAngle, false);
+        arcContainer.addChild(mask);
 
+        for (let i = 0; i < arcsNeeded; ++i) {
             const sprite = PIXI.Sprite.from(texture);
             sprite.rotation = angle + initialRotation;
             sprite.position.set(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale);
             sprite.anchor.set(1);
 
-            if (i == arcsNeeded - 1) {
-                const mask = new PIXI.Graphics();
-                mask.lineStyle(50 * node.scale, 0x00FF00);
-                mask.arc(node.nodeGroup.x * node.scale, node.nodeGroup.y * node.scale, node.orbitRadii[node.orbit] * node.scale, startAngle, endAngle, false);
-
-                sprite.mask = mask;
-                arcContainer.addChild(mask);
-            }
-
-            arcContainer.addChild(sprite);
-
             if (connection.removing) {
                 sprite.tint = 0xFF0000;
             }
+
+            sprite.mask = mask;
+            arcContainer.addChild(sprite);
 
             if (angle < Math.PI / 2) {
                 continue
@@ -488,29 +552,43 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return arcContainer;
     }
 
-    private DrawLineConnection = (connection: IConnnection): PIXI.Sprite => {
+    private DrawLineConnection = (connection: IConnnection): PIXI.Container | null => {
         const node = connection.node;
         const other = connection.other;
 
-        const texture = PIXI.Texture.from(connection.asset);
-        texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-
-        const length = Math.hypot(node.x - other.x, node.y - other.y);
-        let line: PIXI.Sprite;
-        if (length <= texture.baseTexture.width) {
-            const lineTexure = new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(0, 0, length, texture.baseTexture.height));
-            line = PIXI.Sprite.from(lineTexure);
-        } else {
-            line = PIXI.TilingSprite.from(texture.baseTexture, { width: length, height: texture.baseTexture.height });
+        const texture = this.GetSpritesheetTexture(connection.patch, connection.key, connection.icon);
+        if (texture === null || !texture.valid) {
+            return null;
         }
-        line.anchor.set(0, 0.5);
-        line.position.set(node.x, node.y);
-        line.rotation = Math.atan2(other.y - node.y, other.x - node.x);
 
-        if (connection.removing) {
-            line.tint = 0xFF0000;
+        const container = new PIXI.Container();
+        const rotation = Math.atan2(other.y - node.y, other.x - node.x);
+        let length = Math.hypot(node.x - other.x, node.y - other.y);
+        var current = { x: node.x, y: node.y };
+        var linesNeeded = Math.ceil(length / texture.frame.width);
+        for (let i = 0; i < linesNeeded; ++i) {
+            const lineTexure = length >= texture.frame.width
+                ? texture
+                : new PIXI.Texture(texture.baseTexture, new PIXI.Rectangle(texture.frame.x, texture.frame.y, length, texture.frame.height));
+
+            const line = PIXI.Sprite.from(lineTexure);
+            line.anchor.set(0, 0.5);
+            line.position.set(current.x, current.y);
+            line.rotation = rotation;
+
+            if (connection.removing) {
+                line.tint = 0xFF0000;
+            }
+
+            container.addChild(line);
+            current = {
+                x: current.x + (line.width * Math.cos(rotation)),
+                y: current.y + (line.width * Math.sin(rotation))
+            };
+            length -= texture.frame.width;
         }
-        return line;
+
+        return container;
     }
 
     protected DrawHighlights = (layer: RenderLayer, highlights: IHighlight[]): void => {
@@ -539,15 +617,19 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     private GetSpritesheetTexture = (patch: string, spriteSheetKey: string, icon: string): PIXI.Texture | null => {
-        const pixiSpritesheet = this.NodeSpritesheets[`${patch}/${spriteSheetKey}`];
-        if (pixiSpritesheet !== undefined) {
-            const texture = pixiSpritesheet.textures[`${patch}/${spriteSheetKey}/${icon}`];
-            if (texture !== undefined) {
-                return texture
+        const key = this.GetSpritesheetKey(patch, spriteSheetKey);
+        const frame = this.GetSpritesheetFrameKey(key, icon);
+        const pixiSpritesheets = this.NodeSpritesheets[key];
+        if (pixiSpritesheets !== undefined) {
+            for (const pixiSpritesheet of pixiSpritesheets) {
+                const texture = pixiSpritesheet.textures[frame];
+                if (texture !== undefined) {
+                    return texture
+                }
             }
         }
 
-        console.warn(`Texture not found for ${patch}/${spriteSheetKey}/${icon}`);
+        console.warn(`Texture not found for ${frame}`);
         return null;
     }
 
@@ -670,7 +752,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         let tooltip: PIXI.Container | undefined = this.NodeTooltips[`${node.GetId()}_${node.patch}`];
 
         if (tooltip === undefined) {
-            let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name} [${node.id}]`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
+            let title: PIXI.Text | null = node.name.length > 0 ? new PIXI.Text(`${node.name} [${node.skill}]`, { fill: 0xFFFFFF, fontSize: 18 }) : null;
             let stats: PIXI.Text | null = node.stats.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.stats.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xFFFFFF, fontSize: 14 }) : null;
             let flavour: PIXI.Text | null = node.flavourText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.flavourText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0xAF6025, fontSize: 14 }) : null;
             let reminder: PIXI.Text | null = node.reminderText.filter(utils.NotNullOrWhiteSpace).length > 0 ? new PIXI.Text(`\n${node.reminderText.filter(utils.NotNullOrWhiteSpace).join('\n')}`, { fill: 0x808080, fontSize: 14 }) : null;

@@ -1,0 +1,13 @@
+﻿interface IExpansionJewelV7 {
+    /** Index of the jewel socket */
+    index: number;
+
+    /** The parent node id which was proxied from */
+    parent: string | undefined;
+
+    /** The node id to the proxied node */
+    proxy: string;
+
+    /** The size of cluster jewel that the socket can fit (i.e. 2 = Large, 1 = Medium, 0 = Small) */
+    size: number;
+}

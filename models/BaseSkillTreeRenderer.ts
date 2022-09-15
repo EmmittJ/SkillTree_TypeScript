@@ -1,8 +1,6 @@
 ﻿import { utils } from "../app/utils";
 import { ConnectionStyle, DrawType, SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeData } from "./SkillTreeData";
-import { SkillTreeEvents } from "./SkillTreeEvents";
-import { IConnnection } from "./types/IConnection";
 import { ISkillTreeRenderer } from "./types/ISkillTreeRenderer";
 
 export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
@@ -40,11 +38,10 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     abstract Initialize(): Promise<boolean>;
     abstract CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
 
-    protected abstract DrawAsset(layer: RenderLayer, asset: IAsset): { width: number, height: number };
-    protected abstract DrawAssets(layer: RenderLayer, assets: IAsset[]): void;
-    protected abstract DrawSpriteSheetAssets(layer: RenderLayer, assets: ISpriteSheetAsset[]): void;
+    protected abstract DrawSpriteSheetAsset(layer: RenderLayer, asset: ISpriteSheetAsset): { width: number, height: number };
+    protected abstract DrawSpriteSheetAssets(layer: RenderLayer, assets: ISpriteSheetAsset[]): { width: number, height: number }[];
     protected abstract DrawText(layer: RenderLayer, text: string, colour: string, x: number, y: number): void;
-    protected abstract DrawBackgroundAsset(layer: RenderLayer, asset: "AtlasPassiveBackground" | "Background2" | "Background1"): void;
+    protected abstract DrawBackgroundAsset(layer: RenderLayer, asset: ISpriteSheetAsset): void;
 
     public RenderBase = (): void => {
         if (!this.Initialized) {
@@ -74,13 +71,13 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private DrawBackground = (): void => {
-        if (this.skillTreeData.assets["AtlasPassiveBackground"] !== undefined) {
-            this.DrawBackgroundAsset(RenderLayer.Background, "AtlasPassiveBackground");
-        } else if (this.skillTreeData.assets["Background2"] !== undefined) {
-            this.DrawBackgroundAsset(RenderLayer.Background, "Background2");
-        } else {
-            this.DrawBackgroundAsset(RenderLayer.Background, "Background1");
+        var background = this.skillTreeData.hasSprite("background", "Background1") ? "Background1" : "Background2";
+        var asset: ISpriteSheetAsset = {
+            patch: this.skillTreeData.patch,
+            key: this.skillTreeData.tree === "Atlas" ? "atlasBackground" : "background",
+            icon: this.skillTreeData.tree === "Atlas" ? "AtlasPassiveBackground" : background
         }
+        this.DrawBackgroundAsset(RenderLayer.Background, asset);
     }
 
     private GenerateCompare = (): void => {
@@ -127,7 +124,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private DrawGroupBackgrounds = (): void => {
-        const assets: Array<IAsset> = [];
+        const assets: Array<ISpriteSheetAsset> = [];
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
             const nodes = group.nodes || [];
@@ -141,13 +138,15 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             if (max <= 0 || max > 3) continue;
 
             assets.push({
-                name: `PSGroupBackground${max}`,
+                patch: this.skillTreeData.patch,
+                key: "groupBackground",
+                icon: `PSGroupBackground${max}`,
                 x: Math.ceil(group.x * this.skillTreeData.scale),
                 y: Math.ceil(group.y * this.skillTreeData.scale),
                 half: max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage
             });
         }
-        this.DrawAssets(RenderLayer.GroupBackground, assets);
+        this.DrawSpriteSheetAssets(RenderLayer.GroupBackground, assets);
     }
 
     private DrawAscendacyBackgrounds = (): void => {
@@ -159,12 +158,19 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             const group = node.nodeGroup;
 
             const ascendancyName = node.ascendancyName;
-            const asset = {
-                name: `Classes${ascendancyName}`,
+            if (!this.skillTreeData.hasSprite("ascendancyBackground", `Classes${ascendancyName}`)) {
+                continue;
+            }
+
+            const asset: ISpriteSheetAsset = {
+                patch: this.skillTreeData.patch,
+                key: "ascendancyBackground",
+                icon: `Classes${ascendancyName}`,
                 x: Math.ceil(group.x * this.skillTreeData.scale),
-                y: Math.ceil(group.y * this.skillTreeData.scale)
+                y: Math.ceil(group.y * this.skillTreeData.scale),
+                mask: "circle"
             };
-            const sprite = this.DrawAsset(RenderLayer.GroupBackground, asset);
+            const sprite = this.DrawSpriteSheetAsset(RenderLayer.GroupBackground, asset);
 
             if (this.skillTreeData.classes === undefined) {
                 continue;
@@ -178,7 +184,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                         continue;
                     }
 
-                    const rect = typeof ascClass.flavourTextRect === "string" ? ascClass.flavourTextRect.split(",") : [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
+                    const rect = [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
                     const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
                     const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
 
@@ -212,11 +218,11 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private DrawInactiveCharacters = (): void => {
-        if (this.skillTreeData.assets["PSStartNodeBackgroundInactive"] === undefined) {
+        if (!this.skillTreeData.hasSprite("startNode", "PSStartNodeBackgroundInactive")) {
             return;
         }
 
-        const assets: Array<IAsset> = [];
+        const assets: Array<ISpriteSheetAsset> = [];
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
             if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
@@ -224,12 +230,14 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             assets.push({
-                name: "PSStartNodeBackgroundInactive",
+                patch: this.skillTreeData.patch,
+                key: "startNode",
+                icon: "PSStartNodeBackgroundInactive",
                 x: node.nodeGroup.x * this.skillTreeData.scale,
                 y: node.nodeGroup.y * this.skillTreeData.scale
             });
         }
-        this.DrawAssets(RenderLayer.CharacterStarts, assets);
+        this.DrawSpriteSheetAssets(RenderLayer.CharacterStarts, assets);
     }
 
     private DrawInactiveNodes = (): void => {
@@ -324,7 +332,9 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                     : `LineConnector${connectionType}`;
                 const removing = node.is(SkillNodeStates.Active | SkillNodeStates.Pathing) && other.is(SkillNodeStates.Active | SkillNodeStates.Pathing);
                 connections.push({
-                    asset: asset,
+                    patch: node.patch,
+                    key: "line",
+                    icon: asset,
                     style: style,
                     node: node,
                     other: other,
@@ -361,7 +371,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         const effects: Array<ISpriteSheetAsset> = [];
         const icons: Array<ISpriteSheetAsset> = [];
         const atlasMastery: Array<ISpriteSheetAsset> = [];
-        const frames: Array<IAsset> = [];
+        const frames: Array<ISpriteSheetAsset> = [];
         for (const id in nodes) {
             const node = nodes[id];
             if (node.nodeGroup === undefined || (options.filterClassIndex && node.classStartIndex !== undefined)) {
@@ -381,14 +391,24 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             const icon = node.GetIcon();
             if (!node.isAscendancyStart && icon !== "") {
                 if (this.skillTreeData.tree === "Atlas" && node.isMastery && node.is(SkillNodeStates.Hovered)) {
-                    atlasMastery.push({
-                        patch: node.patch,
-                        key: node.GetSpriteSheetKey(),
-                        icon: icon,
-                        x: node.x,
-                        y: node.y,
-                        scale: 2.5
-                    });
+                    if (this.skillTreeData.hasSprite('masteryOverlay', icon)) {
+                        atlasMastery.push({
+                            patch: node.patch,
+                            key: 'masteryOverlay',
+                            icon: icon,
+                            x: node.x,
+                            y: node.y
+                        });
+                    } else {
+                        atlasMastery.push({
+                            patch: node.patch,
+                            key: 'mastery',
+                            icon: icon,
+                            x: node.x,
+                            y: node.y,
+                            scale: 2.5
+                        });
+                    }
                 } else {
                     icons.push({
                         patch: node.patch,
@@ -410,28 +430,30 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                 for (const out of others) {
                     if (out.classStartIndex !== undefined) continue;
                     const ins = out.in.map(x => all[x]);
-                    const drawType = out.GetDrawType(ins);
                     const frame = out.GetFrameAssetKey(ins);
+                    const key = frame?.startsWith('Ascendancy') ? 'ascendancy' : 'frame';
                     if (frame !== null) {
                         frames.push({
-                            name: frame,
+                            patch: node.patch,
+                            key: key,
+                            icon: frame,
                             x: out.x,
-                            y: out.y,
-                            drawType: drawType
+                            y: out.y
                         });
                     }
                 }
             }
 
-            const drawType = node.GetDrawType(others);
             const frame = node.GetFrameAssetKey(others);
+            const key = frame?.startsWith('Ascendancy') ? 'ascendancy' : 'frame';
             if (frame !== null) {
                 frames.push({
-                    name: frame,
+                    patch: node.patch,
+                    key: key,
+                    icon: frame,
                     x: node.x,
                     y: node.y,
-                    node: options.bindEvents ? node : undefined,
-                    drawType: drawType
+                    node: options.bindEvents ? node : undefined
                 });
             }
         }
@@ -439,7 +461,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawSpriteSheetAssets(RenderLayer.SkillIconsActiveEffects, effects);
         this.DrawSpriteSheetAssets(RenderLayer.AtlasMasteryHighlight, atlasMastery);
         this.DrawSpriteSheetAssets(layer, icons);
-        this.DrawAssets(layer, frames);
+        this.DrawSpriteSheetAssets(layer, frames);
     }
 
     public RenderActive = (): void => {
@@ -465,8 +487,8 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.ClearLayer(RenderLayer.BackgroundActive);
         this.ClearLayer(RenderLayer.CharacterStartsActive);
 
-        const backgroundAssets: Array<IAsset> = [];
-        const startAssets: Array<IAsset> = [];
+        const backgroundAssets: Array<ISpriteSheetAsset> = [];
+        const startAssets: Array<ISpriteSheetAsset> = [];
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
             const classId = node.classStartIndex;
@@ -475,19 +497,24 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             const className = utils.getKeyByValue(this.skillTreeData.constants.classes, classId);
-            if (className === undefined && Object.keys(this.skillTreeData.constants.classes).length === 0) {
+            if (this.skillTreeData.hasSprite("startNode", "AtlasPassiveSkillScreenStart")) {
                 startAssets.push({
-                    name: "AtlasStart",
+                    patch: node.patch,
+                    key: "startNode",
+                    icon: "AtlasPassiveSkillScreenStart",
                     x: node.x,
                     y: node.y
                 });
             } else if (className !== undefined) {
                 const commonName = this.skillTreeData.constants.classesToName[className];
-                if (this.skillTreeData.extraImages !== undefined) {
+                var asset = `Background${className.replace("Class", "")}`;
+                if (this.skillTreeData.extraImages !== undefined && this.skillTreeData.hasSprite("startNode", asset)) {
                     const extraImage = this.skillTreeData.extraImages[classId];
                     if (extraImage) {
                         backgroundAssets.push({
-                            name: `Background${className.replace("Class", "")}`,
+                            patch: node.patch,
+                            key: "startNode",
+                            icon: asset,
                             x: extraImage.x * this.skillTreeData.scale,
                             y: extraImage.y * this.skillTreeData.scale,
                             offsetX: 0
@@ -496,15 +523,17 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                 }
 
                 startAssets.push({
-                    name: `center${commonName.toLocaleLowerCase()}`,
+                    patch: node.patch,
+                    key: "startNode",
+                    icon: `center${commonName.toLocaleLowerCase()}`,
                     x: node.x,
                     y: node.y
                 });
 
             }
         }
-        this.DrawAssets(RenderLayer.BackgroundActive, backgroundAssets);
-        this.DrawAssets(RenderLayer.CharacterStartsActive, startAssets);
+        this.DrawSpriteSheetAssets(RenderLayer.BackgroundActive, backgroundAssets);
+        this.DrawSpriteSheetAssets(RenderLayer.CharacterStartsActive, startAssets);
     }
 
     protected abstract DrawHighlights(layer: RenderLayer, highlights: IHighlight[]): void;
@@ -631,26 +660,26 @@ export enum HighlightColor {
     Searched = 0xB452FF
 };
 
-export interface IAsset {
-    name: string;
-    x: number;
-    y: number;
+export interface ISpriteSheetAsset {
+    patch: string;
+    key: SpriteSheetKey;
+    icon: string;
+    x?: number | undefined;
+    y?: number | undefined;
     half?: boolean | undefined;
     offsetX?: number | undefined;
     offsetY?: number | undefined;
-    node?: SkillNode | undefined;
-    drawType?: DrawType | undefined;
-};
-
-export interface ISpriteSheetAsset {
-    patch: string;
-    key: string;
-    icon: string;
-    x: number;
-    y: number;
     scale?: number | undefined;
     node?: SkillNode | undefined;
+    mask?: "circle" | undefined;
 };
+
+export interface IConnnection extends ISpriteSheetAsset {
+    style: ConnectionStyle;
+    node: SkillNode;
+    other: SkillNode;
+    removing: boolean
+}
 
 export interface IHighlight {
     node: SkillNode,

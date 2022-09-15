@@ -2,28 +2,25 @@
 import { Constants } from "./Constants";
 
 export class SkillTreeData implements ISkillTreeData {
-    tree: "Default" | "Royale" | "Atlas" | undefined;
+    tree: "Default" | "Royale" | "Atlas";
     patch: string;
     version: number;
     fullscreen: number;
-    characterData: { [id: string]: ICharacter };
     classes: IAscendancyClasses[];
     groups: { [id: string]: IGroup };
-    root: IRootNode;
+    root: ISkillNodeV9;
     nodes: { [id: string]: SkillNode };
-    extraImages: { [id: string]: IClassImage } | undefined;
     min_x: number;
     min_y: number;
     max_x: number;
     max_y: number;
-    assets: { [id: string]: { [zoomLevel: string]: string } };
-    imageRoot: string;
     imageZoomLevels: Array<number>;
-    skillSprites: { [id: string]: Array<ISpriteSheet> };
+    sprites: { [id: string]: { [zoomLevel: string]: ISpriteSheet } };
     constants: Constants;
-    circles: { [id: string]: ICircleOption[] };
     uiArtOptions: IUIArtOptions;
     points: IPoints;
+    jewelSlots: Array<number>;
+    extraImages: { [id: string]: IClassImage; };
 
     width: number;
     height: number;
@@ -41,220 +38,111 @@ export class SkillTreeData implements ISkillTreeData {
         [SkillNodeStates.Moved]: new Array<string>(),
     }
 
-    constructor(skillTree: ISkillTreeData, patch: string, options: ISkillTreeOptions | undefined) {
-        this.tree = skillTree.tree || "Default"
-        this.patch = patch || (options && options.version) || "test"
+    constructor(skillTree: ISkillTreeData, patch: string) {
+        this.tree = skillTree.tree || "Default";
+        this.patch = patch;
         this.version = 4; skillTree.version = this.version;
         this.fullscreen = skillTree.fullscreen = 0;
-        //this.skillTreeOptions = options;
-        this.characterData = skillTree.characterData;
-        this.groups = skillTree.groups;
-        this.root = skillTree.root || skillTree.nodes["root"];
+        this.jewelSlots = skillTree.jewelSlots;
+        this.extraImages = skillTree.extraImages;
+        this.groups = skillTree.groups as { [id: string]: IGroup };;
+        this.root = skillTree.nodes["root"];
         this.extraImages = skillTree.extraImages;
         this.min_x = skillTree.min_x;
         this.max_x = skillTree.max_x;
         this.min_y = skillTree.min_y;
         this.max_y = skillTree.max_y;
-        this.assets = skillTree.assets;
-        this.imageRoot = skillTree.imageRoot;
         this.imageZoomLevels = skillTree.imageZoomLevels;
         this.constants = new Constants(skillTree.constants);
         this.uiArtOptions = skillTree.uiArtOptions || { largeGroupUsesHalfImage: true };
         this.points = skillTree.points || { totalPoints: 121, ascendancyPoints: 8 };
-        this.circles = (options && options.circles) || { "Small": [{ "level": 0.1246, "width": 199 }, { "level": 0.2109, "width": 337 }, { "level": 0.2972, "width": 476 }, { "level": 0.3835, "width": 614 }], "Medium": [{ "level": 0.1246, "width": 299 }, { "level": 0.2109, "width": 506 }, { "level": 0.2972, "width": 713 }, { "level": 0.3835, "width": 920 }], "Large": [{ "level": 0.1246, "width": 374 }, { "level": 0.2109, "width": 633 }, { "level": 0.2972, "width": 892 }, { "level": 0.3835, "width": 1151 }] };
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);
         this.maxZoomLevel = skillTree.imageZoomLevels.length - 1
         this.scale = skillTree.imageZoomLevels[this.maxZoomLevel];
+        this.sprites = skillTree.sprites;
+        this.classes = skillTree.classes || [];
 
-        // #region Fix for old school style skill sprites 
-        this.skillSprites = {};
-        for (const i in skillTree.skillSprites) {
-            const sprites = skillTree.skillSprites[i];
-            if (i === "active" || i === "inactive") {
-                const key = i.charAt(0).toUpperCase() + i.slice(1);
-                const sheets: { [id: string]: ISpriteSheet[] } = {};
-                sheets[`notable${key}`] = [];
-                sheets[`keystone${key}`] = [];
-                sheets[`normal${key}`] = [];
+        delete skillTree.nodes["root"];
 
-                for (const sheet of sprites) {
-                    const old = sheet as ISpriteSheetOld;
-
-                    const notableCoords = old.notableCoords === undefined ? old.coords : old.notableCoords;
-                    const keystoneCoords = old.notableCoords === undefined ? old.coords : old.notableCoords;
-                    const normalCoords = old.coords;
-
-                    sheets[`notable${key}`].push({ filename: old.filename, coords: notableCoords });
-                    sheets[`keystone${key}`].push({ filename: old.filename, coords: keystoneCoords });
-                    sheets[`normal${key}`].push({ filename: old.filename, coords: normalCoords });
-                }
-
-                for (const j in sheets) {
-                    this.skillSprites[j] = sheets[j];
-                }
-            } else {
-                this.skillSprites[i] = sprites;
-            }
-        }
-        // #endregion
-        // #region Fix for old school style nodes
-        const temp: { [id: string]: ISkillNode } = {};
-        for (const i in skillTree.nodes) {
-            if (i === "root") continue;
-            const node = skillTree.nodes[i];
-            if (node.out === undefined) node.out = [];
-            if (node.in === undefined) node.in = [];
-            if (node.classStartIndex === undefined) node.classStartIndex = (node.spc && node.spc.length > 0) ? node.spc[0] : undefined;
-
-            temp[`${node.id || node.skill}`] = node;
-        }
-        skillTree.nodes = temp;
-        // #endregion
-        // #region Setup in/out properties correctly
-        {
-            this.root.in = this.root.in === undefined ? [] : this.root.in.map(x => +x);
-            this.root.out = this.root.out.map(x => +x);
-
-            for (const id in skillTree.nodes) {
-                skillTree.nodes[id].in = skillTree.nodes[id].in.map(x => +x).filter(x => x !== +id);
-                skillTree.nodes[id].out = skillTree.nodes[id].out.map(x => +x).filter(x => x !== +id);
-            }
-
-            for (const id in skillTree.nodes) {
-                for (const outId of skillTree.nodes[id].out) {
-                    if (skillTree.nodes[id].in.indexOf(outId) < 0) {
-                        skillTree.nodes[id].in.push(outId);
-                    }
-                    if (!skillTree.nodes[outId].isMastery && skillTree.nodes[outId].out.indexOf(+id) < 0) {
-                        skillTree.nodes[outId].out.push(+id);
-                    }
-                }
-
-                for (const inId of skillTree.nodes[id].in) {
-                    if (!skillTree.nodes[id].isMastery && skillTree.nodes[id].out.indexOf(inId) < 0) {
-                        skillTree.nodes[id].out.push(inId);
-                    }
-                    if (skillTree.nodes[inId].in.indexOf(+id) < 0) {
-                        skillTree.nodes[inId].in.push(+id);
-                    }
-                }
-            }
-        }
-        // #endregion
         // #region Fix ascendancy groups
-        if (skillTree.classes !== undefined) {
-            this.classes = skillTree.classes;
-        } else {
-            this.classes = [];
-            if (options && options.ascClasses) {
-                for (const id in options.ascClasses) {
-                    const character = options.ascClasses[id];
-                    character.name = this.constants.classIdToName[+id];
-                    if (character.ascendancies === undefined) character.ascendancies = character.classes;
-                    this.classes[+id] = character;
-                }
-            }
-        }
-
-        const groupsCompleted: { [id: string]: boolean | undefined } = {};
-        for (const id in skillTree.nodes) {
-            const node = skillTree.nodes[id];
-            const nodeGroupId = node.g || node.group || 0;
-            if (node.isAscendancyStart && groupsCompleted[nodeGroupId] === undefined) {
-                let startNode: ISkillNode | undefined = undefined;
-                for (const o of node.out) {
-                    if (skillTree.nodes[o].classStartIndex !== undefined) {
-                        startNode = skillTree.nodes[o];
-                    }
-                }
-
-                for (const o of node.in) {
-                    if (skillTree.nodes[o].classStartIndex !== undefined) {
-                        startNode = skillTree.nodes[o];
-                    }
-                }
-
-                if (startNode === undefined) {
-                    continue;
-                }
-
-                let offset = 0;
-                if (startNode.classStartIndex !== undefined) {
-                    const classes = this.classes[startNode.classStartIndex].ascendancies;
-                    for (const i in classes) {
-                        if (classes[i].name.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
-                            offset = +i - 1;
-                            break;
+        if (this.classes.length > 0) {
+            const groupsCompleted: { [id: string]: boolean | undefined } = {};
+            for (const id in skillTree.nodes) {
+                const node = skillTree.nodes[id];
+                const nodeGroupId = `${node.group || 0}`;
+                if (node.isAscendancyStart && groupsCompleted[nodeGroupId] === undefined) {
+                    let startNode: ISkillNode | undefined = undefined;
+                    for (const o of node.out) {
+                        if (skillTree.nodes[o].classStartIndex !== undefined) {
+                            startNode = skillTree.nodes[o];
                         }
                     }
-                }
 
-                const centerThreshold = 100;
-                const offsetDistance = 1450;
-                let baseX = 0;
-                let baseY = 0;
-                const startGroup = this.groups[startNode.g || startNode.group || 0];
-
-                if ((startGroup.x > -centerThreshold && startGroup.x < centerThreshold) && (startGroup.y > -centerThreshold && startGroup.y < centerThreshold)) {
-                    // Scion
-                    baseX = this.min_x * .65;
-                    baseY = this.max_y * .95;
-                    if (this.patch >= '3.16.0') {
-                        baseX = this.min_x * .85;
-                        baseY = this.max_y * .85;
-                    }
-                } else if (startGroup.x > -centerThreshold && startGroup.x < centerThreshold) {
-                    // Witch, Duelist
-                    baseX = startGroup.x + (Math.sign(startGroup.x) * offset * offsetDistance);
-                    baseY = Math.sign(startGroup.y) > 0 ? this.max_y * 1.05 : this.min_y;
-                } else {
-                    // Templar, Marauder, Ranger, Shadow 
-                    baseX = startGroup.x < 0 ? this.min_x * .80 : this.max_x;
-                    baseY = startGroup.y + (Math.sign(startGroup.y) * (offset + 1) * offsetDistance);
-                    if (this.patch >= '3.16.0') {
-                        baseX = startGroup.x < 0 ? this.min_x * 1.05 : this.max_x;
-                    }
-                }
-
-                groupsCompleted[nodeGroupId] = true;
-                for (const oid in skillTree.nodes) {
-                    const other = skillTree.nodes[oid];
-                    const otherGroupId = other.g || other.group || 0;
-                    if (groupsCompleted[otherGroupId] === undefined && other.ascendancyName === node.ascendancyName) {
-                        const diffX = this.groups[nodeGroupId].x - this.groups[otherGroupId].x;
-                        const diffY = this.groups[nodeGroupId].y - this.groups[otherGroupId].y;
-                        this.groups[otherGroupId].x = baseX - diffX;
-                        this.groups[otherGroupId].y = baseY - diffY;
-                        groupsCompleted[otherGroupId] = true;
-                    }
-                }
-
-                this.groups[nodeGroupId].x = baseX;
-                this.groups[nodeGroupId].y = baseY;
-            }
-        }
-        // #endregion
-        // #region Fix group orbits
-        {
-            for (const id in skillTree.groups) {
-                const group = skillTree.groups[id];
-                group.nodes = group.nodes || group.n;
-                if (group.nodes) {
-                    group.nodes = group.nodes.map(n => +n);
-                }
-
-                group.orbits = group.orbits || [];
-                if (group.oo) {
-                    if (Array.isArray(group.oo)) {
-                        group.oo = { "0": group.oo[0] };
+                    for (const o of node.in) {
+                        if (skillTree.nodes[o].classStartIndex !== undefined) {
+                            startNode = skillTree.nodes[o];
+                        }
                     }
 
-                    for (const id in group.oo) {
-                        group.orbits.push(+id);
+                    if (startNode === undefined) {
+                        continue;
                     }
+
+                    let offset = 0;
+                    if (startNode.classStartIndex !== undefined) {
+                        const classes = this.classes[startNode.classStartIndex].ascendancies;
+                        for (const i in classes) {
+                            if (node.ascendancyName && classes[i].name.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
+                                offset = +i - 1;
+                                break;
+                            }
+                        }
+                    }
+
+                    const centerThreshold = 100;
+                    const offsetDistance = 1450;
+                    let baseX = 0;
+                    let baseY = 0;
+                    const startGroup = this.groups[startNode.group || 0];
+
+                    if ((startGroup.x > -centerThreshold && startGroup.x < centerThreshold) && (startGroup.y > -centerThreshold && startGroup.y < centerThreshold)) {
+                        // Scion
+                        baseX = this.min_x * .65;
+                        baseY = this.max_y * .95;
+                        if (this.patch >= '3.16.0') {
+                            baseX = this.min_x * .85;
+                            baseY = this.max_y * .85;
+                        }
+                    } else if (startGroup.x > -centerThreshold && startGroup.x < centerThreshold) {
+                        // Witch, Duelist
+                        baseX = startGroup.x + (Math.sign(startGroup.x) * offset * offsetDistance);
+                        baseY = Math.sign(startGroup.y) > 0 ? this.max_y * 1.05 : this.min_y;
+                    } else {
+                        // Templar, Marauder, Ranger, Shadow 
+                        baseX = startGroup.x < 0 ? this.min_x * .80 : this.max_x;
+                        baseY = startGroup.y + (Math.sign(startGroup.y) * (offset + 1) * offsetDistance);
+                        if (this.patch >= '3.16.0') {
+                            baseX = startGroup.x < 0 ? this.min_x * 1.05 : this.max_x;
+                        }
+                    }
+
+                    groupsCompleted[nodeGroupId] = true;
+                    for (const oid in skillTree.nodes) {
+                        const other = skillTree.nodes[oid];
+                        const otherGroupId = `${other.group || 0}`;
+                        if (groupsCompleted[otherGroupId] === undefined && other.ascendancyName === node.ascendancyName) {
+                            const diffX = this.groups[nodeGroupId].x - this.groups[otherGroupId].x;
+                            const diffY = this.groups[nodeGroupId].y - this.groups[otherGroupId].y;
+                            this.groups[otherGroupId].x = baseX - diffX;
+                            this.groups[otherGroupId].y = baseY - diffY;
+                            groupsCompleted[otherGroupId] = true;
+                        }
+                    }
+
+                    this.groups[nodeGroupId].x = baseX;
+                    this.groups[nodeGroupId].y = baseY;
                 }
-                this.groups[id] = group;
             }
         }
         // #endregion
@@ -263,10 +151,10 @@ export class SkillTreeData implements ISkillTreeData {
         this.ascedancyNodes = {};
         const orbitAngles = this.getOrbitAngles(skillTree.constants.skillsPerOrbit)
         for (const id in skillTree.nodes) {
-            const groupId = skillTree.nodes[id].g || skillTree.nodes[id].group || 0;
-            const node = new SkillNode(skillTree.nodes[id], skillTree.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale, this.patch);
-            if (this.root.out.indexOf(+id) >= 0 && node.classStartIndex === undefined) {
-                node.classStartIndex = this.root.out.indexOf(+id);
+            const groupId = skillTree.nodes[id].group || 0;
+            const node = new SkillNode(skillTree.nodes[id], this.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale, this.patch);
+            if (this.root.out.indexOf(id) >= 0 && node.classStartIndex === undefined) {
+                node.classStartIndex = this.root.out.indexOf(id);
             }
 
             this.nodes[id] = node;
@@ -458,5 +346,11 @@ export class SkillTreeData implements ISkillTreeData {
         }
 
         this.nodesInState[state] = new Array<string>();
+    }
+
+    public hasSprite = (sheet: SpriteSheetKey, icon: string): boolean => {
+        return this.sprites[sheet] &&
+            ((this.sprites[sheet][this.scale.toString()] && this.sprites[sheet][this.scale.toString()].coords[icon] !== undefined)
+            || (this.sprites[sheet]["1"] && this.sprites[sheet]["1"].coords[icon] !== undefined))
     }
 }
