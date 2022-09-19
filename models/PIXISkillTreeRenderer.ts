@@ -1,19 +1,18 @@
 ﻿import { SkillTreeData } from './SkillTreeData';
-import Viewport = require("pixi-viewport");
-import PIXI = require("pixi.js");
+import { Viewport } from 'pixi-viewport';
+import * as PIXI from 'pixi.js';
 import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
 import { SpatialHash } from 'pixi-cull';
 import { BaseSkillTreeRenderer, RenderLayer, IHighlight, ISpriteSheetAsset, IConnnection } from "./BaseSkillTreeRenderer";
-import { ISpritesheetData } from 'pixi.js';
 
 export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     private NodeTooltips: { [id: string]: PIXI.Container | undefined };
     private NodeSpritesheets: { [id: string]: PIXI.Spritesheet[] | undefined };
     private _dirty = true;
     private pixi: PIXI.Application;
-    private viewport: Viewport.Viewport;
+    private viewport: Viewport;
     private cull: SpatialHash;
     private DO_NOT_CULL = [RenderLayer.Tooltip, RenderLayer.TooltipCompare];
     LayerContainers: { [layer in RenderLayer]: PIXI.Container } = {
@@ -57,7 +56,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         PIXI.Loader.shared.reset();
 
         const zoomPercent = this.skillTreeData.imageZoomLevels.length > 2 ? this.skillTreeData.imageZoomLevels[1] - this.skillTreeData.imageZoomLevels[0] : .1;
-        this.viewport = new Viewport.Viewport({
+        this.viewport = new Viewport({
             screenWidth: this.pixi.screen.width,
             screenHeight: this.pixi.screen.height,
             worldWidth: this.skillTreeData.width * (this.skillTreeData.scale * 1.25),
@@ -248,6 +247,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                 const text = new PIXI.Text(progressText, { fontSize: 250, fill: 0xFFFFFF });
                 text.position.set(0, -50);
                 this.viewport.addChild(text);
+                this.Tick();
             }
         });
         // #endregion
@@ -312,7 +312,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     private GetSpritesheetData = (spriteSheet: ISpriteSheet, key: string): PIXI.ISpritesheetData => {
-        let data: ISpritesheetData = {
+        let data: PIXI.ISpritesheetData = {
             frames: {},
             animations: undefined,
             meta: {
@@ -342,7 +342,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     private GetCoordSpritesheetData = (spriteSheet: ISpriteSheet, key: string, id: string, texture: PIXI.Texture): PIXI.ISpritesheetData => {
-        let data: ISpritesheetData = {
+        let data: PIXI.ISpritesheetData = {
             frames: {},
             animations: undefined,
             meta: {
