@@ -65,6 +65,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             noTicker: true,
             stopPropagation: true
         });
+        this.viewport.name = 'viewport';
         this.viewport.drag().wheel({ percent: zoomPercent }).pinch({ percent: zoomPercent * 10 });
         this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         this.viewport.fitWorld(true);
@@ -407,7 +408,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             if (asset.half) {
                 sprite.anchor.set(offset, 1);
                 const sprite2 = PIXI.Sprite.from(texture);
-                sprite2.name = sprite.name;
+                sprite2.name = `${sprite.name}-half`;
                 sprite2.rotation = Math.PI;
                 sprite2.position.set(asset.x, asset.y);
                 sprite2.anchor.set(offset, 1);
@@ -443,6 +444,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         const container = this.GetLayer(layer);
 
         const text = new PIXI.Text(_text, { fill: colour, fontSize: 48, fontFamily: "serif", fontStyle: "italic", stroke: 0x000000, strokeThickness: 4 });
+        text.name = _text;
         text.position.set(x, y);
         text.scale.set(this.skillTreeData.scale);
         container.addChild(text);
@@ -459,6 +461,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         }
 
         let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(texture);
+        backgroundSprite.name = asset.icon;
         if (asset.icon === "AtlasPassiveBackground") {
             backgroundSprite.scale.set(2.8173)
             backgroundSprite.anchor.set(.504, .918);
@@ -467,7 +470,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             backgroundSprite = PIXI.TilingSprite.from(texture.baseTexture, { width: this.skillTreeData.width * (this.skillTreeData.scale * 1.25), height: this.skillTreeData.height * (this.skillTreeData.scale * 1.25) });
             backgroundSprite.anchor.set(.5);
         }
-
+        
         container.addChild(backgroundSprite);
         this.SetLayer(layer, container);
     }
@@ -601,6 +604,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             }
 
             const graphic = new PIXI.Graphics();
+            graphic.name = `highlight-${highlight.node.id}`
             graphic.beginFill(0x000000, 0);
             graphic.lineStyle(5, highlight.color);
             graphic.drawCircle(0, 0, Math.max(size.width, size.height) * .85);
