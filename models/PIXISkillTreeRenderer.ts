@@ -1,6 +1,7 @@
 ﻿import { SkillTreeData } from './SkillTreeData';
 import { Viewport } from 'pixi-viewport';
 import * as PIXI from 'pixi.js';
+import { Assets } from '@pixi/assets';
 import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
@@ -53,7 +54,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         PIXI.settings.ROUND_PIXELS = false;
         PIXI.settings.RESOLUTION = devicePixelRatio;
         PIXI.utils.destroyTextureCache();
-        PIXI.Loader.shared.reset();
+        Assets.reset();
 
         const zoomPercent = this.skillTreeData.imageZoomLevels.length > 2 ? this.skillTreeData.imageZoomLevels[1] - this.skillTreeData.imageZoomLevels[0] : .1;
         this.viewport = new Viewport({
@@ -194,8 +195,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             throw new Error("SkillTreeData has not been defined. Could not load assets.");
         }
 
-        const promise = new Promise<boolean>(resolve => PIXI.Loader.shared.onComplete.add(() => resolve(true)));
-
         // #region Load Assets
         const addedAssets = new Array<string>();
         for (const i of filteredData) {
@@ -210,28 +209,24 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                     for (const coord in sheet.coords) {
                         if (addedAssets.indexOf(coord) < 0) {
                             addedAssets.push(coord);
-                            PIXI.Loader.shared.add(coord, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${coord}.png`);
+                            Assets.add(coord, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${coord}.png`);
                         }
                     }
                 } else {
                     if (addedAssets.indexOf(filename) < 0) {
                         addedAssets.push(filename);
-                        PIXI.Loader.shared.add(filename, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
+                        Assets.add(filename, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
                     }
                 }
             }
         }
         // #endregion
-
-        // #region Display Loading Bar
         const skillTreeData = filteredData[0];
-        PIXI.Loader.shared.load();
-        let loadedAssets = 0;
         const loadbarWidth = skillTreeData.width / 2;
         let progressText = "";
-        PIXI.Loader.shared.onProgress.add(() => {
-            loadedAssets++;
-            const newText = `${Math.ceil(loadedAssets / addedAssets.length * 1000) / 10}%`;
+
+        return Assets.load(addedAssets, (progress: number) => {
+            const newText = `${progress * 100}%`;
             if (newText !== progressText) {
                 this.viewport.removeChildren();
                 progressText = newText;
@@ -240,7 +235,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                 loadbar.moveTo(0, 0);
                 loadbar.beginFill(0xFFFFFF, .75);
                 loadbar.lineStyle(2, 0xCBB59C)
-                loadbar.drawRect(0, 0, (loadedAssets / addedAssets.length) * loadbarWidth, 50);
+                loadbar.drawRect(0, 0, progress * loadbarWidth, 50);
                 loadbar.endFill();
                 //loadbar.position.set(screen.width - (loadbarWidth / 2), screen.height / 2);
                 this.viewport.addChild(loadbar);
@@ -250,10 +245,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                 this.viewport.addChild(text);
                 this.Tick();
             }
-        });
-        // #endregion
-
-        return promise;
+        }).then(_ => true);
     }
 
     async InitializeSpriteSheets(): Promise<boolean> {
@@ -303,7 +295,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             const sheets = this.NodeSpritesheets[key];
             if (sheets !== undefined) {
                 for (const i in sheets) {
-                    const promise = new Promise<boolean>(resolve => this.NodeSpritesheets[key]![i].parse(() => resolve(true)));
+                    const promise = new Promise<boolean>(resolve => this.NodeSpritesheets[key]![i].parse().then(_ => resolve(true)));
                     promises.push(promise);
                 }
 
@@ -470,7 +462,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             backgroundSprite = PIXI.TilingSprite.from(texture.baseTexture, { width: this.skillTreeData.width * (this.skillTreeData.scale * 1.25), height: this.skillTreeData.height * (this.skillTreeData.scale * 1.25) });
             backgroundSprite.anchor.set(.5);
         }
-        
+
         container.addChild(backgroundSprite);
         this.SetLayer(layer, container);
     }

@@ -19,11 +19,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@pixi/constants": "6.3.2",
-    "@pixi/core": "6.3.2",
-    "@pixi/display": "6.3.2",
-    "@pixi/interaction": "6.3.2",
-    "@pixi/utils": "6.3.2",
     "@types/css-font-loading-module": "^0.0.7",
     "@types/downloadjs": "^1.4.3",
     "@types/semver": "^7.3.12",
@@ -38,10 +33,11 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@pixi/assets": "^6.5.4",
     "downloadjs": "^1.4.7",
     "pixi-cull": "^2.2.0",
-    "pixi-viewport": "4.34.4",
-    "pixi.js": "6.3.2",
+    "pixi-viewport": "^4.35.0",
+    "pixi.js": "^6.5.4",
     "requirejs": "^2.3.6",
     "semver": "^7.3.7"
   },
