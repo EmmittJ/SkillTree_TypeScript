@@ -7,11 +7,12 @@
       "dom",
       "es6"
     ],
-    "module": "commonjs",
+    "module": "ES6",
     "target": "es6",
     "moduleResolution": "node",
     // Required for importing 3rd-party dependencies like EventEmitter3
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     // Loaders needs this to use the more strict mini-signal types
     "paths": {
       "mini-signals": [

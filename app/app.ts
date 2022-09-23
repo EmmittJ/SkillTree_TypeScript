@@ -4,7 +4,7 @@ import { SkillTreeData } from "../models/SkillTreeData";
 import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
-import download = require("downloadjs");
+import download from 'downloadjs';
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
 import { SkillNodeStates } from '../models/SkillNode';
 import { utils } from './utils';
