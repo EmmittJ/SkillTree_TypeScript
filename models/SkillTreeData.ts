@@ -17,7 +17,6 @@ export class SkillTreeData implements ISkillTreeData {
     imageZoomLevels: Array<number>;
     sprites: { [id: string]: { [zoomLevel: string]: ISpriteSheet } };
     constants: Constants;
-    uiArtOptions: IUIArtOptions;
     points: IPoints;
     jewelSlots: Array<number>;
     extraImages: { [id: string]: IClassImage; };
@@ -54,7 +53,6 @@ export class SkillTreeData implements ISkillTreeData {
         this.max_y = skillTree.max_y;
         this.imageZoomLevels = skillTree.imageZoomLevels;
         this.constants = new Constants(skillTree.constants);
-        this.uiArtOptions = skillTree.uiArtOptions || { largeGroupUsesHalfImage: true };
         this.points = skillTree.points || { totalPoints: 121, ascendancyPoints: 8 };
         this.width = Math.abs(this.min_x) + Math.abs(this.max_x);
         this.height = Math.abs(this.min_y) + Math.abs(this.max_y);

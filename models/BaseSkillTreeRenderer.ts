@@ -127,23 +127,18 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         const assets: Array<ISpriteSheetAsset> = [];
         for (const id in this.skillTreeData.groups) {
             const group = this.skillTreeData.groups[id];
-            const nodes = group.nodes || [];
-            if (nodes.length === 0 || nodes.find(id => this.skillTreeData.nodes[id].ascendancyName !== "") !== undefined) {
+            const background = group.background;
+            if (background === undefined) {
                 continue;
             }
-
-            let orbits = group.orbits || [];
-            orbits = orbits.filter(x => x <= 3);
-            const max = group.backgroundOverride !== undefined && group.backgroundOverride !== 0 ? group.backgroundOverride : Math.max(...orbits);
-            if (max <= 0 || max > 3) continue;
 
             assets.push({
                 patch: this.skillTreeData.patch,
                 key: "groupBackground",
-                icon: `PSGroupBackground${max}`,
-                x: Math.ceil(group.x * this.skillTreeData.scale),
-                y: Math.ceil(group.y * this.skillTreeData.scale),
-                half: max === 3 && this.skillTreeData.uiArtOptions.largeGroupUsesHalfImage
+                icon: background.image,
+                x: Math.ceil(group.x * this.skillTreeData.scale) + (background.offsetX ? background.offsetX * this.skillTreeData.scale : 0),
+                y: Math.ceil(group.y * this.skillTreeData.scale) + (background.offsetY ? background.offsetY * this.skillTreeData.scale : 0),
+                half: background.isHalfImage
             });
         }
         this.DrawSpriteSheetAssets(RenderLayer.GroupBackground, assets);

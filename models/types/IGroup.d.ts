@@ -1,2 +1,2 @@
-﻿interface IGroup extends IGroupV10 {
+﻿interface IGroup extends IGroupV12 {
 }
