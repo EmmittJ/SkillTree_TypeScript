@@ -2,6 +2,7 @@
 import { SkillTreeOptionsPreprocessor } from "./preprocessors/SkillTreeOptionsPreprocessor";
 import { SkillTreePreprocessor } from "./preprocessors/SkillTreePreprocessor";
 import { SkillTreeV10Preprocessor } from "./preprocessors/SkillTreeV10Preprocessor";
+import { SkillTreeV11Preprocessor } from "./preprocessors/SkillTreeV11Preprocessor";
 import { SkillTreeV1Preprocessor } from "./preprocessors/SkillTreeV1Preprocessor";
 import { SkillTreeV2Preprocessor } from "./preprocessors/SkillTreeV2Preprocessor";
 import { SkillTreeV3Preprocessor } from "./preprocessors/SkillTreeV3Preprocessor";
@@ -24,6 +25,7 @@ export class SkillTreePreprocessors {
         new SkillTreeV8Preprocessor(),
         new SkillTreeV9Preprocessor(),
         new SkillTreeV10Preprocessor(),
+        new SkillTreeV11Preprocessor(),
         new SkillTreeOptionsPreprocessor(),
         new SkillTreePreprocessor()
     ];

@@ -1,4 +1,4 @@
-﻿/** 3.19.0 to current */
+﻿/** 3.19.0 */
 export class SkillTreeV10Preprocessor implements ISkillTreePreprocessor {
     CanProcess(data: ISkillTreeV10): boolean {
         return data.assets !== undefined;
@@ -6,8 +6,6 @@ export class SkillTreeV10Preprocessor implements ISkillTreePreprocessor {
 
     Process(data: ISkillTreeV10): ISkillTreeV11 {
         const v11 = JSON.parse(JSON.stringify(data)) as ISkillTreeV11;
-        //delete (v11 as any).assets;
-        delete (v11 as any).skillSprites;
 
         const sprites: { [id: string]: { [zoomLevel: string]: ISpriteSheetV11 } } = {};
         const upgradedSpriteSheets = this.UpgradeSpriteSheets(data);
@@ -28,6 +26,9 @@ export class SkillTreeV10Preprocessor implements ISkillTreePreprocessor {
             }
         }
         v11.sprites = sprites;
+
+        delete (v11 as any).assets;
+        delete (v11 as any).skillSprites;
 
         return v11;
     }

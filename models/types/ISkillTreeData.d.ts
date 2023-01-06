@@ -1,4 +1,4 @@
-﻿interface ISkillTreeData extends ISkillTreeV11 {
+﻿interface ISkillTreeData extends ISkillTreeV12 {
     patch: string;
     version: number;
     fullscreen: number;

@@ -60,6 +60,7 @@
     <TypeScriptCompile Include="models\skill-tree\options-preprocessors\SkillTreeOptionsV1Preprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeOptionsPreprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreePreprocessor.ts" />
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV11Preprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV10Preprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV9Preprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV8Preprocessor.ts" />
@@ -78,6 +79,9 @@
     <TypeScriptCompile Include="models\types\skill-tree-json\v07\ISkillTreeRectV7.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-json\v10\IGroupV10.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-json\v10\IUIArtOptionsV10.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v12\IGroupBackgroundV12.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v12\IGroupV12.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v12\ISkillTreeV12.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-options-json\ISkillTreeOptionsBase.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-options-json\ISkillTreeOptionsPreprocessor.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-json\ISkillTreePreprocessor.d.ts" />
@@ -125,7 +129,6 @@
     <TypeScriptCompile Include="models\types\ISkillTreeRenderer.d.ts" />
     <TypeScriptCompile Include="models\types\ISpriteSheet.d.ts" />
     <TypeScriptCompile Include="models\types\ISkillTreeCodec.d.ts" />
-    <TypeScriptCompile Include="models\types\IUIArtOptions.d.ts" />
     <TypeScriptCompile Include="models\types\IVersions.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-json\ISkillTreeBase.d.ts" />
     <TypeScriptCompile Include="models\types\skill-tree-json\v01\IRootNodeV1.d.ts" />
