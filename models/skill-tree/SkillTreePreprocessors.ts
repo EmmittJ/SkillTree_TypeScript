@@ -1,4 +1,5 @@
-﻿import { SkillTreeOptionsV1Preprocessor } from "./options-preprocessors/SkillTreeOptionsV1Preprocessor";
+﻿import { ISkillTreeData } from "../types/ISkillTreeData";
+import { SkillTreeOptionsV1Preprocessor } from "./options-preprocessors/SkillTreeOptionsV1Preprocessor";
 import { SkillTreeOptionsPreprocessor } from "./preprocessors/SkillTreeOptionsPreprocessor";
 import { SkillTreePreprocessor } from "./preprocessors/SkillTreePreprocessor";
 import { SkillTreeV10Preprocessor } from "./preprocessors/SkillTreeV10Preprocessor";

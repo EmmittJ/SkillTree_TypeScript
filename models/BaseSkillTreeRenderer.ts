@@ -1,4 +1,5 @@
-﻿import { utils } from "../app/utils";
+﻿import { SemVer } from "semver";
+import { utils } from "../app/utils";
 import { ConnectionStyle, DrawType, SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeData } from "./SkillTreeData";
 import { ISkillTreeRenderer } from "./types/ISkillTreeRenderer";
@@ -656,7 +657,7 @@ export enum HighlightColor {
 };
 
 export interface ISpriteSheetAsset {
-    patch: string;
+    patch: SemVer;
     key: SpriteSheetKey;
     icon: string;
     x?: number | undefined;

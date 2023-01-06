@@ -7,6 +7,8 @@ import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
 import { SpatialHash } from 'pixi-cull';
 import { BaseSkillTreeRenderer, RenderLayer, IHighlight, ISpriteSheetAsset, IConnnection } from "./BaseSkillTreeRenderer";
+import { SemVer } from 'semver';
+import { versions } from './versions/verions';
 
 export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     private NodeTooltips: { [id: string]: PIXI.Container | undefined };
@@ -44,7 +46,12 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.NodeTooltips = {};
         this.NodeSpritesheets = {};
 
-        this.pixi = new PIXI.Application({ resizeTo: window, resolution: devicePixelRatio, sharedTicker: true });
+        this.pixi = new PIXI.Application({
+            resizeTo: window,
+            resolution: devicePixelRatio,
+            sharedTicker: true,
+            backgroundColor: skillTreeData.patch.compare(versions.v3_16_0) >= 0 ? 0x070b10 : 0x1a1411
+        });
         PIXI.Ticker.shared.stop();
         PIXI.Ticker.system.stop();
         container.appendChild(this.pixi.view);
@@ -367,8 +374,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return data;
     }
 
-    private GetSpritesheetKey = (patch: string, id: string): string => {
-        return `${patch}/${id}`;
+    private GetSpritesheetKey = (patch: SemVer, id: string): string => {
+        return `${patch.version}/${id}`;
     }
 
     private GetSpritesheetFrameKey = (key: string, id: string): string => {
@@ -612,7 +619,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         return this.pixi.renderer.plugins.extract.base64(this.viewport, mimeType, 1);
     }
 
-    private GetSpritesheetTexture = (patch: string, spriteSheetKey: string, icon: string): PIXI.Texture | null => {
+    private GetSpritesheetTexture = (patch: SemVer, spriteSheetKey: string, icon: string): PIXI.Texture | null => {
         const key = this.GetSpritesheetKey(patch, spriteSheetKey);
         const frame = this.GetSpritesheetFrameKey(key, icon);
         const pixiSpritesheets = this.NodeSpritesheets[key];

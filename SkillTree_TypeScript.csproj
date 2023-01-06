@@ -57,6 +57,7 @@
     <TypeScriptSourceRoot />
   </PropertyGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="models\versions\verions.ts" />
     <TypeScriptCompile Include="models\skill-tree\options-preprocessors\SkillTreeOptionsV1Preprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeOptionsPreprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreePreprocessor.ts" />

@@ -1,4 +1,7 @@
-﻿export class SkillTreeCodec implements ISkillTreeCodec {
+﻿import { ISkillTreeCodec, SkillTreeDefinition } from "./types/ISkillTreeCodec";
+import { ISkillTreeData } from "./types/ISkillTreeData";
+
+export class SkillTreeCodec implements ISkillTreeCodec {
     encodeURL(skillTreeData: ISkillTreeData): string {
         const classid = skillTreeData.getStartClass();
         const ascid = skillTreeData.getAscendancyClass();

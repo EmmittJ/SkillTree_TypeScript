@@ -10,14 +10,13 @@ import { SkillNodeStates } from '../models/SkillNode';
 import { utils } from './utils';
 import { SkillTreePreprocessors } from '../models/skill-tree/SkillTreePreprocessors';
 import { SemVer } from 'semver';
+import { versions } from '../models/versions/verions';
 
 export class App {
     private skillTreeData!: SkillTreeData;
     private skillTreeDataCompare: SkillTreeData | undefined;
     private skillTreeUtilities!: SkillTreeUtilities;
     private renderer!: ISkillTreeRenderer;
-    private _220 = new SemVer('2.2.0'); 
-    private _390 = new SemVer('3.9.0');
 
     public launch = async (version: string, versionCompare: string, versionJson: IVersions) => {
         for (const i of [version, versionCompare]) {
@@ -27,11 +26,11 @@ export class App {
 
             let options: ISkillTreeOptions | undefined = undefined;
             const semver = new SemVer(i);
-            if (semver.compare(this._220) >= 0 && semver.compare(this._390) <= 0) {
+            if (semver.compare(versions.v2_2_0) >= 0 && semver.compare(versions.v3_9_0) <= 0) {
                 options = await fetch(`${utils.SKILL_TREES_URI}/${i}/Opts.json`).then(response => response.status === 200 ? response.json() : undefined);
             }
             var json = await fetch(`${utils.SKILL_TREES_URI}/${i}/SkillTree.json`).then(response => response.json()) as ISkillTreeBase;
-            const data = new SkillTreeData(SkillTreePreprocessors.Decode(json, options), i);
+            const data = new SkillTreeData(SkillTreePreprocessors.Decode(json, options), semver);
 
             if (i === version) {
                 this.skillTreeData = data;

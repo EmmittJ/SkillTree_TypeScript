@@ -163,6 +163,10 @@ export class SkillTreeV10Preprocessor implements ISkillTreePreprocessor {
             return null;
         }
 
+        if (asset.endsWith('Oil')) {
+            return null;
+        }
+
         throw new Error(`Unhandled Asset: ${asset}`);
     }
 

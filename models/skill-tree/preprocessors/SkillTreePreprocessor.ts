@@ -1,4 +1,6 @@
-﻿/** Clean up after all versions are done */
+﻿import { ISkillTreeData } from "../../types/ISkillTreeData";
+
+/** Clean up after all versions are done */
 export class SkillTreePreprocessor implements ISkillTreePreprocessor {
     CanProcess(_: ISkillTreeData): boolean {
         return true;

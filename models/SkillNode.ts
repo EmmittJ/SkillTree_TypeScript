@@ -1,4 +1,5 @@
-﻿import { utils } from "../app/utils";
+﻿import { SemVer } from "semver";
+import { utils } from "../app/utils";
 
 export declare type DrawType = "Allocated" | "Active" | "CanAllocate" | "Unallocated" | "Normal";
 
@@ -64,9 +65,9 @@ export class SkillNode implements ISkillNode {
     isRegular2: boolean;
     isRegular1: boolean;
     hoverText: string | null = null;
-    patch: string;
+    patch: SemVer;
 
-    constructor(id: string, node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number, patch: string) {
+    constructor(id: string, node: ISkillNode, group: IGroup | undefined, orbitRadii: Array<number>, orbitAngles: { [orbit: number]: Array<number> }, scale: number, patch: SemVer) {
         this.id = id;
         this.activeEffectImage = node.activeEffectImage || "";
         this.activeIcon = node.activeIcon || "";

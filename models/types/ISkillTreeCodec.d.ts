@@ -1,4 +1,6 @@
-﻿interface ISkillTreeCodec {
+﻿import { ISkillTreeData } from "./ISkillTreeData";
+
+interface ISkillTreeCodec {
     encodeURL(skillTreeData: ISkillTreeData): string;
     decodeURL(encoding: string, skillTreeData: ISkillTreeData): SkillTreeDefinition;
 }

@@ -1,5 +1,7 @@
-﻿interface ISkillTreeData extends ISkillTreeV12 {
-    patch: string;
+﻿import { SemVer } from "semver";
+
+interface ISkillTreeData extends ISkillTreeV12 {
+    patch: SemVer;
     version: number;
     fullscreen: number;
 
