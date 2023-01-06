@@ -448,12 +448,18 @@ export class App {
 window.onload = async () => {
     const query = App.decodeURLParams(window.location.search);
 
-    const versionsJson: IVersions | undefined = await fetch(`${utils.DATA_URI}/versions.json?t=${(new Date()).getTime()}`).then(response => response.status === 200 ? response.json() : undefined);
-    if (versionsJson === undefined || versionsJson.versions.length === 0) {
-        console.error("Could not load skill tree versions!");
-        return;
+    const versionsJson: IVersions = {
+        versions: []
     }
-
+    const semversions = Object.fromEntries(Object.entries(versions))
+    for (const key in semversions) {
+        const value = semversions[key];
+        if (!(value instanceof SemVer)) {
+            continue
+        }
+        versionsJson.versions.push(value.version)
+    }
+    
     if (versionsJson.versions.indexOf(query['v']) === -1) {
         query['v'] = versionsJson.versions[versionsJson.versions.length - 1];
     }
