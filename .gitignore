@@ -264,6 +264,6 @@ __pycache__/
 *.map
 !/scripts/*.map
 *.d.ts
-!/models/types/*.d.ts
+!/models/types/**/*.d.ts
 /index.html
 /dist/

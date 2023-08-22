@@ -1,7 +1,7 @@
 ﻿import { SemVer } from "semver";
 import { utils } from "../app/utils";
 
-export declare type DrawType = "Allocated" | "Active" | "CanAllocate" | "Unallocated" | "Normal";
+export declare type DrawType = "Allocated" | "Active" | "CanAllocate" | "Unallocated" | "Normal" | "Highlight";
 
 export enum SkillNodeStates {
     None = 0,
@@ -151,6 +151,8 @@ export class SkillNode implements ISkillNode {
             if (this.inactiveIcon) {
                 return this.inactiveIcon;
             }
+        } else if (this.isWormhole) {
+            return "Wormhole";
         }
 
         return this.icon;
@@ -161,13 +163,16 @@ export class SkillNode implements ISkillNode {
             if (this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
                 return "Active";
             }
+            if (this.isWormhole && this.is(SkillNodeStates.Hovered)) {
+                return "Highlight"
+            }
             return "Allocated";
         } else if (others.filter(x => x && x.is(SkillNodeStates.Active)).length > 0) {
             return "CanAllocate";
         } else if (this.ascendancyName !== "" || this.expansionJewel !== undefined || this.isProxy || this.nodeGroup?.isProxy) {
             return "Normal";
         }
-
+        
         return "Unallocated";
     }
 
@@ -194,6 +199,8 @@ export class SkillNode implements ISkillNode {
             return null;
         } else if (this.ascendancyName !== "") {
             return `AscendancyFrameSmall${drawType}`;
+        } else if (this.isWormhole) {
+            return `WormholeFrame${drawType}`
         }
 
         switch (drawType) {
@@ -205,6 +212,8 @@ export class SkillNode implements ISkillNode {
             case "Active":
             case "Allocated":
                 return "PSSkillFrameActive";
+            default:
+                return null;
         }
     }
 
@@ -228,6 +237,8 @@ export class SkillNode implements ISkillNode {
             } else {
                 return "mastery";
             }
+        } else if (this.isWormhole) {
+            return `wormhole${drawType}`
         }
 
         return `normal${drawType}`;

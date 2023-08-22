@@ -66,6 +66,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawConnectionsForNodes(RenderLayer.Connections, this.skillTreeData.nodes);
 
         this.ClearLayer(RenderLayer.SkillIcons);
+        this.ClearLayer(RenderLayer.SkillIconsFrames);
         this.ClearLayer(RenderLayer.SkillIconsCompare);
         this.DrawInactiveNodes();
         this.DrawCompareHighlights();
@@ -278,7 +279,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                 highlights.push({ node: node, color: HighlightColor.Changed });
             }
         }
-        this.DrawHighlights(RenderLayer.SkillIcons, highlights);
+        this.DrawHighlights(RenderLayer.SkillIconsFrames, highlights);
 
         const compareHighlights: Array<IHighlight> = [];
         for (const id in this.skillTreeDataCompare.nodes) {
@@ -353,6 +354,10 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         }
 
         if (node.isMastery || other.isMastery) {
+            return false;
+        }
+
+        if (node.isWormhole && other.isWormhole) {
             return false;
         }
 
@@ -457,7 +462,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawSpriteSheetAssets(RenderLayer.SkillIconsActiveEffects, effects);
         this.DrawSpriteSheetAssets(RenderLayer.AtlasMasteryHighlight, atlasMastery);
         this.DrawSpriteSheetAssets(layer, icons);
-        this.DrawSpriteSheetAssets(layer, frames);
+        this.DrawSpriteSheetAssets(layer + 3, frames);
     }
 
     public RenderActive = (): void => {
@@ -470,7 +475,9 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawConnectionsForNodes(RenderLayer.ConnectionsActive, this.skillTreeData.getNodes(SkillNodeStates.Active));
 
         this.ClearLayer(RenderLayer.SkillIconsPathing);
+        this.ClearLayer(RenderLayer.SkillIconsPathingFrames);
         this.ClearLayer(RenderLayer.SkillIconsActive);
+        this.ClearLayer(RenderLayer.SkillIconsActiveFrames);
         this.ClearLayer(RenderLayer.SkillIconsActiveEffects);
         this.DrawNodes(RenderLayer.SkillIconsActive, this.skillTreeData.getNodes(SkillNodeStates.Active), this.skillTreeData.nodes, { outFrames: true });
     }
@@ -573,6 +580,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
         this.ClearLayer(RenderLayer.ConnectionsPathing);
         this.ClearLayer(RenderLayer.SkillIconsPathing);
+        this.ClearLayer(RenderLayer.SkillIconsPathingFrames);
         this.ClearLayer(RenderLayer.AtlasMasteryHighlight);
         this.ClearLayer(RenderLayer.NodeMoveCompare);
         this.ClearLayer(RenderLayer.Tooltip);
@@ -634,18 +642,21 @@ export enum RenderLayer {
     ConnectionsActive = 5,
     ConnectionsPathing = 6,
     SkillIcons = 7,
-    SkillIconsPathing = 8,
-    SkillIconsActive = 9,
-    CharacterStarts = 10,
-    CharacterStartsActive = 11,
-    JewelSocketActive = 12,
-    JewelSocketHighlights = 13,
-    SkillIconsCompare = 14,
-    Highlights = 15,
-    NodeMoveCompare = 16,
-    AtlasMasteryHighlight = 17,
-    Tooltip = 18,
-    TooltipCompare = 19
+    SkillIconsActive = 8,
+    SkillIconsPathing = 9,
+    SkillIconsFrames = 10,
+    SkillIconsActiveFrames = 11,
+    SkillIconsPathingFrames = 12,
+    CharacterStarts = 13,
+    CharacterStartsActive = 14,
+    JewelSocketActive = 15,
+    JewelSocketHighlights = 16,
+    SkillIconsCompare = 17,
+    Highlights = 18,
+    NodeMoveCompare = 19,
+    AtlasMasteryHighlight = 20,
+    Tooltip = 21,
+    TooltipCompare = 22
 };
 
 export enum HighlightColor {

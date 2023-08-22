@@ -1,4 +1,4 @@
-﻿type SpriteSheetKey = SpriteSheetKeyV11;
+﻿type SpriteSheetKey = SpriteSheetKeyV13;
 
 interface ISpriteSheet extends ISpriteSheetV11 {
 }
