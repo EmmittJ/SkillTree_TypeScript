@@ -1,3 +1,3 @@
-﻿interface ISkillNode extends ISkillNodeV9 {
+﻿interface ISkillNode extends ISkillNodeV13 {
     id?: string | undefined;
 }

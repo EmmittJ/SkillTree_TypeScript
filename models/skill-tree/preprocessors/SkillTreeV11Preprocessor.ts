@@ -1,4 +1,4 @@
-﻿/** 3.20.0 to current */
+﻿/** 3.20.0 */
 export class SkillTreeV11Preprocessor implements ISkillTreePreprocessor {
     CanProcess(data: ISkillTreeV11): boolean {
         for (const id in data.groups) {

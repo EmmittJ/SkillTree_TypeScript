@@ -43,6 +43,7 @@ export class SkillNode implements ISkillNode {
     isMultipleChoiceOption: boolean;
     isNotable: boolean;
     isProxy: boolean;
+    isWormhole: boolean;
     masteryEffects: IMasteryEffect[];
     name: string;
     orbit: number;
@@ -92,6 +93,7 @@ export class SkillNode implements ISkillNode {
         this.isMultipleChoiceOption = node.isMultipleChoiceOption || false;
         this.isNotable = node.isNotable || false;
         this.isProxy = node.isProxy || false;
+        this.isWormhole = node.isWormhole || false;
         this.masteryEffects = node.masteryEffects || [];
         this.name = node.name;
         this.orbit = node.orbit;

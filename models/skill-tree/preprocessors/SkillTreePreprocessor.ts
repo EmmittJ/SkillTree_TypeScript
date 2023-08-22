@@ -10,7 +10,7 @@ export class SkillTreePreprocessor implements ISkillTreePreprocessor {
         data.nodes["root"].in = data.nodes["root"].in || [];
         data.nodes["root"].out = data.nodes["root"].out || [];
 
-        const nodes: { [id: string]: ISkillNodeV9 } = {};
+        const nodes: { [id: string]: ISkillNodeV13 } = {};
         for (const id in data.nodes) {
             nodes[id.toString()] = this.FixNode(id, data.nodes[id]);
         }
@@ -58,7 +58,7 @@ export class SkillTreePreprocessor implements ISkillTreePreprocessor {
         return data;
     }
 
-    private FixNode(id: string, node: ISkillNodeV9): ISkillNodeV9 {
+    private FixNode(id: string, node: ISkillNodeV13): ISkillNodeV13 {
         node.in = (node.in || []).map(x => x.toString()) || [];
         node.out = (node.out || []).map(x => x.toString()) || [];
         node.in = node.in.filter(x => x !== id);

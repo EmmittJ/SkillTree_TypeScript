@@ -57,6 +57,9 @@
     <TypeScriptSourceRoot />
   </PropertyGroup>
   <ItemGroup>
+    <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeV12Preprocessor.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v13\ISkillNodeV13.d.ts" />
+    <TypeScriptCompile Include="models\types\skill-tree-json\v13\ISkillTreeV13.d.ts" />
     <TypeScriptCompile Include="models\versions\verions.ts" />
     <TypeScriptCompile Include="models\skill-tree\options-preprocessors\SkillTreeOptionsV1Preprocessor.ts" />
     <TypeScriptCompile Include="models\skill-tree\preprocessors\SkillTreeOptionsPreprocessor.ts" />

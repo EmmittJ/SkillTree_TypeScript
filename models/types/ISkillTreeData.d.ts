@@ -1,6 +1,6 @@
 ﻿import { SemVer } from "semver";
 
-interface ISkillTreeData extends ISkillTreeV12 {
+interface ISkillTreeData extends ISkillTreeV13 {
     patch: SemVer;
     version: number;
     fullscreen: number;
