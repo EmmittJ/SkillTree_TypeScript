@@ -266,4 +266,5 @@ __pycache__/
 *.d.ts
 !/models/types/**/*.d.ts
 /index.html
-/dist/
+dist/*
+!dist/data
