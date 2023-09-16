@@ -1,0 +1,13 @@
+name: build
+runs:
+  using: 'composite'
+  steps:
+  - uses: oven-sh/setup-bun@v1
+    with:
+      bun-version: 1.0.1
+
+  - name: Build
+    shell: bash
+    run: |
+      bun install
+      bun run build
