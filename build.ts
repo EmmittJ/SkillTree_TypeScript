@@ -14,6 +14,7 @@ klaw(output, { depthLimit: 0 })
 
 const results = await Bun.build({
     entrypoints: ['./app/index.ts'],
+    naming: "[dir]/[name]-[hash].[ext]",
     outdir: output,
     minify: true,
     splitting: true,
