@@ -225,7 +225,7 @@ export class SkillTreeUtilities {
         this.encodeURL();
     }
 
-    private touchTimeout: NodeJS.Timeout | null = null;
+    private touchTimeout: Timer | null = null;
     private touchstart = (node: SkillNode) => {
         this.touchTimeout = setTimeout(() => this.dragEnd.x = this.dragStart.x + this.DRAG_THRESHOLD_SQUARED * this.DRAG_THRESHOLD_SQUARED, this.LONG_PRESS_THRESHOLD);
         this.mouseover(node);

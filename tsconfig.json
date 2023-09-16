@@ -1,31 +1,32 @@
 {
-  "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": ".",
-    "lib": [
-      "dom",
-      "es6"
+    // add Bun type definitions
+    "types": [
+      "bun-types"
     ],
-    "module": "ES6",
-    "target": "es6",
-    "moduleResolution": "node",
-    // Required for importing 3rd-party dependencies like EventEmitter3
+    // enable latest features
+    "lib": [
+      "esnext"
+    ],
+    "module": "esnext",
+    "target": "esnext",
+    // typescript
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+    "allowJs": false,
     "esModuleInterop": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    // Loaders needs this to use the more strict mini-signal types
-    "paths": {
-      "mini-signals": [
-        "node_modules/resource-loader/typings/mini-signals.d.ts"
-      ]
-    },
     "baseUrl": "./"
   },
   "include": [
     "node_modules/@types/**.*.d.ts",
     "models/**/*.ts",
     "models/**/*.d.ts",
-    "app/**/*.ts",
-    "templates/index.html"
+    "app/**/*.ts"
   ]
 }
