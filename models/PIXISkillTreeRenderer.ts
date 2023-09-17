@@ -14,7 +14,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     private NodeTooltips: { [id: string]: PIXI.Container | undefined };
     private NodeSpritesheets: { [id: string]: PIXI.Spritesheet[] | undefined };
     private _dirty = true;
-    private pixi: PIXI.Application;
+    private pixi: PIXI.Application<HTMLCanvasElement>;
     private viewport: Viewport;
     private cull: SpatialHash;
     private DO_NOT_CULL = [RenderLayer.Tooltip, RenderLayer.TooltipCompare];
@@ -59,8 +59,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         PIXI.Ticker.system.stop();
         container.appendChild(this.pixi.view);
 
-        PIXI.settings.SORTABLE_CHILDREN = false;
-        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+        PIXI.Container.defaultSortableChildren = false;
+        PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
         PIXI.settings.ROUND_PIXELS = false;
         PIXI.settings.RESOLUTION = devicePixelRatio;
         PIXI.utils.destroyTextureCache();
@@ -72,7 +72,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             screenHeight: this.pixi.screen.height,
             worldWidth: this.skillTreeData.width * (this.skillTreeData.scale * 1.25),
             worldHeight: this.skillTreeData.height * (this.skillTreeData.scale * 1.25),
-            interaction: this.pixi.renderer.plugins.interaction,
+            events: this.pixi.renderer.events,
             noTicker: true,
             stopPropagation: true
         });
@@ -104,20 +104,20 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         super.Tick();
     }
 
-    private HandleZoomClick = (click: PIXI.InteractionEvent, zoom: number) => {
-        if (!click.data.originalEvent.ctrlKey) {
+    private HandleZoomClick = (click: PIXI.FederatedPointerEvent, zoom: number) => {
+        if (!click.ctrlKey) {
             return;
         }
 
         this.viewport.zoomPercent(zoom, false);
     }
 
-    private HandleShiftClick = (click: PIXI.InteractionEvent) => {
-        if (!click.data.originalEvent.shiftKey) {
+    private HandleShiftClick = (click: PIXI.FederatedPointerEvent) => {
+        if (!click.shiftKey) {
             return;
         }
-
-        const interactiveObject = this.pixi.renderer.plugins.interaction.hitTest(click.data.global, this.viewport.getChildAt(RenderLayer.SkillIcons));
+        const boundary = new PIXI.EventBoundary(this.viewport.getChildAt(RenderLayer.SkillIcons))
+        const interactiveObject = boundary.hitTest(click.global.x, click.global.y);
         if (interactiveObject === null || interactiveObject.name === undefined || interactiveObject.name === null || interactiveObject.name === "") {
             return;
         }
@@ -431,8 +431,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             if (asset.node && (asset.key === "frame" || asset.key === "ascendancy" || asset.node.isMastery)) {
                 this.RebindNodeEvents(asset.node, sprite);
             } else {
-                sprite.interactive = false;
-                sprite.interactiveChildren = false;
+                sprite.eventMode = 'none';
             }
 
             sizes.push({ width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) });
@@ -644,12 +643,13 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         sprite.hitArea = new PIXI.Circle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) / 2);
         sprite.name = `${sprite.name}-${node.GetId()}`;
 
-        if (SkillTreeEvents.events["node"] !== undefined) {
-            sprite.interactive = true;
+        const events = SkillTreeEvents.getEvents("node");
+        if (events !== undefined) {
+            sprite.eventMode = 'static';
 
-            for (const event in SkillTreeEvents.events["node"]) {
-                sprite.on(event, (interaction: PIXI.InteractionEvent) => {
-                    if ((event === "click" || event === "tap") && (interaction.data.originalEvent.shiftKey || interaction.data.originalEvent.ctrlKey || interaction.data.originalEvent.altKey)) {
+            for (const event of events) {
+                sprite.addEventListener(event, (interaction) => {
+                    if ((event === "click" || event === "tap") && (interaction.shiftKey || interaction.ctrlKey || interaction.altKey)) {
                         return;
                     }
 
@@ -790,8 +790,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                 height += reminder.height;
             }
 
-            tooltip.interactive = false;
-            tooltip.interactiveChildren = false;
+            tooltip.eventMode = 'none';
             tooltip.containerUpdateTransform = () => { };
             this.NodeTooltips[`${node.GetId()}_${node.patch}`] = tooltip;
         }

@@ -155,11 +155,13 @@ export class App {
         const defaultGroup = this.skillTreeData.tree === "Atlas" ? "Maps" : "Default";
 
         const masteries: string[] = ["The Maven"];
+        const masteryTest: { [name: string]: string } = {}
         for (const id in this.skillTreeData.nodes) {
             const node = this.skillTreeData.nodes[id];
             const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
             if (mastery !== null && mastery.name !== defaultGroup) {
                 masteries.push(mastery.name);
+                masteryTest[mastery.name] = mastery.name.replace("The", "").replace("Mastery", "")
             }
         }
 
@@ -175,7 +177,7 @@ export class App {
                 if (mastery === null) {
                     let found = false;
                     for (const name of masteries) {
-                        if (stat.indexOf(name.replace("The", "").replace("Mastery", "")) >= 0) {
+                        if (stat.indexOf(masteryTest[name]) >= 0) {
                             found = true
                             break;
                         }
@@ -235,7 +237,7 @@ export class App {
                 } else {
                     let group = defaultGroup;
                     for (const name of masteries) {
-                        if (stat.indexOf(name.replace("The", "").replace("Mastery", "")) >= 0) {
+                        if (stat.indexOf(masteryTest[name]) >= 0) {
                             group = name;
                             break;
                         }
