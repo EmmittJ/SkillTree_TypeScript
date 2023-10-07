@@ -3,7 +3,7 @@
 interface ISkillTreeData extends ISkillTreeV13 {
     patch: SemVer;
     version: number;
-    fullscreen: number;
+    masteryEffects: { [id: number]: number }
 
     getStartClass(): number;
     getAscendancyClass(): number;

@@ -2,7 +2,7 @@
 import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import * as PIXI from "pixi.js";
-import { SkillTreeCodec } from "./SkillTreeCodec";
+import { SkillTreeCodec } from "./url-processing/SkillTreeCodec";
 
 export class SkillTreeUtilities {
     private dragStart: PIXI.Point;
@@ -57,11 +57,19 @@ export class SkillTreeUtilities {
 
             const def = this.skillTreeCodec.decodeURL(data, this.skillTreeData);
             this.skillTreeData.version = def.Version;
-            this.skillTreeData.fullscreen = def.Fullscreen;
             this.changeStartClass(def.Class, false);
             this.changeAscendancyClass(def.Ascendancy, false);
             for (const node of def.Nodes) {
                 this.skillTreeData.addStateById(`${node.skill}`, SkillNodeStates.Active)
+            }
+
+            for (const node of def.ExtendedNodes) {
+                this.skillTreeData.addStateById(`${node.skill}`, SkillNodeStates.Active)
+            }
+
+            for (const [node, effect] of def.MasteryEffects) {
+                this.skillTreeData.addStateById(`${node.skill}`, SkillNodeStates.Active)
+                this.skillTreeData.masteryEffects[node.skill] = effect;
             }
 
             for (const id in this.skillTreeData.classStartNodes) {

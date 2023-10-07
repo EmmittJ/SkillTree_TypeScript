@@ -8,7 +8,7 @@ export class SkillTreeData implements ISkillTreeData {
     tree: "Default" | "Royale" | "Atlas";
     patch: SemVer;
     version: number;
-    fullscreen: number;
+    masteryEffects: { [id: number]: number }
     classes: IAscendancyClasses[];
     groups: { [id: string]: IGroup };
     root: ISkillNode;
@@ -44,7 +44,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.tree = skillTree.tree || "Default";
         this.patch = patch;
         this.version = 4; skillTree.version = this.version;
-        this.fullscreen = skillTree.fullscreen = 0;
+        this.masteryEffects = [];
         this.jewelSlots = skillTree.jewelSlots;
         this.extraImages = skillTree.extraImages;
         this.groups = skillTree.groups as { [id: string]: IGroup };;
@@ -353,6 +353,6 @@ export class SkillTreeData implements ISkillTreeData {
     public hasSprite = (sheet: SpriteSheetKey, icon: string): boolean => {
         return this.sprites[sheet] &&
             ((this.sprites[sheet][this.scale.toString()] && this.sprites[sheet][this.scale.toString()].coords[icon] !== undefined)
-            || (this.sprites[sheet]["1"] && this.sprites[sheet]["1"].coords[icon] !== undefined))
+                || (this.sprites[sheet]["1"] && this.sprites[sheet]["1"].coords[icon] !== undefined))
     }
 }

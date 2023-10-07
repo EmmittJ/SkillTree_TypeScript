@@ -7,8 +7,9 @@ interface ISkillTreeCodec {
 
 type SkillTreeDefinition = {
     Version: number;
-    Fullscreen: number;
     Class: number;
     Ascendancy: number;
     Nodes: Array<ISkillNode>;
+    ExtendedNodes: Array<ISkillNode>;
+    MasteryEffects: Array<[node: ISkillNode, effect: number]>;
 }
