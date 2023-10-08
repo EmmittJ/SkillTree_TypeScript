@@ -219,13 +219,13 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
                     for (const coord in sheet.coords) {
                         if (addedAssets.indexOf(coord) < 0) {
                             addedAssets.push(coord);
-                            Assets.add(coord, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${coord}.png`);
+                            Assets.add({ alias: coord, src: `${utils.SKILL_TREES_URI}/${i.patch}/assets/${coord}.png` })
                         }
                     }
                 } else {
                     if (addedAssets.indexOf(filename) < 0) {
                         addedAssets.push(filename);
-                        Assets.add(filename, `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}`);
+                        Assets.add({ alias: filename, src: `${utils.SKILL_TREES_URI}/${i.patch}/assets/${filename}` });
                     }
                 }
             }
