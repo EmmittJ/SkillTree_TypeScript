@@ -151,45 +151,58 @@ export class App {
         }
     }
 
-    private updateStats = () => {
-        const defaultGroup = this.skillTreeData.tree === "Atlas" ? "Maps" : "Default";
-
-        const masteries: string[] = ["The Maven"];
-        const masteryTest: { [name: string]: string } = {}
-        for (const id in this.skillTreeData.nodes) {
-            const node = this.skillTreeData.nodes[id];
-            const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
-            if (mastery !== null && mastery.name !== defaultGroup) {
-                masteries.push(mastery.name);
-                masteryTest[mastery.name] = mastery.name.replace("The", "").replace("Mastery", "")
+    private masteries: string[] | undefined = undefined;
+    private masteryTest: { [name: string]: string } | undefined = undefined;
+    private defaultStats: { [stat: string]: boolean } | undefined = undefined;
+    private buildStatLookups = (defaultGroup: string): [masteries: string[], masteryTest: { [name: string]: string }, defaultStats: { [stat: string]: boolean }] => {
+        if (this.masteries === undefined || this.masteryTest === undefined) {
+            const masteries: string[] = ["The Maven"];
+            const masteryTest: { [name: string]: string } = {}
+            for (const id in this.skillTreeData.nodes) {
+                const node = this.skillTreeData.nodes[id];
+                const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
+                if (mastery !== null && mastery.name !== defaultGroup) {
+                    masteries.push(mastery.name);
+                    masteryTest[mastery.name] = mastery.name.replace("The", "").replace("Mastery", "")
+                }
             }
+            this.masteries = masteries;
+            this.masteryTest = masteryTest;
         }
 
-        const defaultStats: { [stat: string]: boolean } = {};
-        for (const id in this.skillTreeData.nodes) {
-            const node = this.skillTreeData.nodes[id];
-            for (const stat of node.stats) {
-                if (defaultStats[stat] !== undefined) {
-                    continue
-                }
+        if (this.defaultStats === undefined) {
+            const defaultStats: { [stat: string]: boolean } = {};
+            for (const id in this.skillTreeData.nodes) {
+                const node = this.skillTreeData.nodes[id];
+                for (const stat of node.stats) {
+                    if (defaultStats[stat] !== undefined) {
+                        continue
+                    }
 
-                const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
-                if (mastery === null) {
-                    let found = false;
-                    for (const name of masteries) {
-                        if (stat.indexOf(masteryTest[name]) >= 0) {
-                            found = true
-                            break;
+                    const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
+                    if (mastery === null) {
+                        let found = false;
+                        for (const name of this.masteries) {
+                            if (stat.indexOf(this.masteryTest[name]) >= 0) {
+                                found = true
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+                            defaultStats[stat] = true;
                         }
                     }
-
-                    if (!found) {
-                        defaultStats[stat] = true;
-                    }
                 }
             }
+            this.defaultStats = defaultStats;
         }
+        return [this.masteries, this.masteryTest, this.defaultStats];
+    }
 
+    private updateStats = () => {
+        const defaultGroup = this.skillTreeData.tree === "Atlas" ? "Maps" : "Default";
+        const [masteries, masteryTest, defaultStats] = this.buildStatLookups(defaultGroup);
 
         const groups: { [group: string]: string[] } = {};
         const statGroup: { [stat: string]: string } = {};
@@ -278,7 +291,7 @@ export class App {
         title.className = "title";
         title.innerText = name;
         title.addEventListener("click", () => {
-            const elements = document.querySelectorAll(`[data-group-name*="${name}"]`);
+            const elements = document.querySelectorAll(`[data-group-name="${name}"]`);
             elements.forEach((element) => {
                 element.toggleAttribute("hidden");
             })
