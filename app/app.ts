@@ -337,7 +337,6 @@ export class App {
         }
 
         const ascControl = document.getElementById("skillTreeControl_Ascendancy") as HTMLSelectElement;
-        SkillTreeEvents.fire("controls", "class-change", +classControl.value);
         classControl.onchange = () => {
             const val = classControl.value;
             SkillTreeEvents.fire("controls", "class-change", +val);
