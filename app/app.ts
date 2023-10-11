@@ -123,6 +123,9 @@ export class App {
     private SetupEventsAndControls = () => {
         SkillTreeEvents.on("skilltree", "highlighted-nodes-update", this.renderer.RenderHighlight);
         SkillTreeEvents.on("skilltree", "class-change", this.renderer.RenderCharacterStartsActive);
+        SkillTreeEvents.on("skilltree", "class-change", this.updateClassControl);
+        SkillTreeEvents.on("skilltree", "ascendancy-class-change", this.updateAscClassControl);
+
 
         SkillTreeEvents.on("skilltree", "hovered-nodes-start", this.renderer.StartRenderHover);
         SkillTreeEvents.on("skilltree", "hovered-nodes-end", this.renderer.StopRenderHover);
@@ -347,6 +350,49 @@ export class App {
 
         if (ascControl !== null) {
             this.populateAscendancyClasses(ascControl);
+        }
+    }
+
+    private updateClassControl = () => {
+        const start = this.skillTreeData.getStartClass();
+        (document.getElementById("skillTreeControl_Class") as HTMLSelectElement).value = String(start);
+    }
+
+    private updateAscClassControl = () => {
+        if (this.skillTreeData.classes.length === 0) {
+            return;
+        }
+        
+        const start = this.skillTreeData.getAscendancyClass();
+
+        const ascClasses = this.skillTreeData.classes[this.skillTreeData.getStartClass()].ascendancies;
+
+        if (ascClasses === undefined) {
+            return;
+        }
+        const ascControl = (document.getElementById("skillTreeControl_Ascendancy") as HTMLSelectElement);
+
+        while (ascControl.firstChild) {
+            ascControl.removeChild(ascControl.firstChild);
+        }
+        const none = document.createElement("option");
+        none.text = "None";
+        none.value = "0";
+        ascControl.append(none);
+
+        if (this.skillTreeData.classes.length > 0) {
+            for (const ascid in ascClasses) {
+                const asc = ascClasses[ascid];
+
+                const e = document.createElement("option");
+                e.text = asc.name;
+                e.value = ascid;
+
+                if (+ascid === start) {
+                    e.setAttribute("selected", "selected");
+                }
+                ascControl.append(e);
+            }
         }
     }
 

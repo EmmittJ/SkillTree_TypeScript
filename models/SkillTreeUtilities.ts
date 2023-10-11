@@ -1,4 +1,4 @@
-﻿import { SkillTreeData } from "./SkillTreeData";
+import { SkillTreeData } from "./SkillTreeData";
 import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import * as PIXI from "pixi.js";
@@ -142,7 +142,6 @@ export class SkillTreeUtilities {
                 this.skillTreeData.removeState(i, SkillNodeStates.Active);
             }
         }
-        (document.getElementById("skillTreeControl_Class") as HTMLSelectElement).value = String(start);
         this.changeAscendancyClass(0, false);
 
         if (encode) {
@@ -151,6 +150,7 @@ export class SkillTreeUtilities {
     }
 
     public changeAscendancyClass = (start: number, encode = true) => {
+        SkillTreeEvents.fire("skilltree", "ascendancy-class-change");
         if (this.skillTreeData.classes.length === 0) {
             return;
         }
@@ -163,31 +163,6 @@ export class SkillTreeUtilities {
         const ascClass = ascClasses[start];
         const name = ascClass !== undefined ? ascClass.name : undefined;
 
-        const ascControl = (document.getElementById("skillTreeControl_Ascendancy") as HTMLSelectElement);
-
-        while (ascControl.firstChild) {
-            ascControl.removeChild(ascControl.firstChild);
-        }
-        const none = document.createElement("option");
-        none.text = "None";
-        none.value = "0";
-        ascControl.append(none);
-
-        if (this.skillTreeData.classes.length > 0) {
-            for (const ascid in ascClasses) {
-                const asc = ascClasses[ascid];
-
-                const e = document.createElement("option");
-                e.text = asc.name;
-                e.value = ascid;
-
-                if (+ascid === start) {
-                    e.setAttribute("selected", "selected");
-                }
-                ascControl.append(e);
-            }
-        }
-
         for (const id in this.skillTreeData.ascedancyNodes) {
             const node = this.skillTreeData.nodes[id];
             if (node.ascendancyName !== name) {
@@ -196,7 +171,6 @@ export class SkillTreeUtilities {
             }
             if (node.isAscendancyStart) {
                 this.skillTreeData.addState(node, SkillNodeStates.Active);
-                SkillTreeEvents.fire("skilltree", "ascendancy-class-change", node);
             }
         }
 
