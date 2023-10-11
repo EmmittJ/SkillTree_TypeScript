@@ -142,15 +142,15 @@ export class SkillTreeUtilities {
                 this.skillTreeData.removeState(i, SkillNodeStates.Active);
             }
         }
-        this.changeAscendancyClass(0, false);
+        this.changeAscendancyClass(0, false, true);
 
         if (encode) {
             this.encodeURL();
         }
     }
 
-    public changeAscendancyClass = (start: number, encode = true) => {
-        SkillTreeEvents.fire("skilltree", "ascendancy-class-change");
+    public changeAscendancyClass = (start: number, encode = true, newStart = false) => {
+        if(newStart) SkillTreeEvents.fire("skilltree", "ascendancy-class-change");
         if (this.skillTreeData.classes.length === 0) {
             return;
         }
