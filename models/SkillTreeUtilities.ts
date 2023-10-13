@@ -1,14 +1,9 @@
 import { SkillTreeData } from "./SkillTreeData";
 import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
-import * as PIXI from "pixi.js";
 import { SkillTreeCodec } from "./url-processing/SkillTreeCodec";
 
 export class SkillTreeUtilities {
-    private dragStart: PIXI.Point;
-    private dragEnd: PIXI.Point;
-    private DRAG_THRESHOLD_SQUARED = 5 * 5;
-    private LONG_PRESS_THRESHOLD = 100;
     skillTreeData: SkillTreeData;
     skillTreeDataCompare: SkillTreeData | undefined;
     skillTreeCodec: SkillTreeCodec;
@@ -18,32 +13,20 @@ export class SkillTreeUtilities {
         this.skillTreeDataCompare = contextComapre;
         this.skillTreeCodec = new SkillTreeCodec();
 
-        SkillTreeEvents.on("node", "click", this.click);
-        SkillTreeEvents.on("node", "tap", this.click);
-        SkillTreeEvents.on("node", "mouseover", this.mouseover);
-        SkillTreeEvents.on("node", "mouseout", this.mouseout);
-        SkillTreeEvents.on("node", "touchstart", this.touchstart);
-        SkillTreeEvents.on("node", "touchend", this.touchend);
-        SkillTreeEvents.on("node", "touchcancel", this.touchend);
+        SkillTreeEvents.node.on("click", this.click);
+        SkillTreeEvents.node.on("in", this.mouseover);
+        SkillTreeEvents.node.on("out", this.mouseout);
 
-        this.dragStart = new PIXI.Point(0, 0);
-        this.dragEnd = new PIXI.Point(0, 0);
-        SkillTreeEvents.on("viewport", "drag-start", (point: PIXI.IPoint) => this.dragStart = JSON.parse(JSON.stringify(point)));
-        SkillTreeEvents.on("viewport", "drag-end", (point: PIXI.IPoint) => this.dragEnd = JSON.parse(JSON.stringify(point)));
-        SkillTreeEvents.on("viewport", "mouseup", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250));
-        SkillTreeEvents.on("viewport", "touchend", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250));
-        SkillTreeEvents.on("viewport", "touchcancel", () => setTimeout(() => this.dragStart = JSON.parse(JSON.stringify(this.dragEnd)), 250));
+        SkillTreeEvents.controls.on("class-change", this.changeStartClass);
+        SkillTreeEvents.controls.on("ascendancy-class-change", this.changeAscendancyClass);
+        SkillTreeEvents.controls.on("search-change", this.searchChange);
 
-        SkillTreeEvents.on("controls", "class-change", this.changeStartClass);
-        SkillTreeEvents.on("controls", "ascendancy-class-change", this.changeAscendancyClass);
-        SkillTreeEvents.on("controls", "search-change", this.searchChange);
-
-        SkillTreeEvents.on("skilltree", "encode-url", this.encodeURL);
+        SkillTreeEvents.skill_tree.on("encode-url", this.encodeURL);
     }
 
     private lastHash = "";
     public decodeURL = () => {
-        if(window.location.hash === ""){
+        if (window.location.hash === "") {
             this.changeStartClass(3, false);
         }
         if (this.lastHash === window.location.hash) {
@@ -93,7 +76,7 @@ export class SkillTreeUtilities {
     }
 
     private encodeURL = () => {
-        SkillTreeEvents.fire("skilltree", "active-nodes-update");
+        SkillTreeEvents.skill_tree.fire("active-nodes-update");
         this.broadcastSkillCounts();
         window.location.hash = `#${this.skillTreeCodec.encodeURL(this.skillTreeData)}`;
     }
@@ -118,10 +101,10 @@ export class SkillTreeUtilities {
             }
         }
 
-        SkillTreeEvents.fire("skilltree", "normal-node-count", normalNodes);
-        SkillTreeEvents.fire("skilltree", "normal-node-count-maximum", maximumNormalPoints);
-        SkillTreeEvents.fire("skilltree", "ascendancy-node-count", ascNodes);
-        SkillTreeEvents.fire("skilltree", "ascendancy-node-count-maximum", maximumAscendancyPoints);
+        SkillTreeEvents.skill_tree.fire("normal-node-count", normalNodes);
+        SkillTreeEvents.skill_tree.fire("normal-node-count-maximum", maximumNormalPoints);
+        SkillTreeEvents.skill_tree.fire("ascendancy-node-count", ascNodes);
+        SkillTreeEvents.skill_tree.fire("ascendancy-node-count-maximum", maximumAscendancyPoints);
     }
 
     public changeStartClass = (start: number, encode = true) => {
@@ -137,7 +120,7 @@ export class SkillTreeUtilities {
             }
 
             this.skillTreeData.addState(node, SkillNodeStates.Active);
-            SkillTreeEvents.fire("skilltree", "class-change", node);
+            SkillTreeEvents.skill_tree.fire("class-change", node);
             for (const i of this.getRefundNodes(node)) {
                 this.skillTreeData.removeState(i, SkillNodeStates.Active);
             }
@@ -150,7 +133,7 @@ export class SkillTreeUtilities {
     }
 
     public changeAscendancyClass = (start: number, encode = true, newStart = false) => {
-        if(newStart) SkillTreeEvents.fire("skilltree", "ascendancy-class-change");
+        if (newStart) SkillTreeEvents.skill_tree.fire("ascendancy-class-change");
         if (this.skillTreeData.classes.length === 0) {
             return;
         }
@@ -195,7 +178,7 @@ export class SkillTreeUtilities {
             }
         }
 
-        SkillTreeEvents.fire("skilltree", "highlighted-nodes-update");
+        SkillTreeEvents.skill_tree.fire("highlighted-nodes-update");
     }
 
     private click = (node: SkillNode) => {
@@ -203,10 +186,6 @@ export class SkillTreeUtilities {
             return;
         }
 
-        if ((this.dragStart.x - this.dragEnd.x) * (this.dragStart.x - this.dragEnd.x) > this.DRAG_THRESHOLD_SQUARED
-            || (this.dragStart.y - this.dragEnd.y) * (this.dragStart.y - this.dragEnd.y) > this.DRAG_THRESHOLD_SQUARED) {
-            return;
-        }
         if (node.classStartIndex !== undefined || node.isAscendancyStart) {
             return;
         }
@@ -233,19 +212,6 @@ export class SkillTreeUtilities {
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
         this.skillTreeDataCompare?.clearState(SkillNodeStates.Hovered);
         this.encodeURL();
-    }
-
-    private touchTimeout: Timer | null = null;
-    private touchstart = (node: SkillNode) => {
-        this.touchTimeout = setTimeout(() => this.dragEnd.x = this.dragStart.x + this.DRAG_THRESHOLD_SQUARED * this.DRAG_THRESHOLD_SQUARED, this.LONG_PRESS_THRESHOLD);
-        this.mouseover(node);
-    }
-
-    private touchend = (node: SkillNode) => {
-        if (this.touchTimeout !== null) {
-            clearTimeout(this.touchTimeout);
-        }
-        this.mouseout(node);
     }
 
     private mouseover = (node: SkillNode) => {
@@ -293,14 +259,14 @@ export class SkillTreeUtilities {
             }
         }
 
-        SkillTreeEvents.fire("skilltree", "hovered-nodes-start", node);
+        SkillTreeEvents.skill_tree.fire("hovered-nodes-start", node);
     }
 
     private mouseout = (node: SkillNode) => {
         this.skillTreeData.clearState(SkillNodeStates.Hovered);
         this.skillTreeData.clearState(SkillNodeStates.Pathing);
         this.skillTreeDataCompare?.clearState(SkillNodeStates.Hovered);
-        SkillTreeEvents.fire("skilltree", "hovered-nodes-end", node);
+        SkillTreeEvents.skill_tree.fire("hovered-nodes-end", node);
     }
 
     private getShortestPath = (target: SkillNode): Array<SkillNode> => {

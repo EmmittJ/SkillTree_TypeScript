@@ -11,12 +11,14 @@ import { utils } from './utils';
 import { SkillTreePreprocessors } from '../models/skill-tree/SkillTreePreprocessors';
 import { SemVer } from 'semver';
 import { versions } from '../models/versions/verions';
+import { UIEvents } from 'models/events/UIEvents';
 
 export class App {
     private skillTreeData!: SkillTreeData;
     private skillTreeDataCompare: SkillTreeData | undefined;
     private skillTreeUtilities!: SkillTreeUtilities;
     private renderer!: ISkillTreeRenderer;
+    private uievents!: UIEvents
 
     public launch = async (version: string, versionCompare: string, versionJson: IVersions) => {
         for (const i of [version, versionCompare]) {
@@ -40,6 +42,7 @@ export class App {
                 this.skillTreeDataCompare = data;
             }
         }
+        this.uievents = new UIEvents(this.skillTreeData, this.skillTreeDataCompare);
         this.skillTreeUtilities = new SkillTreeUtilities(this.skillTreeData, this.skillTreeDataCompare);
 
         const versionSelect = document.getElementById("skillTreeControl_Version") as HTMLSelectElement;
@@ -82,8 +85,8 @@ export class App {
 
             this.skillTreeData.clearState(SkillNodeStates.Active);
 
-            SkillTreeEvents.fire("controls", "class-change", start);
-            SkillTreeEvents.fire("controls", "ascendancy-class-change", asc);
+            SkillTreeEvents.controls.fire("class-change", start);
+            SkillTreeEvents.controls.fire("ascendancy-class-change", asc);
         });
 
         const showhide = document.getElementById("skillTreeStats_ShowHide") as HTMLButtonElement;
@@ -121,21 +124,21 @@ export class App {
     }
 
     private SetupEventsAndControls = () => {
-        SkillTreeEvents.on("skilltree", "highlighted-nodes-update", this.renderer.RenderHighlight);
-        SkillTreeEvents.on("skilltree", "class-change", this.renderer.RenderCharacterStartsActive);
-        SkillTreeEvents.on("skilltree", "class-change", this.updateClassControl);
-        SkillTreeEvents.on("skilltree", "ascendancy-class-change", this.updateAscClassControl);
+        SkillTreeEvents.skill_tree.on("highlighted-nodes-update", this.renderer.RenderHighlight);
+        SkillTreeEvents.skill_tree.on("class-change", this.renderer.RenderCharacterStartsActive);
+        SkillTreeEvents.skill_tree.on("class-change", this.updateClassControl);
+        SkillTreeEvents.skill_tree.on("ascendancy-class-change", this.updateAscClassControl);
 
 
-        SkillTreeEvents.on("skilltree", "hovered-nodes-start", this.renderer.StartRenderHover);
-        SkillTreeEvents.on("skilltree", "hovered-nodes-end", this.renderer.StopRenderHover);
-        SkillTreeEvents.on("skilltree", "active-nodes-update", this.renderer.RenderActive);
-        SkillTreeEvents.on("skilltree", "active-nodes-update", this.updateStats);
+        SkillTreeEvents.skill_tree.on("hovered-nodes-start", this.renderer.StartRenderHover);
+        SkillTreeEvents.skill_tree.on("hovered-nodes-end", this.renderer.StopRenderHover);
+        SkillTreeEvents.skill_tree.on("active-nodes-update", this.renderer.RenderActive);
+        SkillTreeEvents.skill_tree.on("active-nodes-update", this.updateStats);
 
-        SkillTreeEvents.on("skilltree", "normal-node-count", (count: number) => { const e = document.getElementById("skillTreeNormalNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
-        SkillTreeEvents.on("skilltree", "normal-node-count-maximum", (count: number) => { const e = document.getElementById("skillTreeNormalNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
-        SkillTreeEvents.on("skilltree", "ascendancy-node-count", (count: number) => { const e = document.getElementById("skillTreeAscendancyNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
-        SkillTreeEvents.on("skilltree", "ascendancy-node-count-maximum", (count: number) => { const e = document.getElementById("skillTreeAscendancyNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.skill_tree.on("normal-node-count", (count: number) => { const e = document.getElementById("skillTreeNormalNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.skill_tree.on("normal-node-count-maximum", (count: number) => { const e = document.getElementById("skillTreeNormalNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.skill_tree.on("ascendancy-node-count", (count: number) => { const e = document.getElementById("skillTreeAscendancyNodeCount"); if (e !== null) e.innerHTML = count.toString(); });
+        SkillTreeEvents.skill_tree.on("ascendancy-node-count-maximum", (count: number) => { const e = document.getElementById("skillTreeAscendancyNodeCountMaximum"); if (e !== null) e.innerHTML = count.toString(); });
 
         this.populateStartClasses(document.getElementById("skillTreeControl_Class") as HTMLSelectElement);
         this.bindSearchBox(document.getElementById("skillTreeControl_Search") as HTMLInputElement);
@@ -355,7 +358,7 @@ export class App {
         const ascControl = document.getElementById("skillTreeControl_Ascendancy") as HTMLSelectElement;
         classControl.onchange = () => {
             const val = classControl.value;
-            SkillTreeEvents.fire("controls", "class-change", +val);
+            SkillTreeEvents.controls.fire("class-change", +val);
             if (ascControl !== null) {
                 this.populateAscendancyClasses(ascControl, +val, 0);
             }
@@ -375,7 +378,7 @@ export class App {
         if (this.skillTreeData.classes.length === 0) {
             return;
         }
-        
+
         const start = this.skillTreeData.getAscendancyClass();
 
         const ascClasses = this.skillTreeData.classes[this.skillTreeData.getStartClass()].ascendancies;
@@ -448,7 +451,7 @@ export class App {
         }
 
         ascControl.onchange = () => {
-            SkillTreeEvents.fire("controls", "ascendancy-class-change", +ascControl.value);
+            SkillTreeEvents.controls.fire("ascendancy-class-change", +ascControl.value);
         };
     }
 
@@ -459,7 +462,7 @@ export class App {
                 clearTimeout(this.searchTimout);
             }
             this.searchTimout = setTimeout(() => {
-                SkillTreeEvents.fire("controls", "search-change", searchControl.value);
+                SkillTreeEvents.controls.fire("search-change", searchControl.value);
                 this.searchTimout = null;
             }, 250);
         };

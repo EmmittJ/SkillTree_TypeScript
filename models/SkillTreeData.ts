@@ -292,24 +292,6 @@ export class SkillTreeData implements ISkillTreeData {
         return n;
     }
 
-    public getNodesInRange = (x: number, y: number, range: number) => {
-        const _nodes: SkillNode[] = [];
-        for (const id in this.nodes) {
-            const n = this.nodes[id];
-            if (n.isMastery) {
-                continue;
-            }
-
-            const dx = Math.abs(n.x - x);
-            const dy = Math.abs(n.y - y)
-            if (dx * dx + dy * dy < range * range && Math.abs(n.y - y) < range) {
-                _nodes.push(n);
-            }
-        }
-
-        return _nodes;
-    }
-
     public addState = (node: SkillNode, state: SkillNodeStates) => this.addStateById(node.GetId(), state);
     public addStateById = (id: string, state: SkillNodeStates) => {
         if (this.nodes[id] === undefined) {

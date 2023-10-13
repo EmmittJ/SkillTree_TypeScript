@@ -1,10 +1,4 @@
-﻿interface IGroupV7 extends Omit<IGroupV1, 'oo' | 'n'>{
-    /** x-coordinate of the group */
-    x: number;
-
-    /** y-coordinate of the group */
-    y: number;
-
+﻿interface IGroupV7 extends Omit<IGroupV1, 'oo' | 'n'> {
     /** Determines if the group is a proxy (cluster jewel) */
     isProxy: boolean;
 

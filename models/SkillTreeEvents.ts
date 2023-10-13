@@ -1,47 +1,63 @@
-﻿import type { AllFederatedEventMap } from "pixi.js";
+﻿class SkillTreeEventContainer<T extends string> {
+    private events: { [event: string]: Array<Function> } = {}
 
-type SkillTreeEvent = "node" | "skilltree" | "viewport" | "controls";
-type ObjectEvent = keyof AllFederatedEventMap;
-
-export class SkillTreeEvents {
-    private static events: { [type: string]: { [event: string]: Array<Function> } } = {};
-
-    public static getEvents = (type: string): Array<ObjectEvent> | undefined => {
-        let array = new Array<ObjectEvent>();
-        for (const event in SkillTreeEvents.events[type]) {
-            array.push(event as (ObjectEvent));
+    public on = (event: T, fn: Function) => {
+        if (this.events[event] === undefined) {
+            this.events[event] = new Array<Function>();
         }
-        if (array.length === 0) {
-            return undefined;
-        }
-        return array;
+
+        this.events[event].push(fn);
     }
 
-    public static on = (type: SkillTreeEvent, event: ObjectEvent | string, fn: Function) => {
-        if (SkillTreeEvents.events[type] === undefined) {
-            SkillTreeEvents.events[type] = {};
-        }
-        if (SkillTreeEvents.events[type][event] === undefined) {
-            SkillTreeEvents.events[type][event] = new Array<Function>();
-        }
-
-        SkillTreeEvents.events[type][event].push(fn);
-    }
-
-    public static off = (type: SkillTreeEvent, event: ObjectEvent | string, fn: Function) => {
-        if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined || SkillTreeEvents.events[type][event].indexOf(fn) === -1) {
+    public off = (event: T, fn: Function) => {
+        if (this.events[event] === undefined || this.events[event].indexOf(fn) === -1) {
             return;
         }
 
-        SkillTreeEvents.events[type][event].splice(SkillTreeEvents.events[type][event].indexOf(fn), 1);
+        this.events[event].splice(this.events[event].indexOf(fn), 1);
     }
 
-    public static fire(type: SkillTreeEvent, event: ObjectEvent | string, context?: any) {
-        if (SkillTreeEvents.events[type] === undefined || SkillTreeEvents.events[type][event] === undefined) {
+    public fire(event: T, context?: any) {
+        if (this.events[event] === undefined) {
             return;
         }
-        for (const fn of SkillTreeEvents.events[type][event]) {
+        for (const fn of this.events[event]) {
             setTimeout(() => fn(context), 0);
         }
     }
+}
+
+export class SkillTreeEvents {
+    public static controls = new SkillTreeEventContainer<
+        | "ascendancy-class-change"
+        | "class-change"
+        | "search-change"
+    >();
+
+    public static skill_tree = new SkillTreeEventContainer<
+        | "active-nodes-update"
+        | "ascendancy-class-change"
+        | "ascendancy-node-count-maximum"
+        | "ascendancy-node-count"
+        | "class-change"
+        | "encode-url"
+        | "highlighted-nodes-update"
+        | "hovered-nodes-end"
+        | "hovered-nodes-start"
+        | "normal-node-count-maximum"
+        | "normal-node-count"
+    >();
+
+    public static node = new SkillTreeEventContainer<
+        | "click"
+        | "in"
+        | "out"
+    >();
+
+    public static viewport = new SkillTreeEventContainer<
+        | "cancel"
+        | "down"
+        | "move"
+        | "up"
+    >();
 }

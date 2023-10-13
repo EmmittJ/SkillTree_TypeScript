@@ -82,14 +82,10 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.viewport.fitWorld(true);
         this.viewport.zoomPercent(1.726);
 
-        this.viewport.on('drag-start', (data) => SkillTreeEvents.fire("viewport", "drag-start", data.world));
-        this.viewport.on('drag-end', (data) => SkillTreeEvents.fire("viewport", "drag-end", data.world));
-        this.viewport.on('mouseup', () => SkillTreeEvents.fire("viewport", "mouseup"));
-        this.viewport.on('touchend', () => SkillTreeEvents.fire("viewport", "touchend"));
-        this.viewport.on('touchcancel', () => SkillTreeEvents.fire("viewport", "touchcancel"));
-        this.viewport.on('click', (click) => this.HandleZoomClick(click, zoomPercent * 2));
-        this.viewport.on('click', this.HandleShiftClick);
-        this.viewport.on('rightclick', (click) => this.HandleZoomClick(click, -zoomPercent * 2));
+        this.viewport.on('pointerdown', (event) => SkillTreeEvents.viewport.fire("down", this.viewport.toLocal(event)));
+        this.viewport.on('pointermove', (event) => SkillTreeEvents.viewport.fire("move", this.viewport.toLocal(event)));
+        this.viewport.on('pointerup', (event) => SkillTreeEvents.viewport.fire("up", this.viewport.toLocal(event)));
+        this.viewport.on('pointercancel', () => SkillTreeEvents.viewport.fire("cancel"));
 
         this.pixi.stage.addChild(this.viewport);
 
@@ -100,32 +96,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         };
 
         this.cull = new SpatialHash({ size: 512 });
-
         super.Tick();
-    }
-
-    private HandleZoomClick = (click: PIXI.FederatedPointerEvent, zoom: number) => {
-        if (!click.ctrlKey) {
-            return;
-        }
-
-        this.viewport.zoomPercent(zoom, false);
-    }
-
-    private HandleShiftClick = (click: PIXI.FederatedPointerEvent) => {
-        if (!click.shiftKey) {
-            return;
-        }
-        const boundary = new PIXI.EventBoundary(this.viewport.getChildAt(RenderLayer.SkillIcons))
-        const interactiveObject = boundary.hitTest(click.global.x, click.global.y);
-        if (interactiveObject === null || interactiveObject.name === undefined || interactiveObject.name === null || interactiveObject.name === "") {
-            return;
-        }
-
-        const node = this.skillTreeData.nodes[interactiveObject.name];
-        if (node.isKeystone) {
-            return;
-        }
     }
 
     IsDirty(): boolean {
@@ -161,6 +132,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
     protected SetLayer(layer: RenderLayer, object: PIXI.Container) {
         this._dirty = true;
+        object.eventMode = 'none';
         this.LayerContainers[layer] = object;
 
         const current = this.viewport.getChildAt(layer) as PIXI.Container;
@@ -402,6 +374,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             const sprite = PIXI.Sprite.from(texture);
             sprite.name = `${asset.patch}/${asset.key}/${asset.icon}`;
             sprite.position.set(asset.x, asset.y);
+            sprite.eventMode = 'none';
             const offset = asset.offsetX === undefined ? .5 : asset.offsetX;
             sprite.anchor.set(offset, asset.offsetY);
             if (asset.scale !== undefined) sprite.scale.set(asset.scale);
@@ -426,12 +399,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
                 sprite.mask = mask;
                 container.addChild(mask);
-            }
-
-            if (asset.node && (asset.key === "frame" || asset.key === "ascendancy" || asset.node.isMastery)) {
-                this.RebindNodeEvents(asset.node, sprite);
-            } else {
-                sprite.eventMode = 'none';
             }
 
             sizes.push({ width: sprite.width, height: sprite.height * (asset.half ? 2 : 1) });
@@ -599,7 +566,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         const container = this.GetLayer(layer);
 
         for (var highlight of highlights) {
-            const size = highlight.node.GetTargetSize();
+            const size = highlight.node.targetSize;
             if (size.width === 0 || size.height === 0) {
                 continue;
             }
@@ -636,27 +603,6 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
         console.warn(`Texture not found for ${frame}`);
         return null;
-    }
-
-    private RebindNodeEvents = (node: SkillNode, sprite: PIXI.Sprite) => {
-        sprite.removeAllListeners();
-        sprite.hitArea = new PIXI.Circle(0, 0, Math.max(sprite.texture.width, sprite.texture.height) / 2);
-        sprite.name = `${sprite.name}-${node.GetId()}`;
-
-        const events = SkillTreeEvents.getEvents("node");
-        if (events !== undefined) {
-            sprite.eventMode = 'static';
-
-            for (const event of events) {
-                sprite.addEventListener(event, (interaction) => {
-                    if ((event === "click" || event === "tap") && (interaction.shiftKey || interaction.ctrlKey || interaction.altKey)) {
-                        return;
-                    }
-
-                    SkillTreeEvents.fire("node", event, node);
-                });
-            }
-        }
     }
 
     protected RenderTooltip = (hovered: SkillNode): void => {
@@ -722,7 +668,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
         if (tooltip !== undefined && hovered !== undefined) {
             const bounds = tooltip.getBounds();
-            const size = hovered.GetTargetSize();
+            const size = hovered.targetSize;
             const scaleX = tooltip.width / bounds.width / devicePixelRatio;
             const scaleY = tooltip.height / bounds.height / devicePixelRatio;
 
