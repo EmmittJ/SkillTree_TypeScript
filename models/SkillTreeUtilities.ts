@@ -1,4 +1,4 @@
-﻿import { SkillTreeData } from "./SkillTreeData";
+import { SkillTreeData } from "./SkillTreeData";
 import { SkillNode, SkillNodeStates } from "./SkillNode";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import * as PIXI from "pixi.js";
@@ -43,6 +43,9 @@ export class SkillTreeUtilities {
 
     private lastHash = "";
     public decodeURL = () => {
+        if(window.location.hash === ""){
+            this.changeStartClass(3, false);
+        }
         if (this.lastHash === window.location.hash) {
             return;
         }
@@ -139,15 +142,15 @@ export class SkillTreeUtilities {
                 this.skillTreeData.removeState(i, SkillNodeStates.Active);
             }
         }
-
-        this.changeAscendancyClass(0, false);
+        this.changeAscendancyClass(0, false, true);
 
         if (encode) {
             this.encodeURL();
         }
     }
 
-    public changeAscendancyClass = (start: number, encode = true) => {
+    public changeAscendancyClass = (start: number, encode = true, newStart = false) => {
+        if(newStart) SkillTreeEvents.fire("skilltree", "ascendancy-class-change");
         if (this.skillTreeData.classes.length === 0) {
             return;
         }
@@ -168,7 +171,6 @@ export class SkillTreeUtilities {
             }
             if (node.isAscendancyStart) {
                 this.skillTreeData.addState(node, SkillNodeStates.Active);
-                SkillTreeEvents.fire("skilltree", "ascendancy-class-change", node);
             }
         }
 
