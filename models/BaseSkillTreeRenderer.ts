@@ -57,7 +57,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
         this.ClearLayer(RenderLayer.GroupBackground);
         this.DrawGroupBackgrounds();
-        this.DrawAscendacyBackgrounds();
+        this.DrawAscendancyBackgrounds();
 
         this.ClearLayer(RenderLayer.CharacterStarts);
         this.DrawInactiveCharacters();
@@ -117,7 +117,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                 this.skillTreeDataCompare.addState(other, SkillNodeStates.Compared);
             }
 
-            const nodeSize = node.GetTargetSize();
+            const nodeSize = node.targetSize;
             const moved = nodeSize.width !== 0 && nodeSize.height !== 0 && (Math.abs(node.x - other.x) > nodeSize.width || Math.abs(node.y - other.y) > nodeSize.height);
             if (moved) {
                 this.skillTreeDataCompare.addState(other, SkillNodeStates.Moved);
@@ -146,7 +146,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawSpriteSheetAssets(RenderLayer.GroupBackground, assets);
     }
 
-    private DrawAscendacyBackgrounds = (): void => {
+    private DrawAscendancyBackgrounds = (): void => {
         for (const id in this.skillTreeData.ascedancyNodes) {
             const node = this.skillTreeData.ascedancyNodes[id];
             if (!node.isAscendancyStart || node.nodeGroup === undefined) {

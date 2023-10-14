@@ -68,8 +68,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
         const zoomPercent = this.skillTreeData.imageZoomLevels.length > 2 ? this.skillTreeData.imageZoomLevels[1] - this.skillTreeData.imageZoomLevels[0] : .1;
         this.viewport = new Viewport({
-            screenWidth: this.pixi.screen.width,
-            screenHeight: this.pixi.screen.height,
+            screenWidth: this.pixi.renderer.width,
+            screenHeight: this.pixi.renderer.height,
             worldWidth: this.skillTreeData.width * (this.skillTreeData.scale * 1.25),
             worldHeight: this.skillTreeData.height * (this.skillTreeData.scale * 1.25),
             events: this.pixi.renderer.events,
@@ -82,9 +82,9 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.viewport.fitWorld(true);
         this.viewport.zoomPercent(1.726);
 
-        this.viewport.on('pointerdown', (event) => SkillTreeEvents.viewport.fire("down", this.viewport.toLocal(event)));
-        this.viewport.on('pointermove', (event) => SkillTreeEvents.viewport.fire("move", this.viewport.toLocal(event)));
-        this.viewport.on('pointerup', (event) => SkillTreeEvents.viewport.fire("up", this.viewport.toLocal(event)));
+        this.viewport.on('pointerdown', (event) => SkillTreeEvents.viewport.fire("down", this.viewport.toWorld(event.global)));
+        this.viewport.on('pointermove', (event) => SkillTreeEvents.viewport.fire("move", this.viewport.toWorld(event.global)));
+        this.viewport.on('pointerup', (event) => SkillTreeEvents.viewport.fire("up", this.viewport.toWorld(event.global)));
         this.viewport.on('pointercancel', () => SkillTreeEvents.viewport.fire("cancel"));
 
         this.pixi.stage.addChild(this.viewport);
