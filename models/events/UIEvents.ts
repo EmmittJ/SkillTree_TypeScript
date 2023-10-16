@@ -37,7 +37,7 @@ export class UIEvents {
     }
 
     private static clickSkillTree = (point: IPoint, skillTree: SkillTreeData) => {
-        const node = this.getNodeAtPoint(point, skillTree);
+        const node = skillTree.getNodeAtPoint(point);
         if (node === null) {
             return;
         }
@@ -61,12 +61,11 @@ export class UIEvents {
 
         const current = new Array<SkillNode>();
         for (const skillTree of this.skillTrees()) {
-            const node = UIEvents.getNodeAtPoint(point, skillTree);
+            const node = skillTree.getNodeAtPoint(point);
             if (node !== null) {
                 current.push(node);
                 break;
             }
-
         }
 
         const diff = this.hovered.filter(x => !current.includes(x));
@@ -78,19 +77,5 @@ export class UIEvents {
         for (const node of this.hovered) {
             SkillTreeEvents.node.fire("in", node);
         }
-    }
-
-    private static getNodeAtPoint = (point: IPoint, skillTree: SkillTreeData): SkillNode | null => {
-        for (const id in skillTree.nodes) {
-            const node = skillTree.nodes[id];
-            const size = node.targetSize;
-            const range = size.width * size.height * skillTree.scale;
-            const diff = { x: node.x - point.x, y: node.y - point.y }
-            const length = diff.x * diff.x + diff.y * diff.y;
-            if (length < range) {
-                return node;
-            }
-        }
-        return null;
     }
 }

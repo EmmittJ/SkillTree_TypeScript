@@ -146,7 +146,7 @@ export class SkillTreeUtilities {
         const ascClass = ascClasses[start];
         const name = ascClass !== undefined ? ascClass.name : undefined;
 
-        for (const id in this.skillTreeData.ascedancyNodes) {
+        for (const id in this.skillTreeData.ascendancyNodes) {
             const node = this.skillTreeData.nodes[id];
             if (node.ascendancyName !== name) {
                 this.skillTreeData.removeState(node, SkillNodeStates.Active);

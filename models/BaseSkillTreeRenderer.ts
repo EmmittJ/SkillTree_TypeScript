@@ -147,8 +147,8 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private DrawAscendancyBackgrounds = (): void => {
-        for (const id in this.skillTreeData.ascedancyNodes) {
-            const node = this.skillTreeData.ascedancyNodes[id];
+        for (const id in this.skillTreeData.ascendancyNodes) {
+            const node = this.skillTreeData.ascendancyNodes[id];
             if (!node.isAscendancyStart || node.nodeGroup === undefined) {
                 continue;
             }
