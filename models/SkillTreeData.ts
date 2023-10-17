@@ -175,8 +175,15 @@ export class SkillTreeData implements ISkillTreeData {
             if (node.classStartIndex !== undefined) {
                 this.classStartNodes[id] = node;
             }
-            this.grid.add(node.id, { x: node.x, y: node.y }, node.targetSize)
+
+            if (this.shouldAddToGrid(node)) {
+                this.grid.add(node.id, { x: node.x, y: node.y }, node.targetSize)
+            }
         }
+    }
+
+    private shouldAddToGrid = (node: SkillNode): boolean => {
+        return node.group !== undefined && node.classStartIndex === undefined;
     }
 
     private getOrbitAngles = (skillsPerOrbit: Array<number>): { [orbit: number]: Array<number> } => {
@@ -297,7 +304,7 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getNodeAtPoint = (point: IPoint): SkillNode | null => {
-        const ids = this.grid.find(point, { width: 150 * this.scale, height: 150 * this.scale });
+        const ids = this.grid.find(point, { width: 0, height: 0 });
         if (ids.length === 0) {
             return null;
         }
