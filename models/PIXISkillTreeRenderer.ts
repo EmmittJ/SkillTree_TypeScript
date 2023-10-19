@@ -50,7 +50,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.NodeSpritesheets = {};
 
         this.pixi = new PIXI.Application({
-            resizeTo: window,
+            width: window.innerWidth,
+            height: window.innerHeight,
             resolution: devicePixelRatio,
             sharedTicker: true,
             backgroundColor: skillTreeData.patch.compare(versions.v3_16_0) >= 0 ? 0x070b10 : 0x1a1411

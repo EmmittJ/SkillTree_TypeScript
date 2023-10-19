@@ -2,12 +2,12 @@
 export class SkillTreeV5Preprocessor implements ISkillTreePreprocessor {
     CanProcess(data: ISkillTreeV5): boolean {
         for (var id in data.nodes) {
-            if ((data.nodes[id] as ISkillNodeV6).isBlighted === undefined) {
-                return true;
+            if ((data.nodes[id] as ISkillNodeV6).isBlighted === true) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     Process(data: ISkillTreeV5): ISkillTreeV6 {
@@ -18,7 +18,7 @@ export class SkillTreeV5Preprocessor implements ISkillTreePreprocessor {
             nodes[id.toString()] = this.UpgradeNode(data.nodes[id]);
         }
         v6.nodes = nodes;
-        
+
         return v6;
     }
 
