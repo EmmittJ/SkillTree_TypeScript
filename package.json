@@ -21,8 +21,8 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@pixi-essentials/cull": "^2.0.0",
     "downloadjs": "^1.4.7",
-    "pixi-cull": "^2.2.0",
     "pixi-viewport": "^5.0.2",
     "pixi.js": "^7.3.1",
     "semver": "^7.5.4"

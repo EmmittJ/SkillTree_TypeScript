@@ -5,7 +5,7 @@ import { Assets } from '@pixi/assets';
 import { utils } from "../app/utils";
 import { SkillTreeEvents } from "./SkillTreeEvents";
 import { SkillNodeStates, SkillNode, ConnectionStyle } from "./SkillNode";
-import { SpatialHash } from 'pixi-cull';
+import { Cull } from '@pixi-essentials/cull';
 import { BaseSkillTreeRenderer, RenderLayer, IHighlight, ISpriteSheetAsset, IConnnection } from "./BaseSkillTreeRenderer";
 import { SemVer } from 'semver';
 import { versions } from './versions/verions';
@@ -16,7 +16,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     private _dirty = true;
     private pixi: PIXI.Application<HTMLCanvasElement>;
     private viewport: Viewport;
-    private cull: SpatialHash;
+    private cull: Cull;
     private DO_NOT_CULL = [RenderLayer.Tooltip, RenderLayer.TooltipCompare];
     LayerContainers: { [layer in RenderLayer]: PIXI.Container } = {
         [RenderLayer.Background]: new PIXI.Container(),
@@ -96,7 +96,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
         };
 
-        this.cull = new SpatialHash({ size: 512 });
+        this.cull = new Cull();
         super.Tick();
     }
 
@@ -109,7 +109,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
     }
 
     Update(_: number): void {
-        this.cull.cull(this.viewport.getVisibleBounds());
+        this.cull.cull(this.pixi.renderer.screen);
         this.pixi.render();
         this._dirty = this.viewport.dirty = false;
     }
@@ -124,7 +124,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             const object = this.LayerContainers[layer];
 
             if (this.DO_NOT_CULL.indexOf(layer) === -1) {
-                this.cull.addContainer(object);
+                this.cull.add(object);
             }
 
             this.viewport.addChild(object);
@@ -138,11 +138,11 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
 
         const current = this.viewport.getChildAt(layer) as PIXI.Container;
         if (this.DO_NOT_CULL.indexOf(layer) === -1) {
-            this.cull.removeContainer(current);
+            this.cull.remove(current);
         }
 
         if (this.DO_NOT_CULL.indexOf(layer) === -1) {
-            this.cull.addContainer(object);
+            this.cull.add(object);
         }
 
         if (object === current) {
