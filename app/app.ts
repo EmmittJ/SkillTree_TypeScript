@@ -4,7 +4,6 @@ import { SkillTreeData } from "../models/SkillTreeData";
 import { SkillTreeEvents } from "../models/SkillTreeEvents";
 import { ISkillTreeRenderer } from '../models/types/ISkillTreeRenderer';
 import { PIXISkillTreeRenderer } from '../models/PIXISkillTreeRenderer';
-import download from 'downloadjs';
 import { SkillTreeUtilities } from '../models/SkillTreeUtilities';
 import { SkillNodeStates } from '../models/SkillNode';
 import { utils } from './utils';
@@ -114,9 +113,9 @@ export class App {
 
                     const screenshot = document.getElementById("skillTreeControl_Screenshot") as HTMLSelectElement;
                     screenshot.style.removeProperty('display');
-                    screenshot.addEventListener("click", () => {
+                    screenshot.addEventListener("click", async () => {
                         const mimeType: 'image/jpeg' = 'image/jpeg';
-                        download(this.renderer.CreateScreenshot(mimeType), `${version.replace(/\./g, '')}_skilltree.jpg`, mimeType);
+                        utils.Download(await this.renderer.CreateScreenshot(mimeType), `${version.replace(/\./g, '')}_skilltree.jpg`, mimeType);
                     });
                 })
                 .catch((reason) => console.error(reason));

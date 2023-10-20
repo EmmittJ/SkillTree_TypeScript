@@ -10,5 +10,5 @@ interface ISkillTreeRenderer {
     RenderHighlight(): void;
     StartRenderHover(skillNode: SkillNode): void;
     StopRenderHover(skillNode: SkillNode): void;
-    CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
+    CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): Promise<string>;
 }

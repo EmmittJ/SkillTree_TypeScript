@@ -37,7 +37,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     abstract Initialize(): Promise<boolean>;
-    abstract CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): string;
+    abstract CreateScreenshot(mimeType: "image/jpeg" | "image/webp"): Promise<string>;
 
     protected abstract DrawSpriteSheetAsset(layer: RenderLayer, asset: ISpriteSheetAsset): { width: number, height: number };
     protected abstract DrawSpriteSheetAssets(layer: RenderLayer, assets: ISpriteSheetAsset[]): { width: number, height: number }[];

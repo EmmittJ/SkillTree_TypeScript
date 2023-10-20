@@ -1,4 +1,4 @@
-﻿import { SkillTreeData } from './SkillTreeData';
+import { SkillTreeData } from './SkillTreeData';
 import { Viewport } from 'pixi-viewport';
 import * as PIXI from 'pixi.js';
 import { Assets } from '@pixi/assets';
@@ -585,8 +585,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         this.SetLayer(layer, container);
     }
 
-    public CreateScreenshot = (mimeType: 'image/jpeg' | 'image/webp'): string => {
-        return this.pixi.renderer.plugins.extract.base64(this.viewport, mimeType, 1);
+    public CreateScreenshot = async (mimeType: 'image/jpeg' | 'image/webp'): Promise<string> => {
+        return await (this.pixi.renderer as any).extract.base64(this.viewport, mimeType, 1);
     }
 
     private GetSpritesheetTexture = (patch: SemVer, spriteSheetKey: string, icon: string): PIXI.Texture | null => {
