@@ -429,18 +429,32 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             return;
         }
 
-        let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(texture);
-        backgroundSprite.name = asset.icon;
         if (asset.icon === "AtlasPassiveBackground") {
+            let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(texture);
+            backgroundSprite.name = asset.icon;
             backgroundSprite.scale.set(2.8173)
-            backgroundSprite.anchor.set(.504, .918);
+            backgroundSprite.anchor.set(.506, .931);
+            container.addChild(backgroundSprite);
         } else {
             texture.baseTexture.wrapMode = PIXI.WRAP_MODES.REPEAT;
-            backgroundSprite = PIXI.TilingSprite.from(texture.baseTexture, { width: this.skillTreeData.width * (this.skillTreeData.scale * 1.25), height: this.skillTreeData.height * (this.skillTreeData.scale * 1.25) });
-            backgroundSprite.anchor.set(.5);
+            const columns = 10;
+            const rows = 10;
+            const width = this.skillTreeData.width * (this.skillTreeData.scale * 1.25);
+            const height = this.skillTreeData.height * (this.skillTreeData.scale * 1.25);
+            const cellWidth = width / columns;
+            const cellHeight = height / rows;
+            for (let row = 0; row < rows; row++) {
+                for (let column = 0; column < columns; column++) {
+                    const x = cellWidth * column - width / 2;
+                    const y = cellHeight * row - height / 2;
+                    let backgroundSprite: PIXI.Sprite = PIXI.Sprite.from(texture);
+                    backgroundSprite.name = `${asset.icon}-r:${row}-c:${column}`;
+                    backgroundSprite = PIXI.TilingSprite.from(texture.baseTexture, { width: cellWidth, height: cellHeight });
+                    backgroundSprite.position.set(x, y);
+                    container.addChild(backgroundSprite);
+                }
+            }
         }
-
-        container.addChild(backgroundSprite);
         this.SetLayer(layer, container);
     }
 
