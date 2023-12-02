@@ -162,7 +162,7 @@ export class App {
     private buildStatLookups = (defaultGroup: string): [masteries: string[], masteryTest: { [name: string]: string }, defaultStats: { [stat: string]: boolean }] => {
         if (this.masteries === undefined || this.masteryTest === undefined) {
             const masteries: string[] = ["The Maven"];
-            const masteryTest: { [name: string]: string } = {}
+            const masteryTest: { [name: string]: string } = {"The Maven": " Maven"}
             for (const id in this.skillTreeData.nodes) {
                 const node = this.skillTreeData.nodes[id];
                 const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);
