@@ -61,7 +61,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         container.appendChild(this.pixi.view);
 
         PIXI.Container.defaultSortableChildren = false;
-        PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
+        PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.LINEAR;
         PIXI.settings.ROUND_PIXELS = false;
         PIXI.settings.RESOLUTION = devicePixelRatio;
         PIXI.utils.destroyTextureCache();
