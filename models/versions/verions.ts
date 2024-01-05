@@ -57,23 +57,43 @@ export class versions {
     public static v3_14_0 = new SemVer("3.14.0");
     public static v3_15_0 = new SemVer("3.15.0");
     public static v3_16_0 = new SemVer("3.16.0");
+
     public static v3_17_0_atlas = new SemVer("3.17.0-atlas");
     public static v3_17_0 = new SemVer("3.17.0");
+
     public static v3_18_0_atlas = new SemVer("3.18.0-atlas");
     public static v3_18_0 = new SemVer("3.18.0");
+
     public static v3_19_0_atlas = new SemVer("3.19.0-atlas");
     public static v3_19_0 = new SemVer("3.19.0");
+
     public static v3_20_0_atlas = new SemVer("3.20.0-atlas");
     public static v3_20_0_ruthless_atlas = new SemVer("3.20.0-ruthless-atlas");
     public static v3_20_0 = new SemVer("3.20.0");
+
     public static v3_20_1_atlas = new SemVer("3.20.1-atlas");
     public static v3_20_1_ruthless_atlas = new SemVer("3.20.1-ruthless-atlas");
     public static v3_20_1 = new SemVer("3.20.1");
+
     public static v3_21_0_atlas = new SemVer("3.21.0-atlas");
     public static v3_21_0_ruthless_atlas = new SemVer("3.21.0-ruthless-atlas");
     public static v3_21_0 = new SemVer("3.21.0");
+
     public static v3_22_0_atlas = new SemVer("3.22.0-atlas");
     public static v3_22_0_ruthless_atlas = new SemVer("3.22.0-ruthless-atlas");
     public static v3_22_0_ruthless = new SemVer("3.22.0-ruthless");
     public static v3_22_0 = new SemVer("3.22.0");
+
+    public static v3_22_0b_ruthless = new SemVer("3.22.0-b-ruthless");
+    public static v3_22_0b = new SemVer("3.22.0-b");
+
+    public static v3_22_1 = new SemVer("3.22.1");
+
+    public static v3_22_2_ruthless = new SemVer("3.22.2-ruthless");
+    public static v3_22_2 = new SemVer("3.22.2");
+
+    public static v3_23_0_atlas = new SemVer("3.23.0-atlas");
+    public static v3_23_0_ruthless_atlas = new SemVer("3.23.0-ruthless-atlas");
+    public static v3_23_0_ruthless = new SemVer("3.23.0-ruthless");
+    public static v3_23_0 = new SemVer("3.23.0");
 }
