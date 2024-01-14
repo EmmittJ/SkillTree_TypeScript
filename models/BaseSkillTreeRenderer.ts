@@ -157,7 +157,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         }
     }
 
-    private DrawAscendancyBackground = (group: IGroup, ascendancyName: string, key: SpriteSheetKeyV13, icon: string) => {
+    private DrawAscendancyBackground = (group: IGroup, ascendancyName: string, key: SpriteSheetKey, icon: string) => {
         if (!this.skillTreeData.hasSprite(key, icon)) {
             return;
         }

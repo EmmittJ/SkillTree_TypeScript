@@ -2,9 +2,6 @@
 import { SkillTreeOptionsV1Preprocessor } from "./options-preprocessors/SkillTreeOptionsV1Preprocessor";
 import { SkillTreeOptionsPreprocessor } from "./preprocessors/SkillTreeOptionsPreprocessor";
 import { SkillTreePreprocessor } from "./preprocessors/SkillTreePreprocessor";
-import { SkillTreeV10Preprocessor } from "./preprocessors/SkillTreeV10Preprocessor";
-import { SkillTreeV11Preprocessor } from "./preprocessors/SkillTreeV11Preprocessor";
-import { SkillTreeV12Preprocessor } from "./preprocessors/SkillTreeV12Preprocessor";
 import { SkillTreeV1Preprocessor } from "./preprocessors/SkillTreeV1Preprocessor";
 import { SkillTreeV2Preprocessor } from "./preprocessors/SkillTreeV2Preprocessor";
 import { SkillTreeV3Preprocessor } from "./preprocessors/SkillTreeV3Preprocessor";
@@ -14,6 +11,11 @@ import { SkillTreeV6Preprocessor } from "./preprocessors/SkillTreeV6Preprocessor
 import { SkillTreeV7Preprocessor } from "./preprocessors/SkillTreeV7Preprocessor";
 import { SkillTreeV8Preprocessor } from "./preprocessors/SkillTreeV8Preprocessor";
 import { SkillTreeV9Preprocessor } from "./preprocessors/SkillTreeV9Preprocessor";
+import { SkillTreeV10Preprocessor } from "./preprocessors/SkillTreeV10Preprocessor";
+import { SkillTreeV11Preprocessor } from "./preprocessors/SkillTreeV11Preprocessor";
+import { SkillTreeV12Preprocessor } from "./preprocessors/SkillTreeV12Preprocessor";
+import { SkillTreeV13Preprocessor } from "./preprocessors/SkillTreeV13Preprocessor";
+import { SkillTreeV14Preprocessor } from "./preprocessors/SkillTreeV14Preprocessor";
 
 export class SkillTreePreprocessors {
     private static _preprocessors: Array<ISkillTreePreprocessor> = [
@@ -29,6 +31,8 @@ export class SkillTreePreprocessors {
         new SkillTreeV10Preprocessor(),
         new SkillTreeV11Preprocessor(),
         new SkillTreeV12Preprocessor(),
+        new SkillTreeV13Preprocessor(),
+        new SkillTreeV14Preprocessor(),
         new SkillTreeOptionsPreprocessor(),
         new SkillTreePreprocessor()
     ];

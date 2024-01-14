@@ -1,6 +1,6 @@
 ﻿import { SemVer } from "semver";
 
-interface ISkillTreeData extends ISkillTreeV13 {
+interface ISkillTreeData extends ISkillTreeV15 {
     patch: SemVer;
     version: number;
     masteryEffects: { [id: number]: number }

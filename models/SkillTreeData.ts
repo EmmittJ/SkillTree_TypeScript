@@ -11,6 +11,7 @@ export class SkillTreeData implements ISkillTreeData {
     version: number;
     masteryEffects: { [id: number]: number }
     classes: IAscendancyClasses[];
+    alternate_ascendancies: IAscendancyClasses[];
     groups: { [id: string]: IGroup };
     root: ISkillNode;
     nodes: { [id: string]: SkillNode };
@@ -65,6 +66,7 @@ export class SkillTreeData implements ISkillTreeData {
         this.scale = skillTree.imageZoomLevels[this.maxZoomLevel];
         this.sprites = skillTree.sprites;
         this.classes = skillTree.classes || [];
+        this.alternate_ascendancies = skillTree.alternate_ascendancies || [];
 
         this.root.id = 'root';
         delete skillTree.nodes["root"];
