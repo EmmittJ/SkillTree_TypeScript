@@ -2,6 +2,7 @@ export interface ISkillTreeUrlData {
     version: number
     class: number
     ascendancy: number
+    wildwoodAscendancy: number
     nodeCount: number
     nodes: Array<number>
     extendedNodeCount: number

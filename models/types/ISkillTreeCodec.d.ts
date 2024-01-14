@@ -9,6 +9,7 @@ type SkillTreeDefinition = {
     Version: number;
     Class: number;
     Ascendancy: number;
+    WildwoodAscendancy: number;
     Nodes: Array<ISkillNode>;
     ExtendedNodes: Array<ISkillNode>;
     MasteryEffects: Array<[node: ISkillNode, effect: number]>;

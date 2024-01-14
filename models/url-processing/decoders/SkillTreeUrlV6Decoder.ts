@@ -9,7 +9,9 @@ export class SkillTreeUrlV6Decoder implements ISkillTreeUrlDecoder {
     decode(bytes: Uint8Array): ISkillTreeUrlData {
         const version = this.version(bytes);
         const _class = this.class(bytes);
-        const ascendancy = this.ascendancy(bytes);
+        const ascendancyByte = this.ascendancyByte(bytes);
+        const ascendancy = ascendancyByte & 0x3;
+        const wildwoodAscendancy = ascendancyByte >> 2;
         let offset = 6;
 
         const nodeCount = bytes[offset++];
@@ -45,6 +47,7 @@ export class SkillTreeUrlV6Decoder implements ISkillTreeUrlDecoder {
             version: version,
             class: _class,
             ascendancy: ascendancy,
+            wildwoodAscendancy: wildwoodAscendancy,
             nodeCount: nodes.length,
             nodes: nodes,
             extendedNodeCount: extendedNodes.length,
@@ -62,7 +65,7 @@ export class SkillTreeUrlV6Decoder implements ISkillTreeUrlDecoder {
         return bytes[4]
     }
 
-    private ascendancy(bytes: Uint8Array): number {
+    private ascendancyByte(bytes: Uint8Array): number {
         return bytes[5]
     }
 }

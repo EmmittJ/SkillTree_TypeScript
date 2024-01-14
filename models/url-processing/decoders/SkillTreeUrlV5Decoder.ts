@@ -34,6 +34,7 @@ export class SkillTreeUrlV5Decoder implements ISkillTreeUrlDecoder {
             version: version,
             class: _class,
             ascendancy: ascendancy,
+            wildwoodAscendancy: 0,
             nodeCount: nodes.length,
             nodes: nodes,
             extendedNodeCount: extendedNodes.length,

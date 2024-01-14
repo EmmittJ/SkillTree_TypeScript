@@ -247,12 +247,12 @@ export class SkillTreeData implements ISkillTreeData {
     }
 
     public getAscendancyClass = (): number => {
+        if (this.classes === undefined || this.classes.length === 0) {
+            return 0;
+        }
+
         for (const id in this.ascendancyNodes) {
             if (this.nodes[id].isAscendancyStart && this.nodes[id].is(SkillNodeStates.Active)) {
-                if (this.classes === undefined) {
-                    continue;
-                }
-
                 for (const classid in this.classes) {
                     const ascendancies = this.classes[classid].ascendancies;
                     if (ascendancies === undefined) {
@@ -261,8 +261,8 @@ export class SkillTreeData implements ISkillTreeData {
 
                     for (const ascid in ascendancies) {
                         const asc = ascendancies[ascid];
-                        if (asc.name === this.nodes[id].name) {
-                            return +ascid;
+                        if (asc.id === this.nodes[id].ascendancyName) {
+                            return (+ascid) + 1;
                         }
                     }
                 }
@@ -272,7 +272,26 @@ export class SkillTreeData implements ISkillTreeData {
         return 0;
     }
 
-    public isAzmeriAscendancyClass = (node: SkillNode): boolean => {
+    public getWildwoodAscendancyClass = (): number => {
+        if (this.alternate_ascendancies === undefined || this.alternate_ascendancies.length === 0) {
+            return 0;
+        }
+
+        for (const id in this.ascendancyNodes) {
+            if (this.nodes[id].isAscendancyStart && this.nodes[id].is(SkillNodeStates.Active)) {
+                for (const ascid in this.alternate_ascendancies) {
+                    const asc = this.alternate_ascendancies[ascid];
+                    if (asc.id === this.nodes[id].ascendancyName) {
+                        return (+ascid) + 1;
+                    }
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    public isWildwoodAscendancyClass = (node: SkillNode): boolean => {
         if (node.ascendancyName === "") {
             return false;
         }

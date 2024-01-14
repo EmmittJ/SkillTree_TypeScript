@@ -19,6 +19,7 @@ export class SkillTreeUtilities {
 
         SkillTreeEvents.controls.on("class-change", this.changeStartClass);
         SkillTreeEvents.controls.on("ascendancy-class-change", this.changeAscendancyClass);
+        SkillTreeEvents.controls.on("wildwood-ascendancy-class-change", this.changeWildwoodAscendancyClass);
         SkillTreeEvents.controls.on("search-change", this.searchChange);
 
         SkillTreeEvents.skill_tree.on("encode-url", this.encodeURL);
@@ -45,6 +46,8 @@ export class SkillTreeUtilities {
             this.skillTreeData.version = def.Version;
             this.changeStartClass(def.Class, false);
             this.changeAscendancyClass(def.Ascendancy, false);
+            this.changeWildwoodAscendancyClass(def.WildwoodAscendancy, false);
+
             for (const node of def.Nodes) {
                 this.skillTreeData.addStateById(`${node.skill}`, SkillNodeStates.Active)
             }
@@ -87,6 +90,7 @@ export class SkillTreeUtilities {
         const maximumAscendancyPoints = this.skillTreeData.points.ascendancyPoints;
         let normalNodes = 0;
         let ascNodes = 0;
+        let wildwoodAscNodes = 0;
 
         const nodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
         for (const id in nodes) {
@@ -95,7 +99,11 @@ export class SkillTreeUtilities {
                 if (node.ascendancyName === "") {
                     normalNodes++;
                 } else {
-                    ascNodes++;
+                    if (this.skillTreeData.isWildwoodAscendancyClass(node)) {
+                        wildwoodAscNodes++;
+                    } else {
+                        ascNodes++;
+                    }
                 }
                 maximumNormalPoints += node.grantedPassivePoints;
             }
@@ -105,6 +113,8 @@ export class SkillTreeUtilities {
         SkillTreeEvents.skill_tree.fire("normal-node-count-maximum", maximumNormalPoints);
         SkillTreeEvents.skill_tree.fire("ascendancy-node-count", ascNodes);
         SkillTreeEvents.skill_tree.fire("ascendancy-node-count-maximum", maximumAscendancyPoints);
+        SkillTreeEvents.skill_tree.fire("wildwood-ascendancy-node-count", wildwoodAscNodes);
+        SkillTreeEvents.skill_tree.fire("wildwood-ascendancy-node-count-maximum", maximumAscendancyPoints);
     }
 
     public changeStartClass = (start: number, encode = true) => {
@@ -126,6 +136,7 @@ export class SkillTreeUtilities {
             }
         }
         this.changeAscendancyClass(0, false, true);
+        this.changeWildwoodAscendancyClass(0, false, true);
 
         if (encode) {
             this.encodeURL();
@@ -142,16 +153,38 @@ export class SkillTreeUtilities {
         if (ascClasses === undefined) {
             return;
         }
+        this.changeAscendancyClassInternal(false, start, ascClasses, encode);
+    }
 
-        const ascClass = ascClasses[start];
-        const name = ascClass !== undefined ? ascClass.name : undefined;
+    public changeWildwoodAscendancyClass = (start: number, encode = true, newStart = false) => {
+        if (newStart) SkillTreeEvents.skill_tree.fire("wildwood-ascendancy-class-change");
+        if (this.skillTreeData.alternate_ascendancies.length === 0) {
+            return;
+        }
+
+        const ascClasses = this.skillTreeData.alternate_ascendancies;
+        if (ascClasses === undefined) {
+            return;
+        }
+
+        this.changeAscendancyClassInternal(true, start, ascClasses, encode);
+    }
+
+    private changeAscendancyClassInternal = (isWildwood: boolean, start: number, ascClasses: IAscendancyClassV7[], encode: boolean) => {
+        const ascClass = ascClasses[start - 1];
+        const name = ascClass !== undefined ? ascClass.id : undefined;
 
         for (const id in this.skillTreeData.ascendancyNodes) {
             const node = this.skillTreeData.nodes[id];
+            if (this.skillTreeData.isWildwoodAscendancyClass(node) !== isWildwood) {
+                continue;
+            }
+
             if (node.ascendancyName !== name) {
                 this.skillTreeData.removeState(node, SkillNodeStates.Active);
                 continue;
             }
+
             if (node.isAscendancyStart) {
                 this.skillTreeData.addState(node, SkillNodeStates.Active);
             }
@@ -360,7 +393,7 @@ export class SkillTreeUtilities {
         const reachable: { [id: string]: SkillNode } = {};
         for (const id of characterStartNode.out) {
             const out = this.skillTreeData.nodes[id];
-            if (out.ascendancyName !== "" && source.ascendancyName !== "" && out.ascendancyName !== source.ascendancyName) {
+            if (!this.isSameAscendancyClass(source, out)) {
                 continue;
             }
             if (out.is(SkillNodeStates.Active) && out.GetId() !== source.GetId()) {
@@ -368,6 +401,16 @@ export class SkillTreeUtilities {
                 reachable[id] = out;
             }
         }
+
+        // support for wildwood ascendancies
+        for (const id of this.skillTreeData.root.out) {
+            const node = this.skillTreeData.nodes[id];
+            if (node.isAscendancyStart && node.is(SkillNodeStates.Active)) {
+                frontier.push(node);
+                reachable[id] = node;
+            }
+        }
+
         while (frontier.length > 0) {
             const nextFrontier = new Array<SkillNode>();
             for (const node of frontier) {
@@ -379,7 +422,7 @@ export class SkillTreeUtilities {
                             continue;
                         }
                     }
-                    if (out.ascendancyName !== "" && source.ascendancyName !== "" && out.ascendancyName !== source.ascendancyName) {
+                    if (!this.isSameAscendancyClass(source, out)) {
                         continue;
                     }
                     if (out.GetId() === source.GetId() || reachable[id] || !out.is(SkillNodeStates.Active)) {
@@ -402,6 +445,20 @@ export class SkillTreeUtilities {
             }
         }
         return unreachable;
+
+
+    }
+
+    private isSameAscendancyClass = (left: SkillNode, right: SkillNode): boolean => {
+        if (left.ascendancyName === "" || right.ascendancyName === "") {
+            return true;
+        }
+
+        if (this.skillTreeData.isWildwoodAscendancyClass(left) !== this.skillTreeData.isWildwoodAscendancyClass(right)) {
+            return true;
+        }
+
+        return left.ascendancyName === right.ascendancyName;
     }
 
     private getAdjacentNodes = (start: { [id: string]: SkillNode }): { [id: string]: SkillNode } => {

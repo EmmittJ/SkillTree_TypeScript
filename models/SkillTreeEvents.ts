@@ -30,6 +30,7 @@
 export class SkillTreeEvents {
     public static controls = new SkillTreeEventContainer<
         | "ascendancy-class-change"
+        | "wildwood-ascendancy-class-change"
         | "class-change"
         | "search-change"
     >();
@@ -37,8 +38,11 @@ export class SkillTreeEvents {
     public static skill_tree = new SkillTreeEventContainer<
         | "active-nodes-update"
         | "ascendancy-class-change"
+        | "wildwood-ascendancy-class-change"
         | "ascendancy-node-count-maximum"
+        | "wildwood-ascendancy-node-count-maximum"
         | "ascendancy-node-count"
+        | "wildwood-ascendancy-node-count"
         | "class-change"
         | "encode-url"
         | "highlighted-nodes-update"

@@ -23,7 +23,9 @@ export class SkillTreeCodec implements ISkillTreeCodec {
         bytes.push(version >> 8 & 0xFF);
         bytes.push(version >> 0 & 0xFF);
         bytes.push(skillTreeData.getStartClass());
-        bytes.push(skillTreeData.getAscendancyClass());
+        const ascendancy = skillTreeData.getAscendancyClass();
+        const wildwoodAscendancy = skillTreeData.getWildwoodAscendancyClass();
+        bytes.push(wildwoodAscendancy << 2 | (ascendancy & 0x3));
 
         const skilledNodes = skillTreeData.getSkilledNodes();
         const nodes = new Array<ISkillNode>();
@@ -77,6 +79,7 @@ export class SkillTreeCodec implements ISkillTreeCodec {
             Version: data.version,
             Class: data.class,
             Ascendancy: data.ascendancy,
+            WildwoodAscendancy: data.wildwoodAscendancy,
             Nodes: [],
             ExtendedNodes: [],
             MasteryEffects: []
@@ -118,6 +121,7 @@ export class SkillTreeCodec implements ISkillTreeCodec {
             version: 6,
             class: 3,
             ascendancy: 0,
+            wildwoodAscendancy: 0,
             nodeCount: 0,
             nodes: [],
             extendedNodeCount: 0,

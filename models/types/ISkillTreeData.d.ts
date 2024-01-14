@@ -7,6 +7,7 @@ interface ISkillTreeData extends ISkillTreeV15 {
 
     getStartClass(): number;
     getAscendancyClass(): number;
+    getWildwoodAscendancyClass(): number;
     getSkilledNodes(): { [id: string]: ISkillNode };
     getHoveredNodes(): { [id: string]: ISkillNode };
 }

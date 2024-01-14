@@ -468,7 +468,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private GetFrameSpriteSheetKey = (node: SkillNode, frame: string | null): SpriteSheetKey => {
-        if (this.skillTreeData.isAzmeriAscendancyClass(node)) {
+        if (this.skillTreeData.isWildwoodAscendancyClass(node)) {
             return 'azmeri';
         }
 
