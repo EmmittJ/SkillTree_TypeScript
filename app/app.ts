@@ -132,7 +132,6 @@ export class App {
         SkillTreeEvents.skill_tree.on("ascendancy-class-change", this.updateAscClassControl);
         SkillTreeEvents.skill_tree.on("wildwood-ascendancy-class-change", this.updateWildwoodAscClassControl);
 
-
         SkillTreeEvents.skill_tree.on("hovered-nodes-start", this.renderer.StartRenderHover);
         SkillTreeEvents.skill_tree.on("hovered-nodes-end", this.renderer.StopRenderHover);
         SkillTreeEvents.skill_tree.on("active-nodes-update", this.renderer.RenderActive);
@@ -393,37 +392,13 @@ export class App {
         }
 
         const start = this.skillTreeData.getAscendancyClass();
-
         const ascClasses = this.skillTreeData.classes[this.skillTreeData.getStartClass()].ascendancies;
-
         if (ascClasses === undefined) {
             return;
         }
+
         const ascControl = (document.getElementById("skillTreeControl_Ascendancy") as HTMLSelectElement);
-
-        while (ascControl.firstChild) {
-            ascControl.removeChild(ascControl.firstChild);
-        }
-        const none = document.createElement("option");
-        none.text = "None";
-        none.value = "0";
-        ascControl.append(none);
-
-        if (this.skillTreeData.classes.length > 0) {
-            for (const ascid in ascClasses) {
-                const asc = ascClasses[ascid];
-                const value = +ascid + 1;
-
-                const e = document.createElement("option");
-                e.text = asc.name;
-                e.value = `${value}`;
-
-                if (value === start) {
-                    e.setAttribute("selected", "selected");
-                }
-                ascControl.append(e);
-            }
-        }
+        this.createAscendancyClassOptions(ascControl, ascClasses, start);
     }
 
     private populateAscendancyClasses = (ascControl: HTMLSelectElement, start: number | undefined = undefined, startasc: number | undefined = undefined) => {
@@ -438,32 +413,14 @@ export class App {
             return;
         }
 
-        const ascStart = startasc !== undefined ? startasc : this.skillTreeData.getAscendancyClass();
-        const none = document.createElement("option");
-        none.text = "None";
-        none.value = "0";
-        if (ascStart === 0) {
-            none.setAttribute("selected", "selected");
-        }
-        ascControl.append(none);
-
         const startClass = start !== undefined ? start : this.skillTreeData.getStartClass();
-        if (this.skillTreeData.classes.length > 0) {
-            const ascendancies = this.skillTreeData.classes[startClass].ascendancies;
-            for (const ascid in ascendancies) {
-                const asc = ascendancies[ascid];
-                const value = +ascid + 1;
-
-                const e = document.createElement("option");
-                e.text = asc.name;
-                e.value = `${value}`;
-
-                if (value === ascStart) {
-                    e.setAttribute("selected", "selected");
-                }
-                ascControl.append(e);
-            }
+        const ascClasses = this.skillTreeData.classes[startClass].ascendancies;
+        if (ascClasses === undefined) {
+            return;
         }
+
+        const ascStart = startasc !== undefined ? startasc : this.skillTreeData.getAscendancyClass();
+        this.createAscendancyClassOptions(ascControl, ascClasses, ascStart);
 
         ascControl.onchange = () => {
             SkillTreeEvents.controls.fire("ascendancy-class-change", +ascControl.value);
@@ -476,24 +433,60 @@ export class App {
         }
 
         const start = this.skillTreeData.getWildwoodAscendancyClass();
+        const ascClasses = this.skillTreeData.alternate_ascendancies;
+        if (ascClasses === undefined) {
+            return;
+        }
+
+        const ascControl = (document.getElementById("skillTreeControl_WildwoodAscendancy") as HTMLSelectElement);
+        this.createAscendancyClassOptions(ascControl, ascClasses, start);
+    }
+
+    private populateWildwoodAscendancyClasses = (ascControl: HTMLSelectElement, startasc: number | undefined = undefined) => {
+        while (ascControl.firstChild) {
+            ascControl.removeChild(ascControl.firstChild);
+        }
+
+        if (this.skillTreeData.alternate_ascendancies.length === 0) {
+            ascControl.style.display = "none";
+            const e = document.getElementById("skillTreeWildwoodAscendancy") as HTMLDivElement;
+            if (e !== null) e.style.display = "none";
+            return;
+        }
 
         const ascClasses = this.skillTreeData.alternate_ascendancies;
         if (ascClasses === undefined) {
             return;
         }
-        const ascControl = (document.getElementById("skillTreeControl_WildwoodAscendancy") as HTMLSelectElement);
 
-        while (ascControl.firstChild) {
-            ascControl.removeChild(ascControl.firstChild);
+        const ascStart = startasc !== undefined ? startasc : this.skillTreeData.getAscendancyClass();
+        this.createAscendancyClassOptions(ascControl, ascClasses, ascStart);
+
+        ascControl.onchange = () => {
+            SkillTreeEvents.controls.fire("wildwood-ascendancy-class-change", +ascControl.value);
+        };
+    }
+
+    private createAscendancyClassOptions = (control: HTMLSelectElement, classes: IAscendancyClassV7[], start: number) => {
+        while (control.firstChild) {
+            control.removeChild(control.firstChild);
         }
+
         const none = document.createElement("option");
         none.text = "None";
         none.value = "0";
-        ascControl.append(none);
+        if (start === 0) {
+            none.setAttribute("selected", "selected");
+        }
+        control.append(none);
 
-        for (const ascid in ascClasses) {
-            const asc = ascClasses[ascid];
-            const value = +ascid + 1;
+        if (classes.length === 0) {
+            return
+        }
+
+        for (const id in classes) {
+            const asc = classes[id];
+            const value = +id + 1;
 
             const e = document.createElement("option");
             e.text = asc.id;
@@ -502,51 +495,8 @@ export class App {
             if (value === start) {
                 e.setAttribute("selected", "selected");
             }
-            ascControl.append(e);
+            control.append(e);
         }
-    }
-
-    private populateWildwoodAscendancyClasses = (ascControl: HTMLSelectElement, startasc: number | undefined = undefined) => {
-        while (ascControl.firstChild) {
-            ascControl.removeChild(ascControl.firstChild);
-        }
-
-        const ascendancies = this.skillTreeData.alternate_ascendancies;
-        if (ascendancies.length === 0) {
-            ascControl.style.display = "none";
-            const e = document.getElementById("skillTreeWildwoodAscendancy") as HTMLDivElement;
-            if (e !== null) e.style.display = "none";
-            return;
-        }
-
-        const ascStart = startasc !== undefined ? startasc : this.skillTreeData.getWildwoodAscendancyClass();
-        const none = document.createElement("option");
-        none.text = "None";
-        none.value = "0";
-        if (ascStart === 0) {
-            none.setAttribute("selected", "selected");
-        }
-        ascControl.append(none);
-
-        if (ascendancies.length > 0) {
-            for (const ascid in ascendancies) {
-                const asc = ascendancies[ascid];
-                const value = +ascid + 1;
-
-                const e = document.createElement("option");
-                e.text = asc.name;
-                e.value = `${value}`;
-
-                if (value === ascStart) {
-                    e.setAttribute("selected", "selected");
-                }
-                ascControl.append(e);
-            }
-        }
-
-        ascControl.onchange = () => {
-            SkillTreeEvents.controls.fire("wildwood-ascendancy-class-change", +ascControl.value);
-        };
     }
 
     private searchTimout: Timer | null = null;
