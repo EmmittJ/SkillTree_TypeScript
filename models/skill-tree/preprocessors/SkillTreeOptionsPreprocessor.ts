@@ -14,6 +14,7 @@
             const character = options.ascClasses[id];
             const current = data.classes[+id] || {};
             current.name = current.name || character.name;
+            current.ascendancies = [];
 
             for (const ascId in character.classes) {
                 const asc = character.classes[ascId];
