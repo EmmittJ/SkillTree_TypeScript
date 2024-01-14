@@ -224,7 +224,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         const assets: Array<ISpriteSheetAsset> = [];
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
-            if (node.classStartIndex === undefined || node.nodeGroup === undefined || node.ascendancyName !== undefined) {
+            if (node.classStartIndex === undefined || node.nodeGroup === undefined || node.ascendancyName !== "") {
                 continue;
             }
 

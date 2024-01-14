@@ -110,6 +110,7 @@ export class App {
                     this.renderer.RenderBase();
                     this.skillTreeUtilities.decodeURL();
                     this.renderer.RenderCharacterStartsActive();
+                    this.renderer.RenderActive();
 
                     const screenshot = document.getElementById("skillTreeControl_Screenshot") as HTMLSelectElement;
                     screenshot.style.removeProperty('display');
@@ -162,7 +163,7 @@ export class App {
     private buildStatLookups = (defaultGroup: string): [masteries: string[], masteryTest: { [name: string]: string }, defaultStats: { [stat: string]: boolean }] => {
         if (this.masteries === undefined || this.masteryTest === undefined) {
             const masteries: string[] = ["The Maven"];
-            const masteryTest: { [name: string]: string } = {"The Maven": " Maven"}
+            const masteryTest: { [name: string]: string } = { "The Maven": " Maven" }
             for (const id in this.skillTreeData.nodes) {
                 const node = this.skillTreeData.nodes[id];
                 const mastery = this.skillTreeData.getMasteryForGroup(node.nodeGroup);

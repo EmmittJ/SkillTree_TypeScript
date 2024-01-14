@@ -171,7 +171,7 @@ export class SkillTreeData implements ISkillTreeData {
 
             this.nodes[id] = node;
 
-            if (node.classStartIndex === 3) {
+            if (node.classStartIndex === this.getDefaultStartNode()) {
                 this.addState(node, SkillNodeStates.Active);
             }
 
@@ -187,6 +187,13 @@ export class SkillTreeData implements ISkillTreeData {
                 this.grid.add(node.id, { x: node.x, y: node.y }, node.targetSize)
             }
         }
+    }
+
+    public getDefaultStartNode = (): number => {
+        if (this.tree === "Atlas") {
+            return 0;
+        }
+        return 3;
     }
 
     private shouldAddToGrid = (node: SkillNode): boolean => {
