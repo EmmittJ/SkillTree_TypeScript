@@ -72,6 +72,7 @@ export class SkillTreeData implements ISkillTreeData {
         delete skillTree.nodes["root"];
 
         // #region Fix ascendancy groups
+        const offsetDistance = 1450;
         if (this.classes.length > 0) {
             const groupsCompleted: { [id: string]: boolean | undefined } = {};
             for (const id in skillTree.nodes) {
@@ -107,7 +108,6 @@ export class SkillTreeData implements ISkillTreeData {
                     }
 
                     const centerThreshold = 100;
-                    const offsetDistance = 1450;
                     let baseX = 0;
                     let baseY = 0;
                     const startGroup = this.groups[startNode.group || 0];
@@ -149,6 +149,49 @@ export class SkillTreeData implements ISkillTreeData {
                     this.groups[nodeGroupId].x = baseX;
                     this.groups[nodeGroupId].y = baseY;
                 }
+            }
+        }
+
+        if (this.alternate_ascendancies.length > 0) {
+            const groupsCompleted: { [id: string]: boolean | undefined } = {};
+            for (const id in skillTree.nodes) {
+                const node = skillTree.nodes[id];
+                const nodeGroupId = `${node.group || 0}`;
+                if (!node.isAscendancyStart || groupsCompleted[nodeGroupId] !== undefined) {
+                    continue;
+                }
+
+                let index = -1;
+                for (const i in this.alternate_ascendancies) {
+                    const ascendancy = this.alternate_ascendancies[i];
+                    if (ascendancy.id === node.ascendancyName) {
+                        index = +i;
+                        break;
+                    }
+                }
+
+                if (index === -1) {
+                    continue;
+                }
+
+                const offset = index - 1;
+                const baseX = (this.max_x * .80) + (offset * -offsetDistance * .75);
+                const baseY = (this.max_y * .90) + (offset * offsetDistance * .75);
+                groupsCompleted[nodeGroupId] = true;
+                for (const oid in skillTree.nodes) {
+                    const other = skillTree.nodes[oid];
+                    const otherGroupId = `${other.group || 0}`;
+                    if (groupsCompleted[otherGroupId] === undefined && other.ascendancyName === node.ascendancyName) {
+                        const diffX = this.groups[nodeGroupId].x - this.groups[otherGroupId].x;
+                        const diffY = this.groups[nodeGroupId].y - this.groups[otherGroupId].y;
+                        this.groups[otherGroupId].x = baseX - diffX;
+                        this.groups[otherGroupId].y = baseY - diffY;
+                        groupsCompleted[otherGroupId] = true;
+                    }
+                }
+
+                this.groups[nodeGroupId].x = baseX;
+                this.groups[nodeGroupId].y = baseY;
             }
         }
         // #endregion
