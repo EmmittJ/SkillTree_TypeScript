@@ -468,12 +468,14 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
     }
 
     private GetFrameSpriteSheetKey = (node: SkillNode, frame: string | null): SpriteSheetKey => {
-        if (frame?.startsWith('Ascendancy')) {
-            return 'ascendancy';
-        }
         if (this.skillTreeData.isAzmeriAscendancyClass(node)) {
             return 'azmeri';
         }
+
+        if (frame?.startsWith('Ascendancy')) {
+            return 'ascendancy';
+        }
+
         return 'frame';
     }
 
