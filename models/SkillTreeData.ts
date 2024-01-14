@@ -99,7 +99,7 @@ export class SkillTreeData implements ISkillTreeData {
                     if (startNode.classStartIndex !== undefined) {
                         const classes = this.classes[startNode.classStartIndex].ascendancies;
                         for (const i in classes) {
-                            if (node.ascendancyName && classes[i].name.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
+                            if (node.ascendancyName && classes[i].id.toLowerCase().includes(node.ascendancyName.toLowerCase())) {
                                 offset = +i - 1;
                                 break;
                             }

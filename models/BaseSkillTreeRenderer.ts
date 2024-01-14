@@ -181,7 +181,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
         for (const id in ascendancies) {
             const ascClass = ascendancies[id];
-            if (ascClass.name !== ascendancyName || ascClass.flavourTextRect === undefined) {
+            if (ascClass.id !== ascendancyName || ascClass.flavourTextRect === undefined) {
                 continue;
             }
 
