@@ -152,43 +152,45 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             if (!node.isAscendancyStart || node.nodeGroup === undefined) {
                 continue;
             }
-            const group = node.nodeGroup;
 
-            const ascendancyName = node.ascendancyName;
-            if (!this.skillTreeData.hasSprite("ascendancyBackground", `Classes${ascendancyName}`)) {
-                continue;
-            }
+            this.DrawAscendancyBackground(node.nodeGroup, node.ascendancyName, "ascendancyBackground", `Classes${node.ascendancyName}`);
+        }
+    }
 
-            const asset: ISpriteSheetAsset = {
-                patch: this.skillTreeData.patch,
-                key: "ascendancyBackground",
-                icon: `Classes${ascendancyName}`,
-                x: Math.ceil(group.x * this.skillTreeData.scale),
-                y: Math.ceil(group.y * this.skillTreeData.scale),
-                mask: "circle"
-            };
-            const sprite = this.DrawSpriteSheetAsset(RenderLayer.GroupBackground, asset);
+    private DrawAscendancyBackground = (group: IGroup, ascendancyName: string, key: SpriteSheetKeyV13, icon: string) => {
+        if (!this.skillTreeData.hasSprite(key, icon)) {
+            return;
+        }
 
-            if (this.skillTreeData.classes === undefined) {
-                continue;
-            }
+        const asset: ISpriteSheetAsset = {
+            patch: this.skillTreeData.patch,
+            key: key,
+            icon: icon,
+            x: Math.ceil(group.x * this.skillTreeData.scale),
+            y: Math.ceil(group.y * this.skillTreeData.scale),
+            mask: "circle"
+        };
+        const sprite = this.DrawSpriteSheetAsset(RenderLayer.GroupBackground, asset);
 
-            for (const id in this.skillTreeData.classes) {
-                const ascClasses = this.skillTreeData.classes[id];
-                for (const classid in ascClasses.ascendancies) {
-                    const ascClass = ascClasses.ascendancies[classid];
-                    if (ascClass.name !== ascendancyName || ascClass.flavourTextRect === undefined) {
-                        continue;
-                    }
+        if (this.skillTreeData.classes === undefined) {
+            return;
+        }
 
-                    const rect = [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
-                    const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
-                    const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
-
-                    const [r, g, b] = this.ExtractColour(ascClass.flavourTextColour);
-                    const colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                    this.DrawText(RenderLayer.GroupBackground, ascClass.flavourText, colour, x, y);
+        for (const id in this.skillTreeData.classes) {
+            const ascClasses = this.skillTreeData.classes[id];
+            for (const classid in ascClasses.ascendancies) {
+                const ascClass = ascClasses.ascendancies[classid];
+                if (ascClass.name !== ascendancyName || ascClass.flavourTextRect === undefined) {
+                    continue;
                 }
+
+                const rect = [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
+                const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
+                const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
+
+                const [r, g, b] = this.ExtractColour(ascClass.flavourTextColour);
+                const colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+                this.DrawText(RenderLayer.GroupBackground, ascClass.flavourText, colour, x, y);
             }
         }
     }
@@ -222,7 +224,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         const assets: Array<ISpriteSheetAsset> = [];
         for (const id of this.skillTreeData.root.out) {
             const node = this.skillTreeData.nodes[id];
-            if (node.classStartIndex === undefined || node.nodeGroup === undefined) {
+            if (node.classStartIndex === undefined || node.nodeGroup === undefined || node.ascendancyName !== undefined) {
                 continue;
             }
 
