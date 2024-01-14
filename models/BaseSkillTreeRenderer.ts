@@ -152,12 +152,15 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             if (!node.isAscendancyStart || node.nodeGroup === undefined) {
                 continue;
             }
-
-            this.DrawAscendancyBackground(node.nodeGroup, node.ascendancyName, "ascendancyBackground", `Classes${node.ascendancyName}`);
+            const group = node.nodeGroup;
+            const ascendancyName = node.ascendancyName;
+            const className = `Classes${node.ascendancyName}`
+            this.DrawAscendancyBackground(this.skillTreeData.classes.flatMap(x => x.ascendancies), group, ascendancyName, "ascendancyBackground", className);
+            this.DrawAscendancyBackground(this.skillTreeData.alternate_ascendancies, group, ascendancyName, "azmeriBackground", className);
         }
     }
 
-    private DrawAscendancyBackground = (group: IGroup, ascendancyName: string, key: SpriteSheetKey, icon: string) => {
+    private DrawAscendancyBackground = (ascendancies: IAscendancyClassV7[], group: IGroup, ascendancyName: string, key: SpriteSheetKey, icon: string) => {
         if (!this.skillTreeData.hasSprite(key, icon)) {
             return;
         }
@@ -172,26 +175,23 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         };
         const sprite = this.DrawSpriteSheetAsset(RenderLayer.GroupBackground, asset);
 
-        if (this.skillTreeData.classes === undefined) {
+        if (ascendancies === undefined || ascendancies.length === 0) {
             return;
         }
 
-        for (const id in this.skillTreeData.classes) {
-            const ascClasses = this.skillTreeData.classes[id];
-            for (const classid in ascClasses.ascendancies) {
-                const ascClass = ascClasses.ascendancies[classid];
-                if (ascClass.name !== ascendancyName || ascClass.flavourTextRect === undefined) {
-                    continue;
-                }
-
-                const rect = [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
-                const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
-                const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
-
-                const [r, g, b] = this.ExtractColour(ascClass.flavourTextColour);
-                const colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-                this.DrawText(RenderLayer.GroupBackground, ascClass.flavourText, colour, x, y);
+        for (const id in ascendancies) {
+            const ascClass = ascendancies[id];
+            if (ascClass.name !== ascendancyName || ascClass.flavourTextRect === undefined) {
+                continue;
             }
+
+            const rect = [ascClass.flavourTextRect.x, ascClass.flavourTextRect.y];
+            const x = Math.ceil((group.x + +rect[0]) * this.skillTreeData.scale) - sprite.width / 2;
+            const y = Math.ceil((group.y + +rect[1]) * this.skillTreeData.scale) - sprite.height / 2;
+
+            const [r, g, b] = this.ExtractColour(ascClass.flavourTextColour);
+            const colour = "0x" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+            this.DrawText(RenderLayer.GroupBackground, ascClass.flavourText, colour, x, y);
         }
     }
 
@@ -434,7 +434,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
                     if (out.classStartIndex !== undefined) continue;
                     const ins = out.in.map(x => all[x]);
                     const frame = out.GetFrameAssetKey(ins);
-                    const key = frame?.startsWith('Ascendancy') ? 'ascendancy' : 'frame';
+                    const key = this.GetFrameSpriteSheetKey(out, frame);
                     if (frame !== null) {
                         frames.push({
                             patch: node.patch,
@@ -448,7 +448,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
             }
 
             const frame = node.GetFrameAssetKey(others);
-            const key = frame?.startsWith('Ascendancy') ? 'ascendancy' : 'frame';
+            const key = this.GetFrameSpriteSheetKey(node, frame);
             if (frame !== null) {
                 frames.push({
                     patch: node.patch,
@@ -465,6 +465,16 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         this.DrawSpriteSheetAssets(RenderLayer.AtlasMasteryHighlight, atlasMastery);
         this.DrawSpriteSheetAssets(layer, icons);
         this.DrawSpriteSheetAssets(layer + 3, frames);
+    }
+
+    private GetFrameSpriteSheetKey = (node: SkillNode, frame: string | null): SpriteSheetKey => {
+        if (frame?.startsWith('Ascendancy')) {
+            return 'ascendancy';
+        }
+        if (this.skillTreeData.isAzmeriAscendancyClass(node)) {
+            return 'azmeri';
+        }
+        return 'frame';
     }
 
     public RenderActive = (): void => {

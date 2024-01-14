@@ -11,7 +11,7 @@ export class SkillTreeData implements ISkillTreeData {
     version: number;
     masteryEffects: { [id: number]: number }
     classes: IAscendancyClasses[];
-    alternate_ascendancies: IAscendancyClasses[];
+    alternate_ascendancies: IAscendancyClassV7[];
     groups: { [id: string]: IGroup };
     root: ISkillNode;
     nodes: { [id: string]: SkillNode };
@@ -160,8 +160,13 @@ export class SkillTreeData implements ISkillTreeData {
         for (const id in skillTree.nodes) {
             const groupId = skillTree.nodes[id].group || 0;
             const node = new SkillNode(id, skillTree.nodes[id], this.groups[groupId], skillTree.constants.orbitRadii, orbitAngles, this.scale, this.patch);
-            if (this.root.out.indexOf(id) >= 0 && node.classStartIndex === undefined) {
-                node.classStartIndex = this.root.out.indexOf(id);
+            if (this.root.out.indexOf(id) >= 0) {
+                if (node.classStartIndex === undefined && node.ascendancyName === "") {
+                    node.classStartIndex = this.root.out.indexOf(id);
+                }
+                if (node.ascendancyName !== "") {
+                    node.isAscendancyStart = true;
+                }
             }
 
             this.nodes[id] = node;
@@ -258,6 +263,20 @@ export class SkillTreeData implements ISkillTreeData {
         }
 
         return 0;
+    }
+
+    public isAzmeriAscendancyClass = (node: SkillNode): boolean => {
+        if (node.ascendancyName === "") {
+            return false;
+        }
+
+        for (const ascendancy of this.alternate_ascendancies) {
+            if (node.ascendancyName === ascendancy.id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public getMasteryForGroup = (group: IGroup | undefined): SkillNode | null => {
