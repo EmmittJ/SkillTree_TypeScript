@@ -95,7 +95,7 @@ export class SkillTreeUtilities {
         const nodes = this.skillTreeData.getNodes(SkillNodeStates.Active);
         for (const id in nodes) {
             const node = nodes[id];
-            if (node.classStartIndex === undefined && !node.isAscendancyStart) {
+            if (node.classStartIndex === undefined && !node.isAscendancyStart && !node.isMultipleChoice) {
                 if (node.ascendancyName === "") {
                     normalNodes++;
                 } else {
