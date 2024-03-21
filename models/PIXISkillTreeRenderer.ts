@@ -68,6 +68,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         Assets.reset();
 
         const zoomPercent = this.skillTreeData.imageZoomLevels.length > 2 ? this.skillTreeData.imageZoomLevels[1] - this.skillTreeData.imageZoomLevels[0] : .1;
+        const defaultZoomLimits = { minWidth: this.skillTreeData.width * (zoomPercent / 2), minHeight: this.skillTreeData.height * (zoomPercent / 2), maxWidth: this.skillTreeData.width * (zoomPercent * 10), maxHeight: this.skillTreeData.height * (zoomPercent * 10) };
         this.viewport = new Viewport({
             screenWidth: this.pixi.renderer.width,
             screenHeight: this.pixi.renderer.height,
@@ -79,7 +80,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         });
         this.viewport.name = 'viewport';
         this.viewport.drag().wheel({ percent: zoomPercent }).pinch({ percent: zoomPercent * 10 });
-        this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
+        this.viewport.clampZoom(defaultZoomLimits);
+        if(skillTreeData.tree === 'Atlas') this.viewport.moveCenter(this.viewport.center.x * (zoomPercent / 2), this.viewport.center.y * (zoomPercent / 2) - 2000 )
         this.viewport.fitWorld(true);
         this.viewport.zoomPercent(1.726);
 
@@ -93,7 +95,7 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
         window.onresize = () => {
             this.pixi.renderer.resize(window.innerWidth, window.innerHeight);
             this.viewport.resize(this.pixi.renderer.width, this.pixi.renderer.height, this.skillTreeData.width * (this.skillTreeData.scale * 1.25), this.skillTreeData.height * (this.skillTreeData.scale * 1.25));
-            this.viewport.clampZoom({ minWidth: this.skillTreeData.width * (zoomPercent / 8), minHeight: this.skillTreeData.height * (zoomPercent / 8) });
+            this.viewport.clampZoom(defaultZoomLimits);
         };
 
         this.cull = new Cull();
