@@ -748,6 +748,8 @@ export class PIXISkillTreeRenderer extends BaseSkillTreeRenderer {
             }
 
             if (reminder !== null) {
+                reminder.style.wordWrap = true;
+                reminder.style.wordWrapWidth = tooltip.width;
                 tooltip.addChild(reminder);
                 reminder.position.set(0, height);
                 height += reminder.height;
