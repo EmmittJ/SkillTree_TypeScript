@@ -101,7 +101,7 @@ export class SkillNode implements ISkillNode {
         this.orbitIndex = node.orbitIndex;
         this.out = node.out;
         this.recipe = node.recipe || [];
-        this.reminderText = node.recipe || [];
+        this.reminderText = node.reminderText || [];
         this.skill = node.skill;
         this.stats = node.stats;
 
