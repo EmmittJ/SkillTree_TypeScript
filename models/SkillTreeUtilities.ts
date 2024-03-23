@@ -258,7 +258,7 @@ export class SkillTreeUtilities {
             } else {
                 this.skillTreeData.addState(node, SkillNodeStates.Hovered);
 
-                if (this.skillTreeData.tree === "Atlas" && node.isMastery) {
+                if (this.skillTreeData.isAtlasTree() && node.isMastery) {
                     for (const id in this.skillTreeData.nodes) {
                         const other = this.skillTreeData.nodes[id];
                         if (!other.isMastery) {

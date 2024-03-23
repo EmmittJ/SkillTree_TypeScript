@@ -232,8 +232,12 @@ export class SkillTreeData implements ISkillTreeData {
         }
     }
 
+    public isAtlasTree = (): boolean => {
+        return this.tree.startsWith("Atlas")
+    }
+
     public getDefaultStartNode = (): number => {
-        if (this.tree === "Atlas") {
+        if (this.isAtlasTree()) {
             return 0;
         }
         return 3;

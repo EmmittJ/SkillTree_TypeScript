@@ -211,7 +211,7 @@ export class App {
     }
 
     private updateStats = () => {
-        const defaultGroup = this.skillTreeData.tree === "Atlas" ? "Maps" : "Default";
+        const defaultGroup = this.skillTreeData.isAtlasTree() ? "Maps" : "Default";
         const [masteries, masteryTest, defaultStats] = this.buildStatLookups(defaultGroup);
 
         const groups: { [group: string]: string[] } = {};

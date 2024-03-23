@@ -76,8 +76,8 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
         var background = this.skillTreeData.hasSprite("background", "Background1") ? "Background1" : "Background2";
         var asset: ISpriteSheetAsset = {
             patch: this.skillTreeData.patch,
-            key: this.skillTreeData.tree === "Atlas" ? "atlasBackground" : "background",
-            icon: this.skillTreeData.tree === "Atlas" ? "AtlasPassiveBackground" : background
+            key: this.skillTreeData.isAtlasTree() ? "atlasBackground" : "background",
+            icon: this.skillTreeData.isAtlasTree() ? "AtlasPassiveBackground" : background
         }
         this.DrawBackgroundAsset(RenderLayer.Background, asset);
     }
@@ -393,7 +393,7 @@ export abstract class BaseSkillTreeRenderer implements ISkillTreeRenderer {
 
             const icon = node.GetIcon();
             if (!node.isAscendancyStart && icon !== "") {
-                if (this.skillTreeData.tree === "Atlas" && node.isMastery && node.is(SkillNodeStates.Hovered)) {
+                if (this.skillTreeData.isAtlasTree() && node.isMastery && node.is(SkillNodeStates.Hovered)) {
                     if (this.skillTreeData.hasSprite('masteryOverlay', icon)) {
                         atlasMastery.push({
                             patch: node.patch,
