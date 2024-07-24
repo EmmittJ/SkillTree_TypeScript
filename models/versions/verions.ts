@@ -107,4 +107,7 @@ export class versions {
     public static v3_24_0_ruthless_atlas = new SemVer("3.24.0-pre-ruthless-atlas");
     public static v3_24_0_ruthless = new SemVer("3.24.0-pre-ruthless");
     public static v3_24_0 = new SemVer("3.24.0-pre");
+
+    public static v3_25_0 = new SemVer("3.25.0");
+    public static v3_25_0_ruthless = new SemVer("3.25.0-ruthless");
 }
