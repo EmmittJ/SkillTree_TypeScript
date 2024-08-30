@@ -1,5 +1,5 @@
 ﻿interface ISkillNodeV7 extends Omit<ISkillNodeV6, 'spc' | 'da' | 'ia' | 'sa' | 'id' | 'g' | 'ks' | 'm' | 'not' | 'dn' | 'o' | 'oidx' | 'sd' | 'passivePointsGranted' | 'in' | 'out'> {
-    /** Detemines the root classes of the SkillNode */
+    /** Determines the root classes of the SkillNode */
     classStartIndex: number | undefined;
 
     /** Expansion Jewel properties of a Jewel Socket */
@@ -51,10 +51,10 @@
      */
     orbitIndex: number;
 
-    /** The conections from this SkillNode */
+    /** The connections from this SkillNode */
     out: Array<string>;
 
-    /** The Blgiht Oil Recipe for the node */
+    /** The Blight Oil Recipe for the node */
     recipe: Array<string> | undefined;
 
     /** The stat descriptions of the SkillNode */

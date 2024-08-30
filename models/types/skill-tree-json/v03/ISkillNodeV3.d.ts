@@ -1,5 +1,5 @@
 ﻿interface ISkillNodeV3 extends ISkillNodeV1 {
-    /** Determines if the Skillnode is a Jewel Socket */
+    /** Determines if the SkillNode is a Jewel Socket */
     isJewelSocket: boolean;
 
     /** Determines if the SkillNode is Multiple Choice */
@@ -17,7 +17,7 @@
     /** Determines if the SkillNode is the root of an Ascendancy Class */
     isAscendancyStart: boolean | undefined;
 
-    /** Node flavour text (similar to the flavour text on unqiues, appears in the unique border color in game) */
+    /** Node flavour text (similar to the flavour text on uniques, appears in the unique border color in game) */
     flavourText: Array<string> | undefined;
 
     /** Additional information on mechanics or the node itself (appears grey in game) */
